@@ -69,10 +69,10 @@ Initialize the SQLite WAL database, create the initial organization namespace, a
 
 ```bash
 # If installed via 1-line script (binary in PATH):
-refweird bootstrap --email admin@corp.Refweir --namespace acme --data-dir ./data
+refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data
 
 # Or if built from source:
-# ./bin/refweird bootstrap --email admin@corp.Refweir --namespace acme --data-dir ./data
+# ./bin/refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data
 ```
 
 ### 3. Start the Server

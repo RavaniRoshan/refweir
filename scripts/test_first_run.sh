@@ -19,6 +19,8 @@ fi
 START_TIME=$(date +%s)
 echo "=== Starting Refweir first-run installation verification ==="
 
+export REFWEIR_TELEMETRY_OPT_IN="${REFWEIR_TELEMETRY_OPT_IN:-0}"
+
 # Ensure Go toolchain is available
 if ! command -v go >/dev/null 2>&1; then
     if [ -x "/home/linuxbrew/.linuxbrew/bin/go" ]; then
