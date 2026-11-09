@@ -315,6 +315,7 @@ func Open(cfg config.Config) (*App, error) {
 
 	// Autonomous Agent Activity Stream & Capability Leases
 	mux.HandleFunc("GET /api/v1/agent/activities", agentactivity.Handler(agentactivity.DefaultHub))
+	mux.HandleFunc("GET /api/v1/agent/activities/stream", agentactivity.StreamHandler(agentactivity.DefaultHub))
 	leaseSecret := []byte(cfg.JWTSecret)
 	if len(leaseSecret) == 0 {
 		raw, _, _ := auth.GenerateSessionToken()

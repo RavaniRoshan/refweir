@@ -82,7 +82,12 @@ func (h *Hub) Recent(limit int) []Activity {
 	return out
 }
 
-// Clear resets the activity buffer (used in testing).
+// Count returns the number of entries in the buffer.
+func (h *Hub) Count() int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return len(h.entries)
+}
 func (h *Hub) Clear() {
 	h.mu.Lock()
 	defer h.mu.Unlock()

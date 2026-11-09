@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: Refweir API
+  version: 0.6.0-beta
+  description: REST API for the Refweir self-hosted Git forge.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+paths:
+  /api/v1/system/info:
+    get:
+      summary: System information
+      responses:
+        '200':
+          description: System info
+  /api/v1/repos:
+    get:
+      summary: List repositories
+      responses:
+        '200':
+          description: Repository list
+    post:
+      summary: Create repository
+      responses:
+        '201':
+          description: Created
+  /api/v1/repos/{owner}/{name}:
+    get:
+      summary: Get repository
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema: { type: string }
+        - name: name
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Repository details
+  /api/v1/repos/{owner}/{name}/pulls:
+    get:
+      summary: List pull requests
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema: { type: string }
+        - name: name
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Pull request list
+    post:
+      summary: Create pull request
+      responses:
+        '201':
+          description: Created
+  /api/v1/repos/{owner}/{name}/pulls/{number}/merge:
+    post:
+      summary: Merge pull request
+      responses:
+        '200':
+          description: Merged
+  /api/v1/agent/activities:
+    get:
+      summary: Recent agent activities
+      responses:
+        '200':
+          description: Activity list
+  /api/v1/agent/activities/stream:
+    get:
+      summary: SSE stream of agent activities
+      responses:
+        '200':
+          description: SSE stream
+  /api/v1/agent/leases:
+    post:
+      summary: Issue capability lease
+      responses:
+        '201':
+          description: Lease issued
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
