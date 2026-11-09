@@ -132,4 +132,17 @@ describe('Header Component', () => {
     fireEvent.click(sshTab)
     expect(screen.getByText('git clone git@localhost:2222/shiva/refweir.dev.git')).toBeInTheDocument()
   })
+
+  it('renders environment indicator badge in header', async () => {
+    vi.mocked(api.isDemoModeActive).mockReturnValue(true)
+    render(
+      <Header
+        repo={mockRepo}
+        activeTab="code"
+        onTabChange={vi.fn()}
+      />
+    )
+    expect(screen.getByTestId('environment-indicator-badge')).toBeInTheDocument()
+    expect(screen.getByTestId('environment-indicator-badge')).toHaveTextContent(/SANDBOX|DEV|DEMO/i)
+  })
 })

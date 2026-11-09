@@ -239,19 +239,22 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="font-bold text-sm tracking-tight text-foreground hidden sm:inline">refweir.dev</span>
               </button>
 
-              {/* Mode Toggle Capsule */}
-              <button
-                onClick={toggleDemoMode}
-                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
-                  isDemo
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                }`}
-                title="Click to toggle between Live Production API and Offline Sandbox Demo mode"
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                <span>{isDemo ? 'Sandbox Demo' : 'Live Production'}</span>
-              </button>
+              {/* Mode Toggle Capsule & Environment Badge */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  data-testid="environment-indicator-badge"
+                  onClick={toggleDemoMode}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                    isDemo
+                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                  }`}
+                  title="Click to toggle between Live Production API and Offline Sandbox Demo mode"
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span>{isDemo ? 'Sandbox Demo' : 'Live Production'}</span>
+                </button>
+              </div>
             </div>
 
             {/* Central Search Bar */}
