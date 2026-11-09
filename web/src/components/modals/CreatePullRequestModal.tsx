@@ -11,11 +11,11 @@ import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import {
   getBranches,
-  createPullRequest,
   type RepoInfo,
   type BranchItem,
   type PullRequest,
 } from '@/lib/api'
+import { useCreatePullRequestMutation } from '@/lib/queries/useRepoMutations'
 
 export interface CreatePullRequestModalProps {
   isOpen: boolean
@@ -33,6 +33,8 @@ export const CreatePullRequestModal: React.FC<CreatePullRequestModalProps> = ({
   const owner = repo?.ownerSlug || 'acme'
   const repoName = repo?.name || 'rocket'
   const defaultBranch = repo?.defaultBranch || 'main'
+
+  const createPrMutation = useCreatePullRequestMutation(owner, repoName)
 
   const [branches, setBranches] = useState<BranchItem[]>([])
   const [baseBranch, setBaseBranch] = useState(defaultBranch)
@@ -78,7 +80,7 @@ export const CreatePullRequestModal: React.FC<CreatePullRequestModalProps> = ({
     setSubmitting(true)
     setError(null)
     try {
-      const created = await createPullRequest(owner, repoName, {
+      const created = await createPrMutation.mutateAsync({
         title: title.trim(),
         head: headBranch,
         base: baseBranch,

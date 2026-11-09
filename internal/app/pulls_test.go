@@ -155,6 +155,25 @@ func TestPullRequestsLifecycle(t *testing.T) {
 		t.Fatalf("expected diffHunk for engine.go, got %+v", listPRsResp.Pulls[0].DiffHunks)
 	}
 
+	// 7b. Get single pull request details
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/repos/acme/rocket/pulls/1", nil)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/repos/acme/rocket/pulls/1 code = %d, body = %s", rec.Code, rec.Body.String())
+	}
+	var getPRResp struct {
+		Pull struct {
+			Number int    `json:"number"`
+			Title  string `json:"title"`
+			State  string `json:"state"`
+		} `json:"pull"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &getPRResp)
+	if getPRResp.Pull.Number != 1 || getPRResp.Pull.Title != "feat: implement rocket propulsion thrust" {
+		t.Fatalf("unexpected single PR response: %+v", getPRResp)
+	}
+
 	// 8. Add a comment on the PR
 	commentBody, _ := json.Marshal(map[string]any{
 		"body": "Looks great, ready for deployment!",

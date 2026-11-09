@@ -1,8 +1,13 @@
 import '@testing-library/jest-dom/vitest'
-import { vi } from 'vitest'
+import { vi, afterEach } from 'vitest'
 import { configure } from '@testing-library/react'
+import { queryClient } from '@/lib/queryClient'
 
 configure({ asyncUtilTimeout: 4000 })
+
+afterEach(() => {
+  queryClient.clear()
+})
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {

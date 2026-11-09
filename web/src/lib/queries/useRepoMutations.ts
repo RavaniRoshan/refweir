@@ -21,12 +21,14 @@ export function useCreatePullRequestMutation(owner: string, name: string, client
         base?: string;
         headBranch?: string;
         baseBranch?: string;
+        draft?: boolean;
       }) =>
         createPullRequest(owner, name, {
           title: params.title,
           body: params.body,
           head: params.head || params.headBranch || 'feature',
           base: params.base || params.baseBranch || 'main',
+          draft: params.draft,
         }),
       onSuccess: () => {
         queryClient.invalidateQueries({

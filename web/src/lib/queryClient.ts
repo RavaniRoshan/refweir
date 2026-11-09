@@ -12,6 +12,6 @@ export const queryClient = new QueryClient({
 
 if (typeof window !== 'undefined') {
   window.addEventListener('refweir_mode_changed', () => {
-    queryClient.resetQueries();
+    queryClient.clear();
   });
 }

@@ -1,8 +1,10 @@
 package openapi
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -69,5 +71,35 @@ func TestOpenAPI_Handler(t *testing.T) {
 	}
 	if !strings.Contains(body, "Cursor Origin API") {
 		t.Errorf("expected title in body")
+	}
+}
+
+func TestOpenAPI_ForgeHandler(t *testing.T) {
+	h := ForgeHandler()
+	req := httptest.NewRequest(http.MethodGet, "/api/openapi.yaml", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	ct := rec.Header().Get("Content-Type")
+	if !strings.Contains(ct, "yaml") {
+		t.Errorf("expected yaml content-type, got: %s", ct)
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "Refweir Forge API") {
+		t.Errorf("expected Refweir Forge API title in body")
+	}
+}
+
+func TestOpenAPI_ForgeSyncWithRootAPI(t *testing.T) {
+	rootPath := filepath.Join("..", "..", "api", "openapi.yaml")
+	rootBytes, err := os.ReadFile(rootPath)
+	if err != nil {
+		t.Fatalf("failed to read %s: %v", rootPath, err)
+	}
+	if !bytes.Equal(ForgeSpec, rootBytes) {
+		t.Fatalf("internal/openapi/forge.openapi.yaml and %s have drifted; they must be identical", rootPath)
 	}
 }

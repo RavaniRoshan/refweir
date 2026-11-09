@@ -2227,6 +2227,73 @@ func Open(cfg config.Config) (*App, error) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"pulls": out})
 	})
 
+	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/pulls/{number}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+		numStr := r.PathValue("number")
+		number, err := strconv.Atoi(numStr)
+		if err != nil {
+			http.Error(w, "Invalid pull request number", http.StatusBadRequest)
+			return
+		}
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			http.Error(w, "Repository not found", http.StatusNotFound)
+			return
+		}
+		pr, err := db.GetPullRequest(r.Context(), repo.ID, number)
+		if err != nil {
+			http.Error(w, "Pull request not found", http.StatusNotFound)
+			return
+		}
+
+		author := pr.AuthorUserID
+		if author == "" {
+			author = "shiva"
+		}
+		rawComments, _ := db.ListComments(r.Context(), pr.ID)
+		comments := make([]any, 0, len(rawComments))
+		for _, c := range rawComments {
+			cAuthor := c.AuthorUserID
+			if cAuthor == "" {
+				cAuthor = "shiva"
+			}
+			comments = append(comments, map[string]any{
+				"id":        c.ID,
+				"author":    cAuthor,
+				"body":      c.Body,
+				"createdAt": c.CreatedAt,
+				"isAgent":   strings.Contains(strings.ToLower(cAuthor), "agent") || strings.Contains(strings.ToLower(cAuthor), "bot"),
+			})
+		}
+
+		st := pr.State
+		if pr.Merged {
+			st = "merged"
+		}
+
+		out := map[string]any{
+			"id":        pr.ID,
+			"number":    pr.Number,
+			"title":     pr.Title,
+			"body":      pr.Body,
+			"state":     st,
+			"headRef":   pr.HeadRef,
+			"baseRef":   pr.BaseRef,
+			"branch":    pr.HeadRef,
+			"author":    author,
+			"createdAt": pr.CreatedAt,
+			"comments":  comments,
+			"additions": pr.Additions,
+			"deletions": pr.Deletions,
+			"mergeable": pr.Mergeable,
+		}
+
+		_ = json.NewEncoder(w).Encode(map[string]any{"pull": out})
+	})
+
 	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/pulls", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")

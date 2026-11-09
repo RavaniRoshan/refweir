@@ -15,10 +15,15 @@ paths:
         '200':
           description: Service healthy
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: ok
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  time:
+                    type: string
 
   /metrics:
     get:
@@ -54,9 +59,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RepositoryRecord'
+                type: object
+                properties:
+                  repositories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RepositoryRecord'
     post:
       summary: Create repository
       description: Creates a new bare repository on the forge.
@@ -165,9 +173,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CommitItem'
+                type: object
+                properties:
+                  commits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CommitItem'
 
   /api/v1/repos/{owner}/{name}/contents:
     get:
@@ -201,9 +212,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FileItem'
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileItem'
+                  content:
+                    type: string
+                  encoding:
+                    type: string
 
   /api/v1/repos/{owner}/{name}/pulls:
     get:
@@ -225,9 +243,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PullRequest'
+                type: object
+                properties:
+                  pulls:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PullRequest'
     post:
       summary: Create pull request
       parameters:
@@ -290,7 +311,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PullRequest'
+                type: object
+                properties:
+                  pull:
+                    $ref: '#/components/schemas/PullRequest'
 
   /api/v1/repos/{owner}/{name}/pulls/{number}/merge:
     post:
@@ -368,9 +392,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Issue'
+                type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Issue'
     post:
       summary: Create issue
       parameters:
@@ -424,9 +451,12 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ReleaseItem'
+                type: object
+                properties:
+                  releases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReleaseItem'
     post:
       summary: Create release
       parameters:
@@ -654,9 +684,11 @@ components:
         state:
           type: string
           enum: [open, closed, merged]
-        headBranch:
+        headRef:
           type: string
-        baseBranch:
+        baseRef:
+          type: string
+        branch:
           type: string
         createdAt:
           type: string

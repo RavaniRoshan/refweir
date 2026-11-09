@@ -22,7 +22,6 @@ import { Box, BoxHeader, BoxTitle, BoxBody } from '@/components/ui/Card'
 import { CreateRepoModal } from '@/components/modals/CreateRepoModal'
 import { MigrateRepoModal } from '@/components/modals/MigrateRepoModal'
 import {
-  getRepositories,
   getAgentActivities,
   getCommits,
   getReleases,
@@ -30,7 +29,7 @@ import {
   isDemoModeActive,
   type RepositoryRecord,
 } from '@/lib/api'
-import { useRepositoriesQuery } from '@/lib/queries'
+import { useRepositoriesQuery, useSafeQueryClient, queryKeys } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 export interface GlobalHomeViewProps {
@@ -178,12 +177,13 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   const [isMigrateModalOpen, setIsMigrateModalOpen] = useState(false)
 
   // Real or sandbox repositories
+  const queryClient = useSafeQueryClient()
   const { data: queryRepos } = useRepositoriesQuery()
   const [repos, setRepos] = useState<RepositoryRecord[]>(() => (isDemoModeActive() ? defaultDemoRepos : []))
 
   useEffect(() => {
-    if (queryRepos && queryRepos.length > 0) {
-      setRepos(queryRepos)
+    if (!isDemoModeActive()) {
+      setRepos(queryRepos ?? [])
     }
   }, [queryRepos])
 
@@ -200,101 +200,104 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   }, [])
 
   useEffect(() => {
-    // If running in live production mode, fetch live cluster repositories and aggregate activities
-    if (!isDemoModeActive()) {
-      getRepositories().then(async (liveRepos) => {
-        if (liveRepos && liveRepos.length > 0) {
-          setRepos(liveRepos)
+    // If running in live production mode, aggregate activities based on queryRepos
+    if (!isDemoModeActive() && queryRepos && queryRepos.length > 0) {
+      let isCurrent = true
+      const liveRepos = queryRepos
+      const combinedEvents: ActivityEvent[] = []
 
-          const combinedEvents: ActivityEvent[] = []
-
-          // 1. Fetch agent activities
-          try {
-            const acts = await getAgentActivities()
-            if (acts && acts.length > 0) {
-              acts.forEach((a, idx) => {
-                combinedEvents.push({
-                  id: a.id || `agent-${idx}`,
-                  type: 'agent',
-                  actor: a.agentName || 'refweir-agent',
-                  action: `executed ${a.toolName}`,
-                  target: typeof a.requestPayload?.resource === 'string' ? a.requestPayload.resource : 'repository',
-                  timestamp: a.timestamp || 'Recently',
-                  details: a.responseSummary,
-                })
+      ;(async () => {
+        // 1. Fetch agent activities
+        try {
+          const acts = await getAgentActivities()
+          if (acts && acts.length > 0) {
+            acts.forEach((a, idx) => {
+              combinedEvents.push({
+                id: a.id || `agent-${idx}`,
+                type: 'agent',
+                actor: a.agentName || 'refweir-agent',
+                action: `executed ${a.toolName}`,
+                target: typeof a.requestPayload?.resource === 'string' ? a.requestPayload.resource : 'repository',
+                timestamp: a.timestamp || 'Recently',
+                details: a.responseSummary,
               })
-            }
-          } catch {}
+            })
+          }
+        } catch {}
 
-          // 2. Fetch recent commits from primary repo
-          try {
-            const first = liveRepos[0]
-            const owner = first.full_name?.split('/')[0] || 'shiva'
-            const commits = await getCommits(owner, first.name)
-            if (commits && commits.length > 0) {
-              commits.slice(0, 5).forEach((c) => {
-                combinedEvents.push({
-                  id: `commit-${c.sha}`,
-                  type: 'commit',
-                  actor: c.author.name,
-                  action: 'pushed commit to branch',
-                  target: `${first.full_name || first.name} (${first.default_branch || 'main'})`,
-                  timestamp: c.timestamp,
-                  details: c.message,
-                  sha: c.shortSha,
-                })
+        // 2. Fetch recent commits from primary repo
+        try {
+          const first = liveRepos[0]
+          const owner = first.full_name?.split('/')[0] || 'shiva'
+          const commits = await getCommits(owner, first.name)
+          if (commits && commits.length > 0) {
+            commits.slice(0, 5).forEach((c) => {
+              combinedEvents.push({
+                id: `commit-${c.sha}`,
+                type: 'commit',
+                actor: c.author.name,
+                action: 'pushed commit to branch',
+                target: `${first.full_name || first.name} (${first.default_branch || 'main'})`,
+                timestamp: c.timestamp,
+                details: c.message,
+                sha: c.shortSha,
               })
-            }
-          } catch {}
+            })
+          }
+        } catch {}
 
-          // 3. Fetch releases from primary repo
-          try {
-            const first = liveRepos[0]
-            const owner = first.full_name?.split('/')[0] || 'shiva'
-            const releases = await getReleases(owner, first.name)
-            if (releases && releases.length > 0) {
-              releases.slice(0, 3).forEach((rel) => {
-                combinedEvents.push({
-                  id: `rel-${rel.id}`,
-                  type: 'release',
-                  actor: rel.author || 'shiva',
-                  action: 'published enterprise release',
-                  target: rel.tagName,
-                  timestamp: rel.publishedAt || 'Recently',
-                  details: rel.body || `${rel.name} release archive`,
-                })
+        // 3. Fetch releases from primary repo
+        try {
+          const first = liveRepos[0]
+          const owner = first.full_name?.split('/')[0] || 'shiva'
+          const releases = await getReleases(owner, first.name)
+          if (releases && releases.length > 0) {
+            releases.slice(0, 3).forEach((rel) => {
+              combinedEvents.push({
+                id: `rel-${rel.id}`,
+                type: 'release',
+                actor: rel.author || 'shiva',
+                action: 'published enterprise release',
+                target: rel.tagName,
+                timestamp: rel.publishedAt || 'Recently',
+                details: rel.body || `${rel.name} release archive`,
               })
-            }
-          } catch {}
+            })
+          }
+        } catch {}
 
-          // 4. Fetch PRs from primary repo
-          try {
-            const first = liveRepos[0]
-            const owner = first.full_name?.split('/')[0] || 'shiva'
-            const prs = await getPullRequests(owner, first.name)
-            if (prs && prs.length > 0) {
-              prs.slice(0, 5).forEach((p) => {
-                combinedEvents.push({
-                  id: `pr-${p.number}`,
-                  type: 'pr',
-                  actor: p.author || 'shiva',
-                  action: p.state === 'merged' ? 'merged pull request' : p.state === 'closed' ? 'closed pull request' : 'opened pull request',
-                  target: `#${p.number} ${p.title}`,
-                  timestamp: p.createdAt || 'Recently',
-                  details: p.body,
-                })
+        // 4. Fetch PRs from primary repo
+        try {
+          const first = liveRepos[0]
+          const owner = first.full_name?.split('/')[0] || 'shiva'
+          const prs = await getPullRequests(owner, first.name)
+          if (prs && prs.length > 0) {
+            prs.slice(0, 5).forEach((p) => {
+              combinedEvents.push({
+                id: `pr-${p.number}`,
+                type: 'pr',
+                actor: p.author || 'shiva',
+                action: p.state === 'merged' ? 'merged pull request' : p.state === 'closed' ? 'closed pull request' : 'opened pull request',
+                target: `#${p.number} ${p.title}`,
+                timestamp: p.createdAt || 'Recently',
+                details: p.body,
               })
-            }
-          } catch {}
+            })
+          }
+        } catch {}
 
+        if (isCurrent) {
           setEvents(combinedEvents)
-        } else {
-          setRepos([])
-          setEvents([])
         }
-      })
+      })()
+
+      return () => {
+        isCurrent = false
+      }
+    } else if (!isDemoModeActive() && queryRepos && queryRepos.length === 0) {
+      setEvents([])
     }
-  }, [])
+  }, [queryRepos])
 
   const filteredRepos = repos
     .filter((r) => {
@@ -333,6 +336,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
 
   const handleRepoCreated = (newRepo: RepositoryRecord) => {
     setRepos((prev) => [newRepo, ...prev])
+    queryClient.invalidateQueries({ queryKey: queryKeys.repos.all })
     onSelectRepo(newRepo.name)
   }
 

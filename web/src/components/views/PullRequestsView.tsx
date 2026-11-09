@@ -155,13 +155,6 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
     }
   }
 
-  useEffect(() => {
-    const onModeChange = () => {
-      loadPRs()
-    }
-    window.addEventListener('refweir_mode_changed', onModeChange)
-    return () => window.removeEventListener('refweir_mode_changed', onModeChange)
-  }, [owner, repoName])
 
   useEffect(() => {
     if (!selectedPr) return
