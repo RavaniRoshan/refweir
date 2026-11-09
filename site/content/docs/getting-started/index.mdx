@@ -3,13 +3,9 @@ title: Getting started
 description: Install, bootstrap, and run your self-hosted refweir.dev Git forge and agent server.
 ---
 
-## ⚡ 90-Second Agent Demo
+## ⚡ 90-Second Agent Loop
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/assets/demo.gif" alt="refweir.dev 90-second agent loop demo" width="100%" />
-</p>
-
-*Watch an autonomous agent acquire an ephemeral capability lease, clone over Smart-HTTP, push to `refs/heads/agent/*`, open an MCP PR, and merge in under 90 seconds.*
+Refweir enforces capability leases and branch containment directly inside the pure-Go Git kernel. Autonomous agents acquire short-lived HMAC leases scoped strictly to `refs/heads/agent/*`, clone over Smart-HTTP, push commits, and open MCP pull requests without human credentials.
 
 ## 1. Installation
 
@@ -18,7 +14,7 @@ description: Install, bootstrap, and run your self-hosted refweir.dev Git forge 
 Install the pre-compiled binary release in under 60 seconds across Linux, macOS, and Windows:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 ```
 
 The installer script automatically:

@@ -179,7 +179,7 @@ npm run check-links   # validates every internal link in out/
 npm run claims-audit  # CLAIMS.md needles must pass; forbidden phrases must be absent
 ```
 Deploys to GitHub Pages at `https://ravaniroshan.github.io/refweir/` on push to
-`main` (see `.github/workflows/pages.yml`). Docs are served under `/docs/`;
+`main` (see `.github/workflows/pages-deploy.yml`). Docs are served under `/docs/`;
 `/refweir/<page>/` legacy URLs are static redirect stubs. Any copy change on the
 landing MUST keep `npm run claims-audit` green — update needles only together
 with a CLAIMS.md ledger entry.

@@ -562,7 +562,7 @@ git commit -m "feat(site): wire rebuilt marketing page sections"
 
 - [ ] **Step 1: Run full gate**
 
-Run: `cd /home/shiva/projects/exist.io && CGO_ENABLED=0 go test ./... && cd web && npx vitest run && npm run build && cd ../site && npm run verify`
+Run: `CGO_ENABLED=0 go test ./... && cd web && npx vitest run && npm run build && cd ../site && npm run verify`
 Expected: all pass
 
 - [ ] **Step 2: Visual check**

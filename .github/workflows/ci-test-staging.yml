@@ -112,3 +112,6 @@ jobs:
 
       - name: Verify quickstart script consistency
         run: ./scripts/check_quickstart_consistency.sh
+
+      - name: Run published markdown link checker
+        run: ./scripts/check-links.sh

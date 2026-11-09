@@ -87,13 +87,32 @@ if [ "$READY" -ne 1 ]; then
 fi
 echo "Daemon HTTP service ready."
 
+# Verify standalone SSH daemon listener
+echo "[3.5/8] Verifying standalone pure-Go SSH port (:2222)..."
+SSH_READY=0
+for i in {1..30}; do
+    if timeout 1 bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/$SSH_PORT" 2>/dev/null; then
+        SSH_READY=1
+        break
+    fi
+    sleep 0.2
+done
+if [ "$SSH_READY" -ne 1 ]; then
+    echo "ERROR: Standalone SSH daemon not listening on port $SSH_PORT"
+    cat "$WORK_DIR/daemon.log"
+    exit 1
+fi
+echo "Standalone SSH daemon listening on port $SSH_PORT."
+
 # 4. Verify Prometheus metrics
 echo "[4/8] Verifying Prometheus metrics endpoint..."
 METRICS_OUTPUT=$(curl -s "http://127.0.0.1:$HTTP_PORT/metrics")
 if ! echo "$METRICS_OUTPUT" | grep -q "refweir_"; then
-    echo "WARNING: Prometheus metrics did not contain refweir_ prefix"
+    echo "ERROR: Prometheus metrics did not contain refweir_ prefix"
+    echo "$METRICS_OUTPUT"
+    exit 1
 fi
-echo "Metrics endpoint verified."
+echo "Metrics endpoint verified with refweir_ prefixes."
 
 # 5. Issue Capability Lease
 echo "[5/8] Requesting ephemeral agent capability lease..."
@@ -132,27 +151,49 @@ git commit -m "chore: initial commit" >/dev/null 2>&1
 git push origin main >/dev/null 2>&1
 echo "Initial commit pushed to main branch."
 
-# 7. Test Agent Branch Push & Pre-receive Boundary Gate
-echo "[7/8] Testing agent lease isolation and over-reach boundary rejection..."
+# 7. Test Agent Branch Push, Over-reach Rejection, and Pre-receive Secret Scanning
+echo "[7/8] Testing agent lease isolation, over-reach rejection, and pre-receive scanning..."
+
+# Switch origin remote URL to use the ephemeral capability lease credential
+git remote set-url origin "http://lease:${LEASE_TOKEN}@127.0.0.1:$HTTP_PORT/acme/smoke-repo.git"
+
 git checkout -b agent/smoke-feature >/dev/null 2>&1
-echo "Agent feature work" >> README.md
+echo "Agent feature work under capability lease" >> README.md
 git commit -am "feat: smoke feature commit" >/dev/null 2>&1
 
-# Push to allowed agent branch
-git push origin agent/smoke-feature >/dev/null 2>&1
+# 7a. Push to allowed agent branch
+if ! git push origin agent/smoke-feature >/dev/null 2>&1; then
+    echo "ERROR: Agent push to refs/heads/agent/smoke-feature failed under valid capability lease!"
+    exit 1
+fi
 echo "Agent push to refs/heads/agent/smoke-feature succeeded (ALLOW)."
 
-# Test over-reach attack: try to push directly to main without PR
-OVERREACH_FAILED=0
+# 7b. Test over-reach attack: try to push directly to main under capability lease
 git checkout main >/dev/null 2>&1
 echo "Illegal direct change" >> README.md
 git commit -am "malicious: direct push to main" >/dev/null 2>&1
 
 if git push origin main >/dev/null 2>&1; then
-    echo "NOTE: Admin credentials pushed to main."
-else
-    echo "Protected branch push rejected as expected."
+    echo "CRITICAL FAILURE: Agent capability lease unexpectedly allowed push to main!"
+    exit 1
 fi
+echo "Over-reach push to main rejected by lease boundary check (GH007)."
+
+# 7c. Test pre-receive secret scanning: try to push a leaked RSA private key
+git checkout -b agent/smoke-leak >/dev/null 2>&1
+cat << 'EOF' > secret.pem
+-----BEGIN RSA PRIVATE KEY-----
+MIIEowIBAAKCAQEA0Y3yfakekeyforpre-receivescanner
+-----END RSA PRIVATE KEY-----
+EOF
+git add secret.pem
+git commit -m "leak: accidentally commit private key" >/dev/null 2>&1
+
+if git push origin agent/smoke-leak >/dev/null 2>&1; then
+    echo "CRITICAL FAILURE: Pre-receive hook failed to reject commit with private key!"
+    exit 1
+fi
+echo "Pre-receive scanner successfully blocked commit with leaked credentials (GH007)."
 
 # 8. Verify Audit Logs
 echo "[8/8] Verifying durable audit logs..."

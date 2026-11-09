@@ -21,6 +21,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+# Copy compiled web UI assets from Stage 1 into the Go embed location
+COPY --from=web-builder /app/internal/webui/dist ./internal/webui/dist
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" -o /bin/refweird ./cmd/refweird && \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" -o /bin/refweir ./cmd/refweir
 
@@ -43,12 +45,9 @@ RUN mkdir -p /var/lib/refweir/git /var/lib/refweir/audit && \
     chown -R refweir:refweir /var/lib/refweir && \
     chmod 700 /var/lib/refweir
 
-# Copy binaries from builder
+# Copy binaries from builder (with embedded web UI assets)
 COPY --from=go-builder /bin/refweird /usr/local/bin/refweird
 COPY --from=go-builder /bin/refweir /usr/local/bin/refweir
-
-# Copy static Web UI assets into daemon directory
-COPY --from=web-builder /app/internal/webui/dist /var/lib/refweir/web/dist
 
 USER refweir:refweir
 WORKDIR /var/lib/refweir

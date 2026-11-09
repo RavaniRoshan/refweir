@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/RavaniRoshan/refweir/ci.yml?branch=main&style=flat-square&label=CI&color=10B981" alt="CI Status"></a>
+  <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci-dev.yml"><img src="https://img.shields.io/github/actions/workflow/status/RavaniRoshan/refweir/ci-dev.yml?branch=main&style=flat-square&label=CI&color=10B981" alt="CI Status"></a>
   <a href="https://ravaniroshan.github.io/refweir/docs/"><img src="https://img.shields.io/badge/Docs-refweir.dev%2Fdocs-2563EB?style=flat-square" alt="Documentation"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/refweir?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square" alt="License"></a>

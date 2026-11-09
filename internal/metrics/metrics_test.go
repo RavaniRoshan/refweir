@@ -37,11 +37,11 @@ func TestMetricsRegistry(t *testing.T) {
 
 	body := rr.Body.String()
 	for _, expected := range []string{
-		"exist_uptime_seconds",
-		"exist_http_requests_total 1",
-		"exist_git_transfers_total 1",
-		"exist_mcp_tool_calls_total 1",
-		"exist_secret_push_blocks_total 1",
+		"refweir_uptime_seconds",
+		"refweir_http_requests_total 1",
+		"refweir_git_transfers_total 1",
+		"refweir_mcp_tool_calls_total 1",
+		"refweir_secret_push_blocks_total 1",
 	} {
 		if !strings.Contains(body, expected) {
 			t.Errorf("expected metric output to contain %q, got: %s", expected, body)
