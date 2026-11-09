@@ -112,16 +112,29 @@ const TONE: Record<Tone, string> = {
 export function Loop() {
   const [active, setActive] = useState(0);
   const [engaged, setEngaged] = useState(false);
+  const [inView, setInView] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    if (engaged) return;
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (engaged || !inView) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const timer = window.setTimeout(() => {
       setActive((value) => (value + 1) % STEPS.length);
     }, 4600);
     return () => window.clearTimeout(timer);
-  }, [active, engaged]);
+  }, [active, engaged, inView]);
 
   const engage = () => setEngaged(true);
 
@@ -142,7 +155,7 @@ export function Loop() {
   const step = STEPS[active];
 
   return (
-    <section id="agents" className="relative border-b border-line scroll-mt-20">
+    <section ref={sectionRef} id="agents" className="relative border-b border-line scroll-mt-20">
       <span aria-hidden="true" className="crosshair left-0 top-0 hidden -translate-x-1/2 -translate-y-1/2 lg:block" />
       <span aria-hidden="true" className="crosshair right-0 top-0 hidden translate-x-1/2 -translate-y-1/2 lg:block" />
       <div className="container-site py-16 lg:py-24">

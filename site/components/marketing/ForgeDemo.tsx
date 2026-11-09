@@ -70,9 +70,8 @@ export function ForgeDemo() {
     return () => window.clearTimeout(timer);
   }, [playing, step, inView]);
 
-  // Keyboard shortcut listener (Space to pause/play, R to replay)
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  // Scoped keyboard shortcut listener (Space to pause/play, R to replay when focused)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.code === 'Space') {
       e.preventDefault();
       setPlaying((prev) => !prev);
@@ -81,17 +80,19 @@ export function ForgeDemo() {
       setStep(0);
       setPlaying(true);
     }
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  };
 
   const complete = step >= ROWS.length;
 
   return (
-    <div ref={containerRef} className="window relative" data-testid="forge-demo">
+    <div
+      ref={containerRef}
+      className="window relative outline-none focus-visible:ring-1 focus-visible:ring-patina"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      data-testid="forge-demo"
+      aria-label="Interactive forge merge playback. Press Space to pause or play, R to replay."
+    >
       <div className="window-bar">
         <span className="window-dots" aria-hidden="true">
           <span />
