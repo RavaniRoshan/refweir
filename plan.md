@@ -186,27 +186,29 @@ checklist in §10 remains open.
 **Depends on:** 1.3
 **Output:** `deploy/demo/` + a public demo URL
 **Tasks:**
-- [ ] Seed a realistic repo: commits, issues, a PR, a release, an agent run, a lease, an audit trail.
-- [ ] Add a one-click "Try an agent run" flow; no signup wall for the first run.
-- [ ] Reset the demo on a schedule; rate-limit; isolate tenants.
-- [ ] Add a persistent "Demo" banner and a clear "self-host" CTA.
-- [ ] Load-test the demo for launch day; add a status page.
-- [ ] No mock data; no demo mode in production.
+- [x] Seed a realistic repo: commits, issues, a PR, a release, an agent run, a lease, an audit trail. → `deploy/demo/seed.sh` (verified locally)
+- [x] Add a one-click "Try an agent run" flow; no signup wall for the first run. → `POST /api/v1/demo/agent-run`, `DemoBanner` button; performs a real lease-backed push and PR
+- [x] Reset the demo on a schedule; rate-limit; isolate tenants. → `deploy/demo/reset.sh`, systemd timer, app + nginx limits; single-tenant instance, isolation is the container/host (documented)
+- [x] Add a persistent "Demo" banner and a clear "self-host" CTA. → `web/src/components/views/DemoBanner.tsx`, gated by `demoMode` from `/api/v1/system/info`
+- [ ] Load-test the demo for launch day; add a status page. → blocked on deployment host
+- [x] No mock data; no demo mode in production. → demo mode is a server flag; the web client stays on live APIs; `REFWEIR_DEMO_MODE` is off by default
 
-**Acceptance:** A PH visitor can run an agent, see the diff, review, audit, and merge in under 60 seconds on a fresh phone and desktop.
+**Acceptance:** A PH visitor can run an agent, see the diff, review, audit, and merge in under 60 seconds on a fresh phone and desktop. → local run returns a real PR in ~1s and a 429 on the second immediate run; **public URL pending deployment**, so the phone/desktop acceptance is not yet met. See `deploy/demo/README.md` §8 for the pre-announcement checklist.
 
 ### 1.5 Pricing hypothesis — P1
 **Owner:** Founder/PM
 **Output:** `docs/launch/PRICING.md` (hypothesis only)
 **Tasks:**
-- [ ] Draft three packages: free OSS; hosted evaluation; enterprise self-host (SSO/audit/support).
-- [ ] Anchor against GitLab's **$299/user/mo** air-gapped agent SKU, GitHub Enterprise + Copilot, and Gitea Enterprise.
-- [ ] Write the 10–15 interview script (budget owner, current spend, procurement path, WTP).
-- [ ] Do **not** publish prices yet.
+- [x] Draft three packages: free OSS; hosted evaluation; enterprise self-host (SSO/audit/support). → `docs/launch/PRICING.md` §2
+- [x] Anchor against GitLab's **$299/user/mo** air-gapped agent SKU, GitHub Enterprise + Copilot, and Gitea Enterprise. → `docs/launch/PRICING.md` §4
+- [x] Write the 10–15 interview script (budget owner, current spend, procurement path, WTP). → `docs/launch/PRICING.md` §7
+- [x] Do **not** publish prices yet. → rules in `docs/launch/PRICING.md` §8–§9; no price appears on the site.
 
-**Acceptance:** Hypothesis documented; interview script ready.
+**Acceptance:** Hypothesis documented; interview script ready. → `docs/launch/PRICING.md`; interviews pending Phase 2.
 
 **Gate G1:** Containment demo reproducible and recorded; hosted demo live; positioning approved.
+
+**G1 status (2026-11-09):** containment demo reproducible (script + local run); recording outstanding; hosted demo scaffolding complete and locally verified, public URL pending infrastructure/DNS/TLS; positioning drafted, approval outstanding.
 
 ---
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Reset the hosted Refweir demo every six hours
+Documentation=file:///opt/refweir/deploy/demo/README.md
+
+[Timer]
+# 00:00, 06:00, 12:00, 18:00 UTC. Add RandomizedDelaySec if you want to avoid
+# resetting exactly on the hour.
+OnCalendar=*-*-* 00,06,12,18:00:00
+Persistent=true
+Unit=refweir-demo-reset.service
+
+[Install]
+WantedBy=timers.target

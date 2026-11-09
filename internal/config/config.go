@@ -52,6 +52,16 @@ type Config struct {
 
 	TelemetryEnabled  bool
 	TelemetryEndpoint string
+
+	// DemoMode enables the hosted-demo surface: a persistent banner and a bounded,
+	// rate-limited "try an agent run" endpoint. It must stay off for normal
+	// self-hosted deployments.
+	DemoMode bool
+	// DemoRepo is the owner/name of the seeded repository used by the demo run.
+	DemoRepo string
+	// DemoSelfURL is the base URL the demo runner uses to reach its own Git
+	// transport. Empty means derive it from ListenAddr.
+	DemoSelfURL string
 }
 
 // Load reads configuration from environment variables, falling back to safe self-hosted defaults.
@@ -96,6 +106,10 @@ func Load() (Config, error) {
 	}
 	telemetryEndpoint := getEnv("REFWEIR_TELEMETRY_ENDPOINT", "")
 
+	demoMode := getEnv("REFWEIR_DEMO_MODE", "") == "1"
+	demoRepo := getEnv("REFWEIR_DEMO_REPO", "demo/agent-lab")
+	demoSelfURL := strings.TrimRight(getEnv("REFWEIR_DEMO_SELF_URL", ""), "/")
+
 	return Config{
 		Version:        version,
 		ListenAddr:     listenAddr,
@@ -119,6 +133,9 @@ func Load() (Config, error) {
 
 		TelemetryEnabled:  telemetryEnabled,
 		TelemetryEndpoint: telemetryEndpoint,
+		DemoMode:          demoMode,
+		DemoRepo:          demoRepo,
+		DemoSelfURL:       demoSelfURL,
 	}, nil
 }
 

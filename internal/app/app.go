@@ -62,6 +62,10 @@ type App struct {
 	Notifications *notifications.Worker
 	Mailer        *notifications.Mailer
 	Telemetry     *telemetry.Client
+	LeaseSecret   []byte
+
+	demoLimiter *demoRateLimiter
+	demoSlots   chan struct{}
 
 	handler http.Handler
 }
@@ -381,6 +385,8 @@ func Open(cfg config.Config) (*App, error) {
 			"walStatus":            "active",
 			"engine":               "SQLite WAL modernc.org/sqlite (zero-CGO)",
 			"mcpMountedToolsCount": len(mcp.BuiltinTools()),
+			"demoMode":             cfg.DemoMode,
+			"demoRepo":             cfg.DemoRepo,
 		})
 	})
 
@@ -3702,6 +3708,7 @@ func Open(cfg config.Config) (*App, error) {
 		AutoMerge:     autoMerge,
 		Notifications: notifWorker,
 		Mailer:        mailer,
+		LeaseSecret:   leaseSecret,
 		handler:       mux,
 	}
 	app.Telemetry = telemetry.New(telemetry.Config{
@@ -3728,6 +3735,7 @@ func Open(cfg config.Config) (*App, error) {
 	app.registerMigrateRoutes(mux, db, git)
 	app.registerSuggestionRoutes(mux, db, git)
 	app.registerNotificationRoutes(mux, db)
+	app.registerDemoRoutes(mux)
 	return app, nil
 }
 

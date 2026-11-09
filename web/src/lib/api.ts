@@ -2268,6 +2268,44 @@ export async function redeliverRepoWebhook(
   return res.json()
 }
 
+export interface DemoAgentRunResult {
+  ok: boolean
+  agent: string
+  leaseId: string
+  expiresAt: string
+  branch: string
+  title: string
+  prNumber: number
+  prUrl: string
+  files: string[]
+  auditTail: Array<{
+    timestamp: string
+    actor: string
+    actorType: string
+    action: string
+    resource: string
+    severity: string
+  }>
+}
+
+/**
+ * Trigger the hosted demo's bounded agent run. This performs a real lease-backed
+ * push to an agent/* branch and opens a real pull request. It is only available
+ * when the server was started with REFWEIR_DEMO_MODE=1; it must not be replaced
+ * with canned data in sandbox demo mode.
+ */
+export async function runDemoAgent(): Promise<DemoAgentRunResult> {
+  if (isDemoModeActive()) {
+    throw new Error('The hosted agent run needs a live demo server. Turn off sandbox demo mode.')
+  }
+  const res = await fetch('/api/v1/demo/agent-run', { method: 'POST' })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || `Demo agent run failed (HTTP ${res.status})`)
+  }
+  return data as DemoAgentRunResult
+}
+
 // Export initial fallback values for components that need synchronous defaults
 export const defaultRepo = mockDefaultRepo
 export const sampleReadme = mockSampleReadme

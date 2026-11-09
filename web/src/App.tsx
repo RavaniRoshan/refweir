@@ -8,6 +8,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { Header } from '@/components/views/Header'
+import { DemoBanner } from '@/components/views/DemoBanner'
 import { RepoOverview } from '@/components/views/RepoOverview'
 import { PullRequestsView } from '@/components/views/PullRequestsView'
 import { CommitsView } from '@/components/views/CommitsView'
@@ -62,7 +63,12 @@ export default function App() {
   })
   const [adminSection, setAdminSection] = useState<'cluster' | 'users' | 'sso' | 'audit'>('cluster')
   const [tourOpen, setTourOpen] = useState(false)
-  const [systemInfo, setSystemInfo] = useState<{ version?: string; mcpMountedToolsCount?: number }>({})
+  const [systemInfo, setSystemInfo] = useState<{
+    version?: string
+    mcpMountedToolsCount?: number
+    demoMode?: boolean
+    demoRepo?: string
+  }>({})
 
   useEffect(() => {
     fetch('/api/v1/system/info')
@@ -131,6 +137,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/25 selection:text-primary">
+      {/* Hosted demo banner — only when the server reports REFWEIR_DEMO_MODE=1 */}
+      {systemInfo.demoMode ? <DemoBanner repo={systemInfo.demoRepo} /> : null}
+
       {/* Top Application Header & UnderlineNav */}
       <Header
         repo={currentRepo}
