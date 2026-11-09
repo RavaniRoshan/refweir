@@ -51,6 +51,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# PACING=1 slows the demo for a screen recording. PACING_MARKERS, when set,
+# receives "<section> <epoch-seconds>" lines so the recording can time captions.
+# Neither changes what the demo does; the default run stays fast.
+PACING="${PACING:-0}"
+mark() {
+    if [ -n "${PACING_MARKERS:-}" ]; then
+        printf '%s %s\n' "$1" "$(date +%s.%N)" >>"$PACING_MARKERS"
+    fi
+}
+beat() {
+    if [ "$PACING" = "1" ]; then
+        sleep "${1:-1}"
+    fi
+}
+
 fail() {
     echo
     echo "FAIL: $*" >&2
@@ -83,11 +98,13 @@ PY
 fi
 BASE="http://127.0.0.1:${PORT}"
 
+mark run_start
 echo "================================================================"
 echo " Refweir containment demo"
 echo " workspace: $WORK"
 echo " server:    $BASE"
 echo "================================================================"
+beat 2
 
 mkdir -p "$BIN" "$DATA"
 
@@ -158,8 +175,10 @@ git checkout -q -b agent/feature-123
 printf '\nContainment demo change made by Agent A.\n' >>README.md
 git add README.md
 git commit -q -m "agent: add containment demo note"
+beat 1
 
 # ---------------------------------------------------------------------------
+mark step1
 echo
 echo "== 1. Valid lease: Agent A pushes refs/heads/agent/feature-123 =="
 LEASE_A_JSON="$(issue_lease agent-a '["refs/heads/agent/"]' 900)" || fail "lease A issuance failed"
@@ -181,6 +200,8 @@ audit_contains '"action":"git.receive_pack"'
 audit_contains '"actorType":"agent"'
 
 # ---------------------------------------------------------------------------
+beat 9
+mark step2
 echo
 echo "== 2. Over-reach: Agent B pushes refs/heads/main =="
 LEASE_B_JSON="$(issue_lease agent-b '["refs/heads/agent/"]' 900)" || fail "lease B issuance failed"
@@ -201,6 +222,8 @@ audit_contains '"action":"agent.lease_rejected"'
 audit_contains '"refs/heads/main"'
 
 # ---------------------------------------------------------------------------
+beat 9
+mark step3
 echo
 echo "== 3. Expired lease: issued with a 1 second TTL =="
 LEASE_X_JSON="$(issue_lease agent-expired '["refs/heads/agent/"]' 1)" || fail "expiring lease issuance failed"
@@ -220,6 +243,8 @@ fi
 echo "   result:  REJECTED — expired token cannot authenticate"
 
 # ---------------------------------------------------------------------------
+beat 9
+mark step4
 echo
 echo "== 4. Revoked lease: revoke Agent A via MCP, then push =="
 REVOKE_JSON="$(curl -fsS \
@@ -253,6 +278,8 @@ audit_contains '"action":"agent.lease_revoked"'
 audit_contains '"action":"git.push_rejected"'
 
 # ---------------------------------------------------------------------------
+beat 9
+mark audit
 echo
 echo "== 5. Durable audit trail =="
 [ -s "$AUDIT_LOG" ] || fail "audit log was not written to $AUDIT_LOG"
@@ -280,6 +307,8 @@ for ev in rows[-14:]:
     print(f"   {ev.get('actorType',''):<7} {ev.get('actor',''):<22} {ev.get('action',''):<32} {ev.get('resource','')}")
 PY
 
+beat 12
+mark end
 echo
 echo "================================================================"
 echo " PASS — containment holds and the audit trail is durable"
@@ -292,3 +321,4 @@ echo "  curl -s -H 'Authorization: Bearer <admin-token>' $BASE/api/v1/admin/audi
 echo
 echo "Not recorded (and not claimed): model name, prompt hash, or human approver."
 echo "Leases scope a repository and ref prefixes; they do not scope individual verbs."
+beat 5

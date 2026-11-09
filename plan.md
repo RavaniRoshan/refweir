@@ -179,7 +179,7 @@ checklist in §10 remains open.
 
 **Implementation:** `examples/containment/run.sh` + `docs/launch/CONTAINMENT_DEMO.md`.
 
-**Acceptance:** A fresh machine can run `examples/containment/run.sh` and reproduce every step; a 60–90s recording with captions exists. → script passes locally; recording outstanding (shot list in `docs/launch/CONTAINMENT_DEMO.md` §6).
+**Acceptance:** A fresh machine can run `examples/containment/run.sh` and reproduce every step; a 60–90s recording with captions exists. → script passes locally; recording at `docs/launch/assets/containment-demo.mp4` (82s, captions burned in) produced by `docs/launch/record-containment.sh`; re-run after any script change.
 
 ### 1.4 Hosted demo — P0
 **Owner:** Backend + Security/Infra
@@ -208,7 +208,7 @@ checklist in §10 remains open.
 
 **Gate G1:** Containment demo reproducible and recorded; hosted demo live; positioning approved.
 
-**G1 status (2026-11-09):** containment demo reproducible (script + local run); recording outstanding; hosted demo scaffolding complete and locally verified, public URL pending infrastructure/DNS/TLS; positioning drafted, approval outstanding.
+**G1 status (2026-11-09):** containment demo reproducible and recorded (script + 82s captioned asset); hosted demo scaffolding complete and locally verified, public URL pending infrastructure/DNS/TLS; positioning drafted, approval outstanding.
 
 ---
 
@@ -217,6 +217,7 @@ checklist in §10 remains open.
 ### 2.1 ICP list of 50 targets — P0
 **Owner:** Founder/PM + DevRel
 **Output:** `docs/launch/DESIGN_PARTNERS.md` with a CRM-style table.
+**Status:** `docs/launch/DESIGN_PARTNERS.md` written — 50 named targets across the four segments, qualification rules, outreach cadence, email template, and exit criteria. Contacts are role-based; verify before sending.
 **Segments, in order:**
 1. Air-gapped/defense/federal/national labs.
 2. EU/sovereign platform teams.

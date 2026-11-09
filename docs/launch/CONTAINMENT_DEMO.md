@@ -169,8 +169,14 @@ verbs. The read-only MCP surface is a separate control.
 
 ## 6. Recording shot list (60–90 seconds)
 
+The recorded asset lives at `docs/launch/assets/containment-demo.mp4` (82 seconds, 1080p,
+captions burned in). It was produced by `docs/launch/record-containment.sh`, which records
+`examples/containment/run.sh` with `PACING=1` and burns the chapter captions, a title card,
+and an end card. Re-run after any change to the demo script.
+
 Record a terminal at 1080p with a large font (16–18 px), no desktop chrome, and
-captions burned in. Keep the run under 90 seconds.
+captions burned in. Keep the run under 90 seconds. The shot list below is the
+reference for the recording; the asset above is the current deliverable.
 
 | Time | Shot | Caption |
 |---|---|---|
