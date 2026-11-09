@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="auto" fill="none">
+  <title>Refweir — The Self-Hosted Forge for Coding Agents</title>
+  <desc>Architecture hero illustrating Refweir's capability leases, pure-Go dual Git transports, MCP server, and protected branch isolation.</desc>
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f17" />
+      <stop offset="50%" stop-color="#0d1424" />
+      <stop offset="100%" stop-color="#070a10" />
+    </linearGradient>
+
+    <linearGradient id="accentGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="50%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#fdba74" />
+    </linearGradient>
+
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Card Fill -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#141c2e" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#0e1524" stop-opacity="0.95" />
+    </linearGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.75" stroke-opacity="0.6" />
+    </pattern>
+  </defs>
+
+  <!-- Outer Canvas Container -->
+  <rect width="1200" height="420" rx="16" fill="url(#bgGrad)" stroke="#1e293b" stroke-width="1.5" />
+  <rect width="1200" height="420" rx="16" fill="url(#grid)" opacity="0.8" />
+
+  <!-- Subtle Ambient Glow -->
+  <circle cx="180" cy="120" r="140" fill="#f97316" opacity="0.08" filter="blur(60px)" />
+  <circle cx="960" cy="210" r="180" fill="#06b6d4" opacity="0.07" filter="blur(80px)" />
+
+  <!-- ==================== LEFT COLUMN: BRAND & VALUE ==================== -->
+  
+  <!-- Version & Architecture Pill -->
+  <g transform="translate(60, 48)">
+    <rect width="365" height="28" rx="14" fill="#1e293b" fill-opacity="0.8" stroke="#334155" stroke-width="1" />
+    <circle cx="16" cy="14" r="4.5" fill="#10b981" />
+    <text x="28" y="18" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="11.5" font-weight="600" letter-spacing="0.5">v0.6.0-beta</text>
+    <text x="112" y="18" fill="#475569" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">|</text>
+    <text x="124" y="18" fill="#cbd5e1" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11.5" font-weight="500">Pure-Go · Zero CGO · Native MCP</text>
+  </g>
+
+  <!-- Title & Logomark -->
+  <g transform="translate(60, 114)">
+    <!-- Logomark Icon (Geometric Forge + Leased Path) -->
+    <rect width="38" height="38" rx="8" fill="#0f172a" stroke="#f97316" stroke-width="1.75" />
+    <path d="M 12 26 L 19 13 L 26 26 Z" fill="none" stroke="#f97316" stroke-width="2" stroke-linejoin="round" />
+    <circle cx="19" cy="19" r="2.5" fill="#fb923c" />
+    <path d="M 19 21 L 19 28" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Brand Name -->
+    <text x="50" y="28" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.8">refweir<tspan fill="#f97316">.dev</tspan></text>
+  </g>
+
+  <!-- Primary Subtitle -->
+  <text x="60" y="186" fill="#f1f5f9" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.3">
+    The Self-Hosted Git Forge for Coding Agents
+  </text>
+
+  <!-- Value Narrative -->
+  <text x="60" y="216" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14.5" line-height="22">
+    <tspan x="60" dy="0">Engineered from first principles for autonomous agents alongside human teams.</tspan>
+    <tspan x="60" dy="22">Cryptographic capability leases, native MCP server, and pure-Go Git transport.</tspan>
+  </text>
+
+  <!-- Quickstart Terminal Command Box -->
+  <g transform="translate(60, 268)">
+    <rect width="490" height="46" rx="8" fill="#0a0f1d" stroke="#334155" stroke-width="1" />
+    <text x="18" y="28" fill="#f97316" font-family="ui-monospace, monospace" font-size="14" font-weight="700">$</text>
+    <text x="34" y="28" fill="#e2e8f0" font-family="ui-monospace, monospace" font-size="13" font-weight="500">curl -fsSL https://refweir.dev/install.sh | bash</text>
+    <rect x="424" y="10" width="54" height="26" rx="5" fill="#1e293b" />
+    <text x="434" y="27" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="600">COPY</text>
+  </g>
+
+  <!-- Bottom Metric Badges -->
+  <g transform="translate(60, 345)">
+    <g transform="translate(0, 0)">
+      <text x="0" y="12" fill="#38bdf8" font-family="ui-monospace, monospace" font-size="14" font-weight="700">0 CGO</text>
+      <text x="0" y="28" fill="#64748b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">Host Isolation</text>
+    </g>
+    <line x1="85" y1="2" x2="85" y2="30" stroke="#334155" stroke-width="1" />
+    <g transform="translate(105, 0)">
+      <text x="0" y="12" fill="#10b981" font-family="ui-monospace, monospace" font-size="14" font-weight="700">:8080 &amp; :2222</text>
+      <text x="0" y="28" fill="#64748b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">HTTP &amp; Pure SSH</text>
+    </g>
+    <line x1="225" y1="2" x2="225" y2="30" stroke="#334155" stroke-width="1" />
+    <g transform="translate(245, 0)">
+      <text x="0" y="12" fill="#fb923c" font-family="ui-monospace, monospace" font-size="14" font-weight="700">refs/heads/agent/*</text>
+      <text x="0" y="28" fill="#64748b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">HMAC Lease Scope</text>
+    </g>
+    <line x1="395" y1="2" x2="395" y2="30" stroke="#334155" stroke-width="1" />
+    <g transform="translate(415, 0)">
+      <text x="0" y="12" fill="#a855f7" font-family="ui-monospace, monospace" font-size="14" font-weight="700">SQLite WAL</text>
+      <text x="0" y="28" fill="#64748b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">Single-Binary Store</text>
+    </g>
+  </g>
+
+  <!-- ==================== RIGHT COLUMN: ARCHITECTURE VISUAL ==================== -->
+  
+  <g transform="translate(605, 36)">
+    <!-- Visual Backing Panel -->
+    <rect width="535" height="348" rx="12" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1" />
+
+    <!-- Panel Header / Status Bar -->
+    <rect width="535" height="38" rx="12" fill="#0f172a" />
+    <rect y="37" width="535" height="1" fill="#1e293b" />
+    <circle cx="20" cy="19" r="4.5" fill="#ef4444" opacity="0.8" />
+    <circle cx="36" cy="19" r="4.5" fill="#f59e0b" opacity="0.8" />
+    <circle cx="52" cy="19" r="4.5" fill="#10b981" opacity="0.8" />
+    <text x="74" y="23" fill="#64748b" font-family="ui-monospace, monospace" font-size="11.5" font-weight="600">refweir-containment-mesh</text>
+    <rect x="420" y="9" width="95" height="20" rx="4" fill="#1e293b" />
+    <text x="430" y="23" fill="#38bdf8" font-family="ui-monospace, monospace" font-size="10.5" font-weight="600">MCP ACTIVE</text>
+
+    <!-- Node 1: AI Coding Agent -->
+    <g transform="translate(30, 60)">
+      <rect width="180" height="74" rx="8" fill="#0b1120" stroke="#3b82f6" stroke-width="1.2" />
+      <circle cx="24" cy="25" r="7" fill="#1d4ed8" />
+      <path d="M 21 25 L 27 25 M 24 22 L 24 28" stroke="#bfdbfe" stroke-width="1.5" stroke-linecap="round" />
+      <text x="38" y="25" fill="#f1f5f9" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="700">Autonomous Agent</text>
+      <text x="38" y="38" fill="#60a5fa" font-family="ui-monospace, monospace" font-size="10">Claude · Cursor · Cline</text>
+      <line x1="16" y1="48" x2="164" y2="48" stroke="#1e293b" stroke-width="1" />
+      <text x="16" y="62" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="9.5">LEASE: lease_8f910a...</text>
+    </g>
+
+    <!-- Arrow 1 -> Lease Gate -->
+    <path d="M 210 97 L 275 97" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 3" />
+    <polygon points="277,97 271,94 271,100" fill="#38bdf8" />
+    <text x="218" y="90" fill="#38bdf8" font-family="ui-monospace, monospace" font-size="9" font-weight="600">POST /mcp</text>
+
+    <!-- Node 2: Ephemeral Capability Lease Authority -->
+    <g transform="translate(280, 56)">
+      <rect width="225" height="82" rx="8" fill="#0b1120" stroke="#f97316" stroke-width="1.5" />
+      <rect x="12" y="10" width="60" height="18" rx="4" fill="#431407" />
+      <text x="18" y="23" fill="#fb923c" font-family="ui-monospace, monospace" font-size="10" font-weight="700">HMAC-256</text>
+      <text x="80" y="23" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="700">Capability Lease</text>
+      <text x="14" y="44" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">Scope: <tspan fill="#fdba74" font-family="ui-monospace, monospace">refs/heads/agent/*</tspan></text>
+      <text x="14" y="59" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">TTL: <tspan fill="#34d399" font-family="ui-monospace, monospace">3600s (Auto-Revoke)</tspan></text>
+      <text x="14" y="74" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">Main branch access: <tspan fill="#f87171" font-weight="700">BLOCKED</tspan></text>
+    </g>
+
+    <!-- Connecting Path Down to Git Engine -->
+    <path d="M 392 138 L 392 170" stroke="#f97316" stroke-width="1.5" />
+    <polygon points="392,172 389,166 395,166" fill="#f97316" />
+
+    <!-- Node 3: Pre-Receive Hook & Review Gate -->
+    <g transform="translate(30, 172)">
+      <rect width="475" height="70" rx="8" fill="#080e1a" stroke="#334155" stroke-width="1" />
+      <text x="18" y="24" fill="#e2e8f0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="700">Automated Security &amp; Policy Pipeline</text>
+      <rect x="260" y="10" width="105" height="18" rx="4" fill="#14532d" />
+      <text x="268" y="23" fill="#4ade80" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">HOOK: PRE-RECEIVE</text>
+      <rect x="375" y="10" width="115" height="18" rx="4" fill="#1e1b4b" />
+      <text x="382" y="23" fill="#a78bfa" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">AST REVIEWER</text>
+
+      <g transform="translate(18, 36)">
+        <text x="0" y="14" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="10.5">✓ Secret pattern scan</text>
+        <text x="155" y="14" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="10.5">✓ SIGSPEC / GPG verify</text>
+        <text x="325" y="14" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="10.5">✓ Deploy-key isolated</text>
+      </g>
+    </g>
+
+    <!-- Split Branches at Bottom -->
+    <g transform="translate(30, 260)">
+      <!-- Agent Branch (Isolated) -->
+      <g transform="translate(0, 0)">
+        <rect width="225" height="68" rx="8" fill="#0f172a" stroke="#fb923c" stroke-width="1.2" stroke-dasharray="4 2" />
+        <circle cx="20" cy="22" r="5" fill="#f97316" />
+        <text x="34" y="26" fill="#fed7aa" font-family="ui-monospace, monospace" font-size="11.5" font-weight="600">refs/heads/agent/*</text>
+        <text x="20" y="44" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">Ephemeral agent branch</text>
+        <text x="20" y="58" fill="#38bdf8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">Auto-created via MCP PR</text>
+      </g>
+
+      <!-- Merge Queue Arrow -->
+      <path d="M 230 34 L 280 34" stroke="#10b981" stroke-width="2" />
+      <polygon points="282,34 276,30 276,38" fill="#10b981" />
+      <text x="238" y="26" fill="#34d399" font-family="ui-monospace, monospace" font-size="9" font-weight="700">MERGE</text>
+
+      <!-- Protected Production Branch -->
+      <g transform="translate(285, 0)">
+        <rect width="190" height="68" rx="8" fill="#06281e" stroke="#10b981" stroke-width="1.5" />
+        <circle cx="20" cy="22" r="5" fill="#34d399" />
+        <text x="34" y="26" fill="#a7f3d0" font-family="ui-monospace, monospace" font-size="12" font-weight="700">refs/heads/main</text>
+        <text x="20" y="44" fill="#6ee7b7" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10">Protected production branch</text>
+        <text x="20" y="58" fill="#a7f3d0" font-family="ui-monospace, monospace" font-size="9.5">3-WAY MERGE ENGINE</text>
+      </g>
+    </g>
+  </g>
+</svg>

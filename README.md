@@ -1,14 +1,12 @@
-<div align="center">
-
-<img src="assets/refweir-logo.svg" alt="Refweir - Self-hosted Git forge built for coding agents" width="100%" max-width="800" />
-
 <p align="center">
-  <strong>Self-hosted Git forge built for coding agents</strong>
+  <a href="https://refweir.dev">
+    <img src="assets/readme/hero.svg" alt="Refweir — The Self-Hosted Git Forge for Coding Agents" width="100%" />
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml"><img src="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
-  <a href="https://ravaniroshan.github.io/refweir/?ref=readme"><img src="https://img.shields.io/badge/Documentation-Refweir-2D6A57?style=flat-square&logo=gitbook&logoColor=white" alt="Documentation"></a>
+  <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/RavaniRoshan/refweir/ci.yml?branch=main&style=flat-square&label=CI&color=10B981" alt="CI Status"></a>
+  <a href="https://ravaniroshan.github.io/refweir/docs/"><img src="https://img.shields.io/badge/Docs-refweir.dev%2Fdocs-2563EB?style=flat-square" alt="Documentation"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/refweir?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Go-Pure--Go%20(Zero%20CGO)-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Pure-Go">
@@ -16,28 +14,50 @@
   <img src="https://img.shields.io/badge/MCP-JSON--RPC%202.0-8A2BE2?style=flat-square" alt="MCP Server">
 </p>
 
-[**Product Documentation**](https://ravaniroshan.github.io/refweir/?ref=readme) &nbsp;&bull;&nbsp; [**Getting Started**](https://ravaniroshan.github.io/refweir/docs/getting-started?ref=readme) &nbsp;&bull;&nbsp; [**Architecture**](https://ravaniroshan.github.io/refweir/docs/architecture?ref=readme) &nbsp;&bull;&nbsp; [**Roadmap**](ROADMAP.md) &nbsp;&bull;&nbsp; [**Claims Ledger**](CLAIMS.md) &nbsp;&bull;&nbsp; [**Contributing**](CONTRIBUTING.md)
-
-</div>
+<p align="center">
+  <a href="https://ravaniroshan.github.io/refweir/docs/"><strong>Documentation</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://ravaniroshan.github.io/refweir/docs/getting-started/"><strong>Getting Started</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://ravaniroshan.github.io/refweir/docs/architecture/"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
+  <a href="ROADMAP.md"><strong>Roadmap</strong></a> &nbsp;&bull;&nbsp;
+  <a href="CLAIMS.md"><strong>Claims Ledger</strong></a> &nbsp;&bull;&nbsp;
+  <a href="CONTRIBUTING.md"><strong>Contributing</strong></a>
+</p>
 
 ---
+
+## What is Refweir?
 
 **Refweir** is a vendor-neutral, self-hosted Git forge engineered from first principles for **autonomous AI coding agents** (Claude Code, Codex, Cline, Cursor) alongside human engineering teams.
 
-While proprietary platforms tie agent workspaces to closed cloud accounts, Refweir runs entirely on your own server. It ships as a single pure-Go binary with an embedded web UI, pure-Go SSH server on port `2222` (zero host OpenSSH dependency), native Model Context Protocol (MCP) server at `/mcp`, and ephemeral HMAC capability leases with ref isolation.
+Traditional Git platforms were built 15+ years ago for human developers clicking buttons in web browsers. Refweir bridges this generational shift by treating autonomous coding agents as first-class citizens:
+- **Dual Transports:** Pure-Go Smart-HTTP (`:8080`) and embedded standalone pure-Go SSH server (`:2222`, zero cgo, zero host OpenSSH dependency).
+- **Ephemeral Capability Leases (`pkg/agentlease`):** HMAC-SHA256 capability tokens with automatic 1-hour expiration and strict ref isolation (`refs/heads/agent/*`), preventing agents from touching production branches.
+- **Native Model Context Protocol (MCP):** Built-in JSON-RPC 2.0 endpoints at `/mcp` (full tool set) and `/mcp/readonly` (read-only sandbox).
+- **Autonomous PR Review Agent (`internal/agentreviewer`):** Static AST analysis, leaked secret detection, coverage inspection, and policy-gated 3-way merges.
+- **Single Hermetic Binary:** Embedded React 19 product UI, SQLite WAL engine (`modernc.org/sqlite`), and bare Git object store compiled with `CGO_ENABLED=0`.
 
-> *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary infrastructure, Refweir is 100% vendor-neutral and self-hosted on your own hardware for any agent.*
+> *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary cloud infrastructure, Refweir is 100% vendor-neutral, open-source, and self-hosted on your own hardware for any agent.*
 
 ---
 
-## 🎬 Architectural Explainer & Demo Videos
+## ⚡ The Agent Loop
+
+Refweir enforces a strict containment model: agents never receive root credentials or direct push access to `main`. Every change traverses a cryptographic lease cycle:
+
+<p align="center">
+  <img src="assets/readme/agent-loop.svg" alt="Refweir Autonomous Agent Lifecycle: Lease to Clone to Push to Review to Merge" width="100%" />
+</p>
+
+---
+
+## 🎬 Demonstrations
 
 <div align="center">
 
-| 🎬 **74-Second Architectural Explainer** | ⚡ **90-Second Agent Loop Demo** |
+| ⚡ **90-Second Agent Loop Demo** | 🛡️ **Autonomous Containment Walkthrough** |
 | :---: | :---: |
-| <a href="https://github.com/RavaniRoshan/refweir/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><img src="videos/exist-agent-git-explainer/contact-sheet.jpg" alt="Refweir Explainer Video Contact Sheet" width="100%" /></a> | <a href="https://github.com/RavaniRoshan/refweir/raw/main/assets/demo.mp4"><img src="assets/demo.gif" alt="Refweir Terminal Demo" width="100%" /></a> |
-| **Why 15-Year-Old Forges Break Under Agent Swarms**<br /><em>Capability leases, sub-millisecond security, and native MCP</em><br /><a href="https://github.com/RavaniRoshan/refweir/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><strong>▶ Watch 1080p Explainer Video (9.1 MB)</strong></a> | **From Cold Bootstrap to Merged Agent PR**<br /><em>Real-time terminal recording on macOS desktop canvas</em><br /><a href="https://github.com/RavaniRoshan/refweir/raw/main/assets/demo.mp4"><strong>▶ Watch High-Definition Demo (1.4 MB)</strong></a> |
+| <a href="assets/demo.mp4"><img src="assets/demo.gif" alt="Refweir Terminal Demo" width="100%" /></a> | <a href="assets/demo.mp4"><img src="assets/desktop_with_browser.png" alt="Refweir Browser View" width="100%" /></a> |
+| **Cold Bootstrap to Merged Agent PR**<br /><em>Real-time terminal recording on macOS canvas</em><br /><a href="assets/demo.mp4"><strong>▶ Watch High-Definition Demo (1.4 MB)</strong></a> | **Live Web UI & Realtime SSE Stream**<br /><em>Primer design system, live agent console & audit log</em><br /><a href="assets/demo.mp4"><strong>▶ Watch Walkthrough</strong></a> |
 
 </div>
 
@@ -47,19 +67,19 @@ While proprietary platforms tie agent workspaces to closed cloud accounts, Refwe
 
 `refweird` is a single hermetic binary with the full web UI embedded. One command to install, one command to bootstrap, and your forge is live.
 
-### Option A: One-Line Installer (Linux, macOS, Windows)
+### 1. Install Refweir
 
+#### Option A: One-Line Installer (Linux, macOS, Windows)
 ```bash
 curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 ```
 
-### Option B: Build from Source (Go 1.22+)
-
+#### Option B: Build from Source (Go 1.22+)
 ```bash
 # Build the forge daemon (single binary with embedded Web UI, zero cgo)
 go build -o bin/refweird ./cmd/refweird
 
-# Build the companion CLI
+# Build the operator companion CLI
 go build -o bin/refweir ./cmd/refweir
 ```
 
@@ -85,13 +105,13 @@ refweird
 # ./bin/refweird
 ```
 
-Open **`http://localhost:8080`** in your browser to view the living web dashboard.
+Open **`http://localhost:8080`** in your browser to view the living forge dashboard.
 
 ---
 
 ## 🤖 Connecting AI Coding Agents (MCP)
 
-`Refweir` speaks the standard [Model Context Protocol (MCP)](https://modelcontextprotocol.io) over JSON-RPC 2.0. Add Refweir to your agent configuration (Claude Code, Cursor, Cline):
+Refweir speaks the standard [Model Context Protocol (MCP)](https://modelcontextprotocol.io) over JSON-RPC 2.0. Add Refweir to your agent configuration (`claude_desktop_config.json`, Cursor, Cline, or OpenCode):
 
 ```json
 {
@@ -107,12 +127,13 @@ Open **`http://localhost:8080`** in your browser to view the living web dashboar
 ```
 
 > [!TIP]
-> **Read-Only Sandbox:** For low-privilege agent exploration, point your agent to `http://localhost:8080/mcp/readonly`. All mutation attempts (`create_pull_request`, `merge_pull_request`, review comments) are rejected at the protocol layer.
+> **Read-Only Sandbox:** For low-privilege agent exploration, configure `http://localhost:8080/mcp/readonly`. All mutation attempts (`create_pull_request`, `merge_pull_request`, review comments, lease requests) are rejected at the protocol layer.
 
 ### Core MCP Tool Set
 
 | Tool Name | Type | Description |
 | :--- | :--- | :--- |
+| `lease_request` | Write | Issue ephemeral HMAC capability lease for `refs/heads/agent/*` |
 | `get_git_tree` | Read | Recursively inspect file trees at any commit SHA or branch ref |
 | `get_file_contents` | Read | Read blob contents, encoding, and metadata |
 | `compare_commits` | Read | Calculate two-way and three-way diffs between branches or commits |
@@ -124,48 +145,33 @@ Open **`http://localhost:8080`** in your browser to view the living web dashboar
 
 ---
 
-## 📊 Verified Capabilities
+## 📊 Measured Concurrency Benchmarks
 
-Only facts backed by code and tests at the current commit are reported below:
+Measured with the reproducible autonomous agent benchmark harness ([`bench/main.go`](bench/main.go)):
 
-| Capability | Implementation |
-| :--- | :--- |
-| **Self-hosted** | Single pure-Go binary with embedded web UI |
-| **MCP server** | Built-in at `/mcp` and `/mcp/readonly` |
-| **Agent leases** | HMAC capability leases restricted to `refs/heads/agent/*` |
-| **SSH transport** | Pure-Go server on `:2222`, zero host OpenSSH dependency |
-| **Compilation** | `CGO_ENABLED=0` with `modernc.org/sqlite` |
-| **Database** | SQLite WAL, zero external database |
-| **Commit signatures** | OpenSSH SIGSPEC and GPG (RFC 4880) verification |
+| Concurrency Tier | Lease Issuance (p50 / p95) | Git Clone (p50 / p95) | Git Push (p50 / p95) | PR Open (p50 / p95) | Full Agent Loop (p50 / p95) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1 Agent (Baseline)** | 1 ms / 1 ms | 61 ms / 61 ms | 1.114 s / 1.125 s | 2 ms / 2 ms | **1.181 s / 1.191 s** |
+| **5 Concurrent Agents** | 3 ms / 6 ms | 75 ms / 127 ms | 2.728 s / 3.398 s | 2 ms / 5 ms | **2.878 s / 3.475 s** |
+| **20 Concurrent Agents** | 6 ms / 70 ms | 166 ms / 280 ms | 13.881 s / 13.993 s | 5 ms / 20 ms | **14.076 s / 14.195 s** |
+| **50 Concurrent Agents** | 39 ms / 166 ms | 327 ms / 423 ms | 25.738 s / 26.741 s | 10 ms / 88 ms | **26.102 s / 27.164 s** |
 
----
-
-## ⚙️ Honest Architectural Limits & Scope
-
-To ensure realistic expectations, Refweir documents its design constraints explicitly:
-
-1. **SQLite WAL Concurrency (Single-Writer)**:
-   Refweir uses pure-Go SQLite in Write-Ahead Logging (WAL) mode. Reads scale concurrently across goroutines, but write transactions (`git push`, PR creation, comments) are executed with a serialized database lock. Refweir is optimized for small to medium teams (1–25 concurrent agents and engineers), not hyper-scale thousands-of-pushes-per-second workloads.
-2. **go-git Performance Profile**:
-   Bare repository operations use `go-git/v6` directly in Go memory. While completely hermetic and CGO-free, `go-git` exhibits higher memory consumption and slower packfile generation on massive monorepos (> 2 GB) compared to native C git.
-3. **Event-Driven Auto-Merge in v0.6.0-beta**:
-   Refweir provides an event-driven auto-merge engine (`AutoMergeEngine`) that monitors PR requirements and automatically executes squash/merge operations once required status check suites pass. Speculative batch-queue merges across interdependent PRs are planned for v0.7.0+.
-
-4. **Telemetry (Off by Default)**:
-   Telemetry is off by default and consent-based. When enabled, Refweir sends only an anonymous instance ID, event name, version, OS family, and day. It never sends repository names, commit content, paths, user identifiers, or hostnames.
-
+To reproduce the benchmark on your own hardware:
+```bash
+go run ./bench/main.go
+```
 
 ---
 
 ## 🌐 Service Endpoints
 
-`refweird` serves all forge transports and APIs on documented, isolated endpoints:
+`refweird` hosts all forge transports and APIs on documented, isolated endpoints:
 
 | Endpoint | Protocol | Description |
 | :--- | :--- | :--- |
-| `http://localhost:8080/` | Web UI | Embedded living developer dashboard & administration |
+| `http://localhost:8080/` | Web UI | Embedded React 19 product UI & administration |
 | `http://localhost:8080/{owner}/{repo}.git` | Git Smart-HTTP | Pure-Go authenticated clone, fetch, and push |
-| `ssh://git@localhost:2222/{owner}/{repo}.git` | Pure-Go SSH | Embedded SSH clone, fetch, and push (:2222) |
+| `ssh://git@localhost:2222/{owner}/{repo}.git` | Pure-Go SSH | Embedded standalone SSH clone, fetch, and push (:2222) |
 | `http://localhost:8080/mcp` | MCP JSON-RPC | Read-write Model Context Protocol endpoint |
 | `http://localhost:8080/mcp/readonly` | MCP JSON-RPC | Sandboxed read-only Model Context Protocol endpoint |
 | `http://localhost:8080/api/v1/*` | REST API | Core forge REST operations |
@@ -174,62 +180,49 @@ To ensure realistic expectations, Refweir documents its design constraints expli
 
 ---
 
-## 📊 Measured Performance & Concurrency Benchmarks
+## ⚙️ Honest Architectural Limits
 
-Measured on November 1, 2026 with the autonomous agent benchmark harness ([`bench/main.go`](bench/main.go), environment and full report in [`docs/benchmarks.md`](docs/benchmarks.md)):
+Refweir documents its design trade-offs openly:
 
-| Concurrency Tier | Lease Issuance (p50 / p95) | Git Clone (p50 / p95) | Git Push (p50 / p95) | PR Open (p50 / p95) | Full Agent Loop (p50 / p95) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1 Agent (Baseline)** | 4 ms / 4 ms | 60 ms / 65 ms | 2.852 s / 3.019 s | 8 ms / 8 ms | **2.937 s / 3.097 s** |
-| **5 Concurrent Agents** | 7 ms / 29 ms | 61 ms / 70 ms | 3.951 s / 4.242 s | 9 ms / 12 ms | **4.068 s / 4.322 s** |
-| **20 Concurrent Agents** | 53 ms / 601 ms | 127 ms / 489 ms | 13.581 s / 14.522 s | 34 ms / 122 ms | **13.870 s / 15.381 s** |
-
-Reproduce benchmarks or verify active API conformance anytime:
-```bash
-# Run multi-agent concurrent benchmark
-go run ./bench/main.go
-
-# Verify live REST API & MCP conformance against any running daemon
-exist conformance --endpoint http://localhost:8080 --token <your-api-key>
-```
-
----
-
-## 🧪 Experimental Modules (Scope Freeze)
-
-The following modules build cleanly and pass automated unit tests, but are frozen for launch while focus is locked on the core agent loop:
-
-- **Git LFS File Locking (`/info/lfs/locks`)**: Implemented in `internal/gitlfs`, frozen.
-- **Enterprise Federation (SCIM 2.0 & OIDC/SAML)**: Implemented in `internal/auth`, frozen for external security review.
-- **Infrastructure as Code**: Terraform provider (`deploy/terraform-provider-refweir`) and Helm chart (`deploy/helm/exist-enterprise`), frozen.
-- **Enterprise Multi-Service Compose**: `docker-compose.enterprise.yml` with MinIO and Litestream, frozen.
+1. **SQLite WAL Concurrency (Single-Writer)**:
+   Refweir uses pure-Go SQLite in Write-Ahead Logging (WAL) mode. Reads scale concurrently across goroutines, while disk write transactions (`git push`, PR creation, comments) are coordinated through SQLite WAL locking. Tuned pragmas deliver ~9,880 write transactions/sec and ~67,100 read lookups/sec, optimized for teams of 1–50 concurrent agents and engineers.
+2. **go-git Performance Profile**:
+   Bare repository operations use `go-git/v6` directly in Go memory. While hermetic and CGO-free, `go-git` exhibits higher memory consumption on massive repositories (> 2 GB) compared to native C git.
+3. **Event-Driven Auto-Merge**:
+   Refweir provides an event-driven auto-merge engine (`AutoMergeEngine`) that monitors PR requirements and executes squash/merge operations once required status check suites pass.
+4. **Telemetry (Off by Default)**:
+   Telemetry is off by default and consent-based. When explicitly enabled, Refweir sends only an anonymous instance ID, event name, version, and OS family. It never transmits repository names, code, commit content, or user identifiers.
 
 ---
 
 ## 🧪 Verification & Automated Testing
 
-Every pull request and release is validated by automated CI. Capability counts are generated from source in [`docs/generated/capability_counts.md`](docs/generated/capability_counts.md).
+Every pull request is validated by automated CI gates. Capability counts are synchronized automatically in [`docs/generated/capability_counts.md`](docs/generated/capability_counts.md).
 
 ```bash
-# Run all Go tests with race detection
-go test -v -race ./...
+# Run all Go unit and integration tests
+go test ./...
 
-# Run frontend Vitest automated test suite
+# Run frontend Vitest automated test suite (52 test files)
 cd web && npm test
 
 # Verify production frontend build
 cd web && npm run build
 
-# Validate documentation site
-cd site && npm run validate && npm run build
+# Validate documentation & marketing static export
+cd site && npm run verify
+
+# Verify clean install and first-run agent loop (runs in 2s)
+./scripts/test_first_run.sh
+./scripts/test_first_run.sh --mutation
 ```
 
 ---
 
 ## 📄 License & Governance
 
-- **Code License**: Licensed under the [Apache License, Version 2.0](LICENSE).
-- **Trademarks**: Name and branding guidelines are governed by [TRADEMARK.md](TRADEMARK.md).
-- **Security**: Vulnerability reporting policy is available at [SECURITY.md](SECURITY.md).
-- **Contributing**: Development runbook and guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Code of Conduct**: Community pledge is located at [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+- **Code License:** Licensed under the [Apache License, Version 2.0](LICENSE).
+- **Trademarks:** Name and branding guidelines are governed by [TRADEMARK.md](TRADEMARK.md).
+- **Security:** Vulnerability reporting policy is available at [SECURITY.md](SECURITY.md).
+- **Contributing:** Development runbook and guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Code of Conduct:** Community pledge is located at [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

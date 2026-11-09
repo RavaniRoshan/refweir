@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 210" width="100%" height="auto" fill="none">
+  <title>Refweir Autonomous Agent Lifecycle</title>
+  <desc>Step-by-step workflow from capability lease request to autonomous PR review and policy-gated merge.</desc>
+  <defs>
+    <linearGradient id="loopBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0f1d" />
+      <stop offset="100%" stop-color="#070a12" />
+    </linearGradient>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#141c2e" />
+      <stop offset="100%" stop-color="#0e1524" />
+    </linearGradient>
+  </defs>
+
+  <!-- Container -->
+  <rect width="1200" height="210" rx="12" fill="url(#loopBg)" stroke="#1e293b" stroke-width="1.2" />
+
+  <!-- Title Bar -->
+  <text x="36" y="32" fill="#94a3b8" font-family="ui-monospace, monospace" font-size="11" font-weight="700" letter-spacing="1">THE AUTONOMOUS AGENT LOOP</text>
+  <text x="260" y="32" fill="#475569" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11">─── Zero credentials stored on the agent · 100% policy-gated merges</text>
+
+  <!-- 5 Horizontal Step Cards -->
+  <!-- STEP 1 -->
+  <g transform="translate(36, 52)">
+    <rect width="210" height="130" rx="8" fill="url(#stepGrad)" stroke="#334155" stroke-width="1" />
+    <rect x="12" y="12" width="28" height="20" rx="4" fill="#1e293b" />
+    <text x="18" y="26" fill="#f97316" font-family="ui-monospace, monospace" font-size="11" font-weight="700">01</text>
+    <text x="48" y="26" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">Lease Request</text>
+    <text x="12" y="54" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" line-height="16">
+      <tspan x="12" dy="0">Agent calls <tspan fill="#38bdf8" font-family="ui-monospace, monospace">lease_request</tspan></tspan>
+      <tspan x="12" dy="18">via native MCP server.</tspan>
+      <tspan x="12" dy="18">Returns HMAC capability</tspan>
+      <tspan x="12" dy="18">token with 1h TTL.</tspan>
+    </text>
+    <circle cx="198" cy="116" r="4" fill="#f97316" />
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <path d="M 252 117 L 272 117" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+  <polygon points="274,117 268,114 268,120" fill="#475569" />
+
+  <!-- STEP 2 -->
+  <g transform="translate(276, 52)">
+    <rect width="210" height="130" rx="8" fill="url(#stepGrad)" stroke="#334155" stroke-width="1" />
+    <rect x="12" y="12" width="28" height="20" rx="4" fill="#1e293b" />
+    <text x="18" y="26" fill="#38bdf8" font-family="ui-monospace, monospace" font-size="11" font-weight="700">02</text>
+    <text x="48" y="26" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">Clone &amp; Branch</text>
+    <text x="12" y="54" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" line-height="16">
+      <tspan x="12" dy="0">Clones bare repository</tspan>
+      <tspan x="12" dy="18">over HTTP or pure SSH.</tspan>
+      <tspan x="12" dy="18">Branches strictly under</tspan>
+      <tspan x="12" dy="18"><tspan fill="#fb923c" font-family="ui-monospace, monospace">refs/heads/agent/*</tspan>.</tspan>
+    </text>
+    <circle cx="198" cy="116" r="4" fill="#38bdf8" />
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <path d="M 492 117 L 512 117" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+  <polygon points="514,117 508,114 508,120" fill="#475569" />
+
+  <!-- STEP 3 -->
+  <g transform="translate(516, 52)">
+    <rect width="210" height="130" rx="8" fill="url(#stepGrad)" stroke="#334155" stroke-width="1" />
+    <rect x="12" y="12" width="28" height="20" rx="4" fill="#1e293b" />
+    <text x="18" y="26" fill="#a855f7" font-family="ui-monospace, monospace" font-size="11" font-weight="700">03</text>
+    <text x="48" y="26" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">Push &amp; Hook</text>
+    <text x="12" y="54" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" line-height="16">
+      <tspan x="12" dy="0">Pre-receive hook blocks</tspan>
+      <tspan x="12" dy="18">hardcoded secrets &amp; keys.</tspan>
+      <tspan x="12" dy="18">Enforces branch leases</tspan>
+      <tspan x="12" dy="18">and verifies signatures.</tspan>
+    </text>
+    <circle cx="198" cy="116" r="4" fill="#a855f7" />
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <path d="M 732 117 L 752 117" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+  <polygon points="754,117 748,114 748,120" fill="#475569" />
+
+  <!-- STEP 4 -->
+  <g transform="translate(756, 52)">
+    <rect width="210" height="130" rx="8" fill="url(#stepGrad)" stroke="#334155" stroke-width="1" />
+    <rect x="12" y="12" width="28" height="20" rx="4" fill="#1e293b" />
+    <text x="18" y="26" fill="#eab308" font-family="ui-monospace, monospace" font-size="11" font-weight="700">04</text>
+    <text x="48" y="26" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">PR &amp; Review</text>
+    <text x="12" y="54" fill="#94a3b8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" line-height="16">
+      <tspan x="12" dy="0">PR opens via MCP tool.</tspan>
+      <tspan x="12" dy="18">Autonomous reviewer agent</tspan>
+      <tspan x="12" dy="18">performs AST analysis &amp;</tspan>
+      <tspan x="12" dy="18">emits check runs.</tspan>
+    </text>
+    <circle cx="198" cy="116" r="4" fill="#eab308" />
+  </g>
+
+  <!-- Arrow 4 -> 5 -->
+  <path d="M 972 117 L 992 117" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3" />
+  <polygon points="994,117 988,114 988,120" fill="#475569" />
+
+  <!-- STEP 5 -->
+  <g transform="translate(996, 52)">
+    <rect width="168" height="130" rx="8" fill="#042018" stroke="#10b981" stroke-width="1.5" />
+    <rect x="12" y="12" width="28" height="20" rx="4" fill="#064e3b" />
+    <text x="18" y="26" fill="#34d399" font-family="ui-monospace, monospace" font-size="11" font-weight="700">05</text>
+    <text x="48" y="26" fill="#f8fafc" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700">Policy Merge</text>
+    <text x="12" y="54" fill="#a7f3d0" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" line-height="16">
+      <tspan x="12" dy="0">Rulesets require passing</tspan>
+      <tspan x="12" dy="18">checks. Deterministic</tspan>
+      <tspan x="12" dy="18">3-way merge into</tspan>
+      <tspan x="12" dy="18"><tspan fill="#34d399" font-weight="700">refs/heads/main</tspan>.</tspan>
+    </text>
+    <circle cx="152" cy="116" r="4" fill="#10b981" />
+  </g>
+</svg>
