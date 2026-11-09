@@ -281,6 +281,11 @@ checklist in §10 remains open.
 
 ## Phase 3 — IA and design system (Weeks 3–6)
 
+Research input: `docs/launch/FRONTEND_RESEARCH.md` (best-in-class landing pages,
+component libraries, motion, and PH launch patterns; recommends keeping
+Patina/React Aria/Tailwind/Vite and adding TanStack Router/Query, SSE, Motion on
+the marketing site only, and Pierre/CodeMirror for diffs).
+
 ### 3.1 Three IA prototypes — P0
 **Owner:** Design + Frontend
 **Output:** `docs/design/IA.md` + clickable prototypes
