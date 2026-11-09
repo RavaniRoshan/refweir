@@ -31,12 +31,12 @@ import {
   type ReleaseItem,
   getFiles,
   getFileContent,
-  getReleases,
   searchRepoSymbols,
   isDemoModeActive,
   sampleFiles,
   sampleReadme,
 } from '@/lib/api'
+import { useReleasesQuery } from '@/lib/queries'
 
 export interface RepoOverviewProps {
   repo: RepoInfo
@@ -130,22 +130,17 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
     return () => window.removeEventListener('refweir_mode_changed', onModeChange)
   }, [owner, name, currentBranch])
 
+  const { data: releasesData } = useReleasesQuery(owner, name)
+
   useEffect(() => {
-    getReleases(owner, name)
-      .then((rels) => {
-        if (rels && rels.length > 0) {
-          setLatestRelease(rels[0])
-          setReleaseCount(rels.length)
-        } else {
-          setLatestRelease(null)
-          setReleaseCount(0)
-        }
-      })
-      .catch(() => {
-        setLatestRelease(null)
-        setReleaseCount(0)
-      })
-  }, [owner, name])
+    if (releasesData && releasesData.length > 0) {
+      setLatestRelease(releasesData[0])
+      setReleaseCount(releasesData.length)
+    } else {
+      setLatestRelease(null)
+      setReleaseCount(0)
+    }
+  }, [releasesData])
 
   const handleSelectFile = async (file: FileItem) => {
     if (file.type !== 'blob') return

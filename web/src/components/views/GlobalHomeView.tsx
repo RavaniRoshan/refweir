@@ -30,6 +30,7 @@ import {
   isDemoModeActive,
   type RepositoryRecord,
 } from '@/lib/api'
+import { useRepositoriesQuery } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 export interface GlobalHomeViewProps {
@@ -177,7 +178,14 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   const [isMigrateModalOpen, setIsMigrateModalOpen] = useState(false)
 
   // Real or sandbox repositories
+  const { data: queryRepos } = useRepositoriesQuery()
   const [repos, setRepos] = useState<RepositoryRecord[]>(() => (isDemoModeActive() ? defaultDemoRepos : []))
+
+  useEffect(() => {
+    if (queryRepos && queryRepos.length > 0) {
+      setRepos(queryRepos)
+    }
+  }, [queryRepos])
 
   // Real or sandbox events
   const [events, setEvents] = useState<ActivityEvent[]>(() => (isDemoModeActive() ? enterpriseFeed : []))

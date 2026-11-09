@@ -35,8 +35,6 @@ import {
   type PullRequest,
   type RepoInfo,
   type AgentReviewResult,
-  getPullRequests,
-  mergePullRequest,
   addPullRequestComment,
   getPullRequestComments,
   getAutoMergeStatus,
@@ -45,6 +43,7 @@ import {
   isDemoModeActive,
   samplePullRequests,
 } from '@/lib/api'
+import { usePullRequestsQuery, useMergePullRequestMutation } from '@/lib/queries'
 
 export interface PullRequestsViewProps {
   repo?: RepoInfo
@@ -63,6 +62,9 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
 }) => {
   const owner = repo?.ownerSlug || 'acme'
   const repoName = repo?.name || 'rocket'
+
+  const { data: prsData, refetch } = usePullRequestsQuery(owner, repoName)
+  const mergeMutation = useMergePullRequestMutation(owner, repoName)
 
   const [prs, setPrs] = useState<PullRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,6 +88,29 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [autoMergeEnabled, setAutoMergeEnabled] = useState(false)
   const [autoMergeMethod, setAutoMergeMethod] = useState<'merge' | 'squash' | 'rebase'>('squash')
+
+  useEffect(() => {
+    if (prsData) {
+      setPrs(prsData)
+      setLoading(false)
+      if (typeof window !== 'undefined') {
+        const p = new URLSearchParams(window.location.search)
+        const prParam = p.get('pr')
+        if (prParam) {
+          const match = prsData.find((item) => String(item.number) === prParam)
+          if (match) {
+            setSelectedPr(match)
+          }
+        } else if (!p.get('filter')) {
+          const hasOpen = prsData.some((p) => p.state === 'open')
+          const hasMerged = prsData.some((p) => p.state === 'merged')
+          if (!hasOpen && hasMerged) {
+            setActiveFilter('merged')
+          }
+        }
+      }
+    }
+  }, [prsData])
 
   const refreshComments = async () => {
     if (!selectedPr) return
@@ -115,23 +140,9 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
     setLoading(true)
     setErrorMessage(null)
     try {
-      const data = await getPullRequests(owner, repoName)
-      setPrs(data)
-      if (typeof window !== 'undefined') {
-        const p = new URLSearchParams(window.location.search)
-        const prParam = p.get('pr')
-        if (prParam) {
-          const match = data.find((item) => String(item.number) === prParam)
-          if (match) {
-            setSelectedPr(match)
-          }
-        } else if (!p.get('filter')) {
-          const hasOpen = data.some((p) => p.state === 'open')
-          const hasMerged = data.some((p) => p.state === 'merged')
-          if (!hasOpen && hasMerged) {
-            setActiveFilter('merged')
-          }
-        }
+      const res = await refetch()
+      if (res.data) {
+        setPrs(res.data)
       }
     } catch {
       if (isDemoModeActive()) {
@@ -145,8 +156,6 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
   }
 
   useEffect(() => {
-    loadPRs()
-
     const onModeChange = () => {
       loadPRs()
     }
@@ -205,7 +214,10 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
     const prNumber = selectedPr.number
 
     try {
-      await mergePullRequest(owner, repoName, prNumber, method === 'rebase' ? 'squash' : method)
+      await mergeMutation.mutateAsync({
+        prNumber,
+        mergeMethod: method === 'rebase' ? 'squash' : method,
+      })
 
       confetti({
         particleCount: 80,

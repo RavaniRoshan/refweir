@@ -82,10 +82,10 @@ function getAuthHeader(): Record<string, string> {
   return { Authorization: `Bearer ${token}` }
 }
 
-export async function fetchLiveServerStatus(): Promise<{ ok: boolean; status: string; latencyMs: number }> {
+export async function fetchLiveServerStatus(signal?: AbortSignal): Promise<{ ok: boolean; status: string; latencyMs: number }> {
   const start = performance.now()
   try {
-    const res = await fetch('/healthz')
+    const res = await fetch('/healthz', { signal })
     const elapsed = Math.round(performance.now() - start)
     if (!res.ok) return { ok: false, status: `HTTP ${res.status}`, latencyMs: elapsed }
     return { ok: true, status: 'Online (200 OK)', latencyMs: elapsed }
@@ -99,13 +99,13 @@ export async function fetchLiveServerStatus(): Promise<{ ok: boolean; status: st
 // Unified Data Providers (Production with Sandbox fallback)
 // -------------------------------------------------------------
 
-export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo> {
+export async function getRepoInfo(owner: string, name: string, signal?: AbortSignal): Promise<RepoInfo> {
   if (isDemoModeActive()) {
     return mockDefaultRepo
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}`)
+    const res = await fetch(`/api/v1/repos/${owner}/${name}`, { signal })
     if (res.ok) {
       const data = await res.json()
       return {
@@ -128,6 +128,7 @@ export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo
 
   try {
     const res = await fetch(`/v1/origin/repos/${owner}/${name}`, {
+      signal,
       headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -162,7 +163,7 @@ export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo
   }
 }
 
-export async function getRepositories(): Promise<RepositoryRecord[]> {
+export async function getRepositories(signal?: AbortSignal): Promise<RepositoryRecord[]> {
   if (isDemoModeActive()) {
     return [
       {
@@ -218,6 +219,7 @@ export async function getRepositories(): Promise<RepositoryRecord[]> {
 
   try {
     const res = await fetch('/api/v1/repos', {
+      signal,
       headers: getAuthHeader(),
     })
     if (!res.ok) return []
@@ -322,9 +324,9 @@ export async function commitFile(params: {
   }
 }
 
-export async function fetchClusterInfo(): Promise<ClusterSystemInfo> {
+export async function fetchClusterInfo(signal?: AbortSignal): Promise<ClusterSystemInfo> {
   try {
-    const res = await fetch('/api/v1/system/info')
+    const res = await fetch('/api/v1/system/info', { signal })
     if (res.ok) return await res.json()
   } catch {}
   return {
@@ -338,7 +340,7 @@ export async function fetchClusterInfo(): Promise<ClusterSystemInfo> {
   }
 }
 
-export async function getFiles(owner: string, name: string, ref = 'main', path = ''): Promise<FileItem[]> {
+export async function getFiles(owner: string, name: string, ref = 'main', path = '', signal?: AbortSignal): Promise<FileItem[]> {
   if (isDemoModeActive()) {
     return mockSampleFiles
   }
@@ -348,9 +350,10 @@ export async function getFiles(owner: string, name: string, ref = 'main', path =
     if (ref) params.set('ref', ref)
     if (path) params.set('path', path)
 
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`)
+    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, { signal })
     if (!res.ok) {
       res = await fetch(`/v1/origin/repos/${owner}/${name}/contents?${params.toString()}`, {
+        signal,
         headers: getAuthHeader(),
       })
     }
@@ -372,7 +375,7 @@ export async function getFiles(owner: string, name: string, ref = 'main', path =
   }
 }
 
-export async function getFileContent(owner: string, name: string, path: string, ref = 'main'): Promise<string> {
+export async function getFileContent(owner: string, name: string, path: string, ref = 'main', signal?: AbortSignal): Promise<string> {
   if (isDemoModeActive()) {
     if (path === 'README.md') return mockSampleReadme
     return `// Sample contents of ${path}`
@@ -380,9 +383,10 @@ export async function getFileContent(owner: string, name: string, path: string, 
 
   try {
     const params = new URLSearchParams({ path, ref })
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`)
+    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, { signal })
     if (!res.ok) {
       res = await fetch(`/v1/origin/repos/${owner}/${name}/contents?${params.toString()}`, {
+        signal,
         headers: getAuthHeader(),
       })
     }
@@ -398,15 +402,16 @@ export async function getFileContent(owner: string, name: string, path: string, 
 }
 
 
-export async function getCommits(owner: string, name: string, ref = 'main'): Promise<CommitItem[]> {
+export async function getCommits(owner: string, name: string, ref = 'main', signal?: AbortSignal): Promise<CommitItem[]> {
   if (isDemoModeActive()) {
     return mockSampleCommits
   }
 
   try {
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/commits?ref=${ref}`)
+    let res = await fetch(`/api/v1/repos/${owner}/${name}/commits?ref=${ref}`, { signal })
     if (!res.ok) {
       res = await fetch(`/v1/origin/repos/${owner}/${name}/commits?ref=${ref}`, {
+        signal,
         headers: getAuthHeader(),
       })
     }
@@ -445,7 +450,7 @@ export interface CreatePRPayload {
   draft?: boolean
 }
 
-export async function getBranches(owner: string, name: string): Promise<BranchItem[]> {
+export async function getBranches(owner: string, name: string, signal?: AbortSignal): Promise<BranchItem[]> {
   if (isDemoModeActive()) {
     return [
       { name: 'main', commitSha: '54926f8', isDefault: true },
@@ -454,7 +459,7 @@ export async function getBranches(owner: string, name: string): Promise<BranchIt
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}/branches`)
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/branches`, { signal })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data?.branches)) {
@@ -467,6 +472,7 @@ export async function getBranches(owner: string, name: string): Promise<BranchIt
     }
     // Fallback to origin
     const originRes = await fetch(`/v1/origin/repos/${owner}/${name}/branches`, {
+      signal,
       headers: getAuthHeader(),
     })
     if (!originRes.ok) return []
@@ -504,13 +510,13 @@ export async function createBranch(
   return res.json()
 }
 
-export async function getPullRequests(owner: string, name: string): Promise<PullRequest[]> {
+export async function getPullRequests(owner: string, name: string, signal?: AbortSignal): Promise<PullRequest[]> {
   if (isDemoModeActive()) {
     return mockSamplePullRequests
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}/pulls`)
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/pulls`, { signal })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data?.pulls)) {
@@ -520,6 +526,7 @@ export async function getPullRequests(owner: string, name: string): Promise<Pull
 
     // Fallback to origin
     const originRes = await fetch(`/v1/origin/repos/${owner}/${name}/pulls`, {
+      signal,
       headers: getAuthHeader(),
     })
     if (!originRes.ok) return []
@@ -857,12 +864,12 @@ export async function getMigrationStatus(jobId: string): Promise<{ id: string; p
   return res.json()
 }
 
-export async function getAgentActivities(): Promise<AgentActivityItem[]> {
+export async function getAgentActivities(signal?: AbortSignal): Promise<AgentActivityItem[]> {
   if (isDemoModeActive()) {
     return mockSampleAgentActivities
   }
   try {
-    const res = await fetch('/api/v1/agent/activities')
+    const res = await fetch('/api/v1/agent/activities', { signal })
     if (!res.ok) return []
     const data = await res.json()
     if (!Array.isArray(data?.activities)) return []
@@ -1050,13 +1057,13 @@ export async function getAuditEvents(): Promise<AuditEvent[]> {
   }
 }
 
-export async function getClusterMetrics(): Promise<ClusterMetrics> {
+export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMetrics> {
   if (isDemoModeActive()) {
     return mockClusterMetrics
   }
 
   try {
-    const res = await fetch('/api/v1/admin/health')
+    const res = await fetch('/api/v1/admin/health', { signal })
     if (res.ok) {
       const data = await res.json()
       return {
@@ -1694,12 +1701,13 @@ export async function batchRedeliverWebhooks(deliveryIds: string[]): Promise<boo
 }
 
 // Issues API
-export async function getIssues(owner: string, name: string): Promise<Issue[]> {
+export async function getIssues(owner: string, name: string, signal?: AbortSignal): Promise<Issue[]> {
   if (isDemoModeActive()) {
     return mockSampleIssues
   }
   try {
     const res = await fetch(`/api/v1/repos/${owner}/${name}/issues`, {
+      signal,
       headers: getAuthHeader(),
     })
     if (!res.ok) return []
@@ -1822,12 +1830,12 @@ I have reviewed this issue and generated isolated reproduction tests in branch \
 }
 
 // Releases API
-export async function getReleases(owner: string, name: string): Promise<ReleaseItem[]> {
+export async function getReleases(owner: string, name: string, signal?: AbortSignal): Promise<ReleaseItem[]> {
   if (isDemoModeActive()) {
     return mockSampleReleases
   }
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}/releases`)
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/releases`, { signal })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data?.releases) ? data.releases : []
