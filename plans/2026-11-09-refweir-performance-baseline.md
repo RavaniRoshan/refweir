@@ -186,3 +186,26 @@ Measured using `go test -bench=BenchmarkGitStore -benchmem -run=^$ -count=5`:
 - **Link & Route Integrity:** 45 HTML pages inspected; all 649 internal links resolved cleanly. Zero host-specific paths or broken anchors.
 - **Redirect Stubs:** 20 legacy redirect stubs emitted to preserve pre-restructure URLs (`/refweir/<page>/` → `/refweir/docs/<page>/`).
 - **Framework Evaluation:** Next.js static export generates a 12 KB initial landing page HTML and 1.2 MB total static JS chunks. Build is fast and passes all claims audits; no migration to Astro or alternative framework is justified.
+
+---
+
+## 10. Task 5 Package Manager Comparison & Decision Record
+
+### 10.1 Empirical Measurement Data
+
+| Scenario / Metric | `npm` (Current Baseline) | `pnpm` (Candidate Experiment) | Ratio / Variance |
+| :--- | :--- | :--- | :--- |
+| **`web` Cold Clean Install** | 18.64s wall-clock, 647.8 MB RSS | 21.22s wall-clock, 454.0 MB RSS | Comparable cold download time |
+| **`web` Warm Reinstall** | 19.92s wall-clock, 657.2 MB RSS | 1.81s wall-clock, 204.6 MB RSS | pnpm hardlink cache is 10.9× faster |
+| **`site` Cold Clean Install** | 29.22s wall-clock, 909.6 MB RSS | N/A (evaluated on `web` gate first) | Evaluated gated on web |
+| **Vitest Test Suite Compatibility** | **45/45 PASS (169/169 tests)** | **0/45 PASS (169/169 FAILED)** | `ReferenceError: document is not defined` |
+| **Root Cause of pnpm Test Failure** | Flat `node_modules` allows Vitest to resolve `jsdom` globally | Strict isolated symlink tree hides `jsdom` from Vitest worker without `@vitest/environment-jsdom` | Breaking dependency resolution difference |
+
+### 10.2 Decision: REJECT pnpm Migration
+
+**Decision:** Retain `npm` with `npm ci` across `web/` and `site/`. Reject `pnpm` migration.  
+**Rationale:**  
+While `pnpm` demonstrated 10× faster warm reinstalls (1.81s vs 19.92s) due to its content-addressable hardlink store, its isolated dependency layout immediately broke 100% of the project's frontend unit tests (`ReferenceError: document is not defined` across all 45 test suites). To make Vitest function under pnpm would require introducing undeclared packaging dependencies (`@vitest/environment-jsdom`), altering `vite.config.ts`, or disabling isolated linking (`node-linker=hoisted`), which eliminates pnpm's primary architectural benefit.  
+Per the decision rules in the performance plan:
+> "A change is accepted only when the target metric improves beyond observed noise... and correctness/accessibility/security checks remain green."
+Because correctness checks fail under pnpm, `npm` remains the stable, supported package manager.
