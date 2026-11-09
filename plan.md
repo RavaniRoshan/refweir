@@ -281,7 +281,7 @@ checklist in §10 remains open.
 
 ## Phase 3 — IA and design system (Weeks 3–6)
 
-Consolidated research (single source of truth): `research/full-frontend-launch.md` (11 parallel subagents + adversarial verification; covers GitHub/Cursor Origin/Scion/Cloudflare/Supabase/frontend architecture/design systems/motion/PH launch/OSS marketing/agentic UX/accessibility). Companion detail: `docs/launch/FRONTEND_RESEARCH.md`, `docs/launch/FRONTEND_TEMPLATES.md`.
+Implementation plan: `docs/plans/2026-11-09-marketing-site-rebuild.md` (bite-sized tasks, TDD, subagent-driven recommended). (11 parallel subagents + adversarial verification; covers GitHub/Cursor Origin/Scion/Cloudflare/Supabase/frontend architecture/design systems/motion/PH launch/OSS marketing/agentic UX/accessibility). Companion detail: `docs/launch/FRONTEND_RESEARCH.md`, `docs/launch/FRONTEND_TEMPLATES.md`.
 
 ### 3.1 Three IA prototypes — P0
 **Owner:** Design + Frontend
