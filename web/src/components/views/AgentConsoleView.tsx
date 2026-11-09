@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Bot,
   Terminal,
@@ -65,6 +65,9 @@ export const AgentConsoleView: React.FC = () => {
       setLoadingActivities(false)
     }
   }
+
+  const execTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     let active = true
@@ -145,12 +148,16 @@ export const AgentConsoleView: React.FC = () => {
       active = false
       cleanup()
       window.removeEventListener('refweir_mode_changed', onModeChange)
+      if (execTimeoutRef.current) clearTimeout(execTimeoutRef.current)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     }
   }, [])
 
   useEffect(() => {
+    let isCurrent = true
     async function loadMcpCatalog() {
       const tools = await queryLocalMcpTools()
+      if (!isCurrent) return
       if (tools.length > 0) {
         setAvailableTools(tools)
       } else {
@@ -167,6 +174,9 @@ export const AgentConsoleView: React.FC = () => {
       }
     }
     loadMcpCatalog()
+    return () => {
+      isCurrent = false
+    }
   }, [])
 
   const handleToolSelect = (toolName: string) => {
@@ -224,7 +234,8 @@ export const AgentConsoleView: React.FC = () => {
       const resData = await response.json()
       setExecutionResult(resData)
 
-      setTimeout(loadActivities, 500)
+      if (execTimeoutRef.current) clearTimeout(execTimeoutRef.current)
+      execTimeoutRef.current = setTimeout(loadActivities, 500)
     } catch (err: any) {
       setExecutionResult({ error: err.message || 'Execution failed' })
     } finally {
@@ -253,7 +264,8 @@ export const AgentConsoleView: React.FC = () => {
     if (!issuedLease) return
     navigator.clipboard.writeText(issuedLease.token)
     setCopiedToken(true)
-    setTimeout(() => setCopiedToken(false), 2000)
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    copyTimeoutRef.current = setTimeout(() => setCopiedToken(false), 2000)
   }
 
   return (

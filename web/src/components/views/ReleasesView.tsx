@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Tag,
   Package,
@@ -30,6 +30,7 @@ export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
   const [releases, setReleases] = useState<ReleaseItem[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedSha, setCopiedSha] = useState<string | null>(null)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Draft Release Modal
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false)
@@ -42,20 +43,30 @@ export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
   const [publishError, setPublishError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadReleases()
-  }, [owner, repoName])
-
-  const loadReleases = async () => {
+    let isCurrent = true
     setLoading(true)
-    const data = await getReleases(owner, repoName)
-    setReleases(data)
-    setLoading(false)
-  }
+
+    getReleases(owner, repoName)
+      .then((data) => {
+        if (isCurrent) setReleases(data)
+      })
+      .finally(() => {
+        if (isCurrent) setLoading(false)
+      })
+
+    return () => {
+      isCurrent = false
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [owner, repoName])
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedSha(id)
-    setTimeout(() => setCopiedSha(null), 2000)
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    copyTimeoutRef.current = setTimeout(() => setCopiedSha(null), 2000)
   }
 
   const handlePublishRelease = async (e: React.FormEvent) => {

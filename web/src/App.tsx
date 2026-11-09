@@ -10,22 +10,41 @@ import {
 import { Header } from '@/components/views/Header'
 import { DemoBanner } from '@/components/views/DemoBanner'
 import { RepoOverview } from '@/components/views/RepoOverview'
-import { PullRequestsView } from '@/components/views/PullRequestsView'
-import { CommitsView } from '@/components/views/CommitsView'
-import { AgentConsoleView } from '@/components/views/AgentConsoleView'
-import { RulesetsView } from '@/components/views/RulesetsView'
-import { WebhooksView } from '@/components/views/WebhooksView'
 import { GlobalHomeView } from '@/components/views/GlobalHomeView'
-import { IssuesView } from '@/components/views/IssuesView'
-import { ReleasesView } from '@/components/views/ReleasesView'
-import { ProductTour } from '@/components/views/ProductTour'
-import { UserManualModal } from '@/components/views/UserManualModal'
 import { defaultRepo, getRepoInfo, getRepositories, isDemoModeActive } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/app/AppShell'
 import { useUIStore } from '@/lib/store'
+import { ViewErrorBoundary } from '@/components/ui/ViewErrorBoundary'
 
 // Lazy-loaded views for bundle optimization & code splitting
+const PullRequestsView = lazy(() =>
+  import('@/components/views/PullRequestsView').then((m) => ({ default: m.PullRequestsView }))
+)
+const CommitsView = lazy(() =>
+  import('@/components/views/CommitsView').then((m) => ({ default: m.CommitsView }))
+)
+const IssuesView = lazy(() =>
+  import('@/components/views/IssuesView').then((m) => ({ default: m.IssuesView }))
+)
+const ReleasesView = lazy(() =>
+  import('@/components/views/ReleasesView').then((m) => ({ default: m.ReleasesView }))
+)
+const AgentConsoleView = lazy(() =>
+  import('@/components/views/AgentConsoleView').then((m) => ({ default: m.AgentConsoleView }))
+)
+const RulesetsView = lazy(() =>
+  import('@/components/views/RulesetsView').then((m) => ({ default: m.RulesetsView }))
+)
+const WebhooksView = lazy(() =>
+  import('@/components/views/WebhooksView').then((m) => ({ default: m.WebhooksView }))
+)
+const ProductTour = lazy(() =>
+  import('@/components/views/ProductTour').then((m) => ({ default: m.ProductTour }))
+)
+const UserManualModal = lazy(() =>
+  import('@/components/views/UserManualModal').then((m) => ({ default: m.UserManualModal }))
+)
 const RepoSettingsView = lazy(() =>
   import('@/components/views/RepoSettingsView').then((m) => ({ default: m.RepoSettingsView }))
 )
@@ -45,9 +64,13 @@ const EnterpriseUsers = lazy(() =>
   import('@/components/views/admin/EnterpriseUsers').then((m) => ({ default: m.EnterpriseUsers }))
 )
 
-const ViewFallback = () => (
-  <div className="py-16 text-center text-xs text-muted-foreground">
-    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
+export const ViewFallback = () => (
+  <div
+    role="status"
+    aria-live="polite"
+    className="min-h-[450px] flex flex-col items-center justify-center p-8 text-center text-xs text-muted-foreground border border-dashed border-border/50 rounded-md bg-card/20 animate-pulse"
+  >
+    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" aria-hidden="true" />
     <span>Loading view...</span>
   </div>
 )
@@ -208,7 +231,8 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-5 lg:px-8 py-6">
-        {/* 0. Enterprise Home Activity Feed */}
+        <ViewErrorBoundary>
+          {/* 0. Enterprise Home Activity Feed */}
         {activeTab === 'home' && (
           <GlobalHomeView
             onSelectRepo={(repoSlug) => handleSelectRepo(repoSlug)}
@@ -238,43 +262,57 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
 
         {/* 1.5. Issues View */}
         {activeTab === 'issues' && (
-          <IssuesView
-            repo={currentRepo}
-            onSelectPullRequest={() => setActiveTab('prs')}
-          />
+          <Suspense fallback={<ViewFallback />}>
+            <IssuesView
+              repo={currentRepo}
+              onSelectPullRequest={() => setActiveTab('prs')}
+            />
+          </Suspense>
         )}
 
         {/* 2. Pull Requests View */}
         {activeTab === 'prs' && (
-          <PullRequestsView
-            repo={currentRepo}
-            onSelectAgentConsole={() => setActiveTab('agents')}
-          />
+          <Suspense fallback={<ViewFallback />}>
+            <PullRequestsView
+              repo={currentRepo}
+              onSelectAgentConsole={() => setActiveTab('agents')}
+            />
+          </Suspense>
         )}
 
         {/* 3. Commits History View */}
         {activeTab === 'commits' && (
-          <CommitsView repo={currentRepo} />
+          <Suspense fallback={<ViewFallback />}>
+            <CommitsView repo={currentRepo} />
+          </Suspense>
         )}
 
         {/* 3.5. Releases & Tags View */}
         {activeTab === 'releases' && (
-          <ReleasesView repo={currentRepo} />
+          <Suspense fallback={<ViewFallback />}>
+            <ReleasesView repo={currentRepo} />
+          </Suspense>
         )}
 
         {/* 4. Autonomous Agent Console & MCP Telemetry */}
         {activeTab === 'agents' && (
-          <AgentConsoleView />
+          <Suspense fallback={<ViewFallback />}>
+            <AgentConsoleView />
+          </Suspense>
         )}
 
         {/* 5. Branch Rulesets & Policy View */}
         {activeTab === 'rulesets' && (
-          <RulesetsView repo={currentRepo} />
+          <Suspense fallback={<ViewFallback />}>
+            <RulesetsView repo={currentRepo} />
+          </Suspense>
         )}
 
         {/* 6. Webhooks Delivery View */}
         {activeTab === 'webhooks' && (
-          <WebhooksView />
+          <Suspense fallback={<ViewFallback />}>
+            <WebhooksView />
+          </Suspense>
         )}
 
         {/* 6.5. Repository Settings & Collaborators */}
@@ -333,6 +371,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
             </section>
           </div>
         )}
+        </ViewErrorBoundary>
       </main>
 
       {/* GitHub Primer Footer */}
@@ -397,17 +436,29 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
       )}
 
       {/* Interactive First-Time Onboarding Tour */}
-      <ProductTour
-        isOpen={tourOpen}
-        onClose={() => setTourOpen(false)}
-        onOpenManual={() => setManualOpen(true)}
-      />
+      {tourOpen && (
+        <ViewErrorBoundary fallbackTitle="Failed to load onboarding tour">
+          <Suspense fallback={null}>
+            <ProductTour
+              isOpen={tourOpen}
+              onClose={() => setTourOpen(false)}
+              onOpenManual={() => setManualOpen(true)}
+            />
+          </Suspense>
+        </ViewErrorBoundary>
+      )}
 
       {/* In-App System Architecture User Manual */}
-      <UserManualModal
-        isOpen={manualOpen}
-        onClose={() => setManualOpen(false)}
-      />
+      {manualOpen && (
+        <ViewErrorBoundary fallbackTitle="Failed to load architecture manual">
+          <Suspense fallback={null}>
+            <UserManualModal
+              isOpen={manualOpen}
+              onClose={() => setManualOpen(false)}
+            />
+          </Suspense>
+        </ViewErrorBoundary>
+      )}
     </>
   )
 }

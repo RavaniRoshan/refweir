@@ -47,6 +47,8 @@ describe('IndexRoute', () => {
     expect(Component).toBeDefined();
     if (!Component) throw new Error('Route component is undefined');
 
+    vi.spyOn(Route, 'useSearch').mockReturnValue({ tab: undefined, shell: undefined });
+
     render(React.createElement(Component));
     await waitFor(() => {
       expect(screen.getAllByText('refweir.dev').length).toBeGreaterThan(0);

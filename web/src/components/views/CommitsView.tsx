@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   GitCommit,
   Copy,
@@ -28,6 +28,8 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
   const [refreshing, setRefreshing] = useState(false)
   const [copiedSha, setCopiedSha] = useState<string | null>(null)
   const [inspectingCommit, setInspectingCommit] = useState<CommitItem | null>(null)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(true)
 
   const loadCommits = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
@@ -35,27 +37,51 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
 
     try {
       const data = await getCommits(repo.ownerSlug, repo.name, repo.defaultBranch || 'main')
-      setCommits(data)
+      if (isMountedRef.current) {
+        setCommits(data)
+      }
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadCommits()
+    isMountedRef.current = true
+    let isCurrent = true
+    setLoading(true)
+
+    getCommits(repo.ownerSlug, repo.name, repo.defaultBranch || 'main')
+      .then((data) => {
+        if (isCurrent) setCommits(data)
+      })
+      .finally(() => {
+        if (isCurrent) setLoading(false)
+      })
+
+    return () => {
+      isCurrent = false
+      isMountedRef.current = false
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
   }, [repo.ownerSlug, repo.name, repo.defaultBranch])
 
   const handleCopySha = (sha: string) => {
     navigator.clipboard.writeText(sha)
     setCopiedSha(sha)
-    setTimeout(() => setCopiedSha(null), 2000)
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    copyTimeoutRef.current = setTimeout(() => setCopiedSha(null), 2000)
   }
 
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedSha(id)
-    setTimeout(() => setCopiedSha(null), 2000)
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    copyTimeoutRef.current = setTimeout(() => setCopiedSha(null), 2000)
   }
 
   // Group commits by date (e.g. "Commits on Oct 15, 2026")

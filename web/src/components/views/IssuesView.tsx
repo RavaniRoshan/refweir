@@ -55,15 +55,24 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
   const [isDelegating, setIsDelegating] = useState(false)
 
   useEffect(() => {
-    loadIssues()
-  }, [owner, repoName])
-
-  const loadIssues = async () => {
+    let isCurrent = true
     setLoading(true)
-    const data = await getIssues(owner, repoName)
-    setIssues(data)
-    setLoading(false)
-  }
+    getIssues(owner, repoName)
+      .then((data) => {
+        if (isCurrent) {
+          setIssues(data)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setLoading(false)
+        }
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [owner, repoName])
 
   const openIssuesCount = issues.filter((i) => i.state === 'open').length
   const closedIssuesCount = issues.filter((i) => i.state === 'closed').length

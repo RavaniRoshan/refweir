@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   ShieldCheck,
   Lock,
@@ -55,10 +55,15 @@ export const RulesetsView: React.FC<RulesetsViewProps> = ({ repo = defaultRepo }
   const [newCaKey, setNewCaKey] = useState('')
   const [showAddCa, setShowAddCa] = useState(false)
   const [actionMsg, setActionMsg] = useState<string | null>(null)
+  const actionMsgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMountedRef = useRef(true)
 
   const showFeedback = (msg: string) => {
     setActionMsg(msg)
-    setTimeout(() => setActionMsg(null), 3000)
+    if (actionMsgTimeoutRef.current) clearTimeout(actionMsgTimeoutRef.current)
+    actionMsgTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) setActionMsg(null)
+    }, 3000)
   }
 
   const loadData = async (isManual = false) => {
@@ -71,19 +76,51 @@ export const RulesetsView: React.FC<RulesetsViewProps> = ({ repo = defaultRepo }
         fetchIPAllowlist(repo.ownerSlug),
         fetchSSHCAs(repo.ownerSlug),
       ])
-      setRulesets(rs)
-      setIpEnabled(ipData.enabled)
-      setIpEntries(ipData.entries)
-      setSshRequired(caData.required)
-      setSshCas(caData.cas)
+      if (isMountedRef.current) {
+        setRulesets(rs)
+        setIpEnabled(ipData.enabled)
+        setIpEntries(ipData.entries)
+        setSshRequired(caData.required)
+        setSshCas(caData.cas)
+      }
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }
 
   useEffect(() => {
-    loadData()
+    isMountedRef.current = true
+    let isCurrent = true
+    setLoading(true)
+
+    Promise.all([
+      fetchRulesets(repo.ownerSlug, repo.name),
+      fetchIPAllowlist(repo.ownerSlug),
+      fetchSSHCAs(repo.ownerSlug),
+    ])
+      .then(([rs, ipData, caData]) => {
+        if (isCurrent) {
+          setRulesets(rs)
+          setIpEnabled(ipData.enabled)
+          setIpEntries(ipData.entries)
+          setSshRequired(caData.required)
+          setSshCas(caData.cas)
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setLoading(false)
+      })
+
+    return () => {
+      isCurrent = false
+      isMountedRef.current = false
+      if (actionMsgTimeoutRef.current) {
+        clearTimeout(actionMsgTimeoutRef.current)
+      }
+    }
   }, [repo.ownerSlug, repo.name])
 
   // Quick setup: Create standard production protection ruleset

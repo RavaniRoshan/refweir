@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
-import App from '../App'
+import App, { ViewFallback } from '../App'
 import * as api from '@/lib/api'
 import { useUIStore } from '@/lib/store'
 
@@ -214,5 +214,17 @@ describe('App End-to-End Navigation', () => {
     } finally {
       useUIStore.setState({ newShell: false })
     }
+  })
+
+  it('renders ViewFallback with accessible status role, polite live region, and CLS min-height', () => {
+    const { container } = render(<ViewFallback />)
+    const fallback = container.querySelector('[role="status"]')
+    expect(fallback).toBeInTheDocument()
+    expect(fallback).toHaveAttribute('aria-live', 'polite')
+    expect(fallback?.className).toContain('min-h-[450px]')
+    expect(fallback?.className).toContain('animate-pulse')
+    const loader = fallback?.querySelector('svg')
+    expect(loader).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByText('Loading view...')).toBeInTheDocument()
   })
 })
