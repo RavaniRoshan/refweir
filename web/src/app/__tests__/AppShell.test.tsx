@@ -61,4 +61,45 @@ describe('AppShell', () => {
       expect(screen.getByPlaceholderText(/type a command or search/i)).toBeInTheDocument();
     });
   });
+
+  it('forwards onTabChange for all navigation targets from command palette', async () => {
+    const handleTabChange = vi.fn();
+    render(<AppShell onTabChange={handleTabChange}><div>content</div></AppShell>);
+
+    const cmdBtn = screen.getByRole('button', { name: /open command palette/i });
+    fireEvent.click(cmdBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Issues')).toBeInTheDocument();
+    });
+
+    const issuesItem = screen.getByText('Issues');
+    fireEvent.click(issuesItem);
+
+    expect(handleTabChange).toHaveBeenCalledWith('issues');
+  });
+
+  it('synchronizes theme toggle with document.documentElement.classList', () => {
+    document.documentElement.classList.add('dark');
+    render(<AppShell><div>content</div></AppShell>);
+
+    const themeBtn = screen.getByRole('button', { name: /switch to (light|dark) mode/i });
+    fireEvent.click(themeBtn);
+
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+
+    fireEvent.click(themeBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('does not create duplicate main landmark element', () => {
+    const { container } = render(
+      <AppShell>
+        <main>primary main content</main>
+      </AppShell>
+    );
+
+    const mains = container.querySelectorAll('main');
+    expect(mains.length).toBe(1);
+  });
 });

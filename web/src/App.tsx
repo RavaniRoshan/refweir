@@ -52,8 +52,16 @@ const ViewFallback = () => (
   </div>
 )
 
-export default function App() {
+export interface AppProps {
+  initialTab?: 'home' | 'profile' | 'code' | 'issues' | 'prs' | 'commits' | 'releases' | 'agents' | 'rulesets' | 'webhooks' | 'admin' | 'settings'
+  initialShell?: boolean
+}
+
+export default function App({ initialTab, initialShell }: AppProps = {}) {
   const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'code' | 'issues' | 'prs' | 'commits' | 'releases' | 'agents' | 'rulesets' | 'webhooks' | 'admin' | 'settings'>(() => {
+    if (initialTab && ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings'].includes(initialTab)) {
+      return initialTab
+    }
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search)
       const t = p.get('tab')
@@ -63,6 +71,12 @@ export default function App() {
     }
     return 'code'
   })
+
+  useEffect(() => {
+    if (initialTab && ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings'].includes(initialTab)) {
+      setActiveTab(initialTab)
+    }
+  }, [initialTab])
   const [adminSection, setAdminSection] = useState<'cluster' | 'users' | 'sso' | 'audit'>('cluster')
   const [tourOpen, setTourOpen] = useState(false)
   const [systemInfo, setSystemInfo] = useState<{
@@ -138,13 +152,21 @@ export default function App() {
   ] as const
 
   const { newShell } = useUIStore()
-  const [isShellParamActive] = useState(() => {
+  const [isShellParamActive, setIsShellParamActive] = useState(() => {
+    if (initialShell !== undefined) return initialShell
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search)
       return p.get('shell') === '1' || p.get('shell') === 'true'
     }
     return false
   })
+
+  useEffect(() => {
+    if (initialShell !== undefined) {
+      setIsShellParamActive(initialShell)
+    }
+  }, [initialShell])
+
   const isShellActive = newShell || isShellParamActive
 
   const shellNav = (() => {
@@ -172,6 +194,7 @@ export default function App() {
       <Header
         repo={currentRepo}
         activeTab={activeTab}
+        suppressCommandPalette={isShellActive}
         onTabChange={(tab) => {
           if (tab === 'admin') {
             setActiveTab('admin')
@@ -362,7 +385,11 @@ export default function App() {
   return (
     <>
       {isShellActive ? (
-        <AppShell activeNav={shellNav} onNavChange={handleShellNavChange}>
+        <AppShell
+          activeNav={shellNav}
+          onNavChange={handleShellNavChange}
+          onTabChange={(tab) => setActiveTab(tab as any)}
+        >
           {content}
         </AppShell>
       ) : (

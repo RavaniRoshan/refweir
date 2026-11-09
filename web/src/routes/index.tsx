@@ -15,5 +15,17 @@ export const Route = createFileRoute('/')({
 });
 
 function IndexPage() {
-  return <App />;
+  let search: IndexSearch = {};
+  try {
+    search = Route.useSearch();
+  } catch {
+    // Support rendering IndexPage in standalone tests without RouterProvider context
+  }
+
+  return (
+    <App
+      initialTab={search?.tab as any}
+      initialShell={search?.shell === '1' || search?.shell === 'true'}
+    />
+  );
 }

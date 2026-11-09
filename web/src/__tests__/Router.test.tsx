@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { RouterProvider } from '@tanstack/react-router';
+import { RouterProvider, createRouter, createMemoryHistory } from '@tanstack/react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { router } from '@/router';
+import { routeTree } from '@/routeTree.gen';
 import { queryClient } from '@/lib/queryClient';
 
 vi.mock('@/lib/api', async () => {
@@ -24,6 +25,7 @@ vi.mock('@/lib/api', async () => {
     getFileContent: vi.fn().mockResolvedValue(''),
     getCommits: vi.fn().mockResolvedValue([]),
     getPullRequests: vi.fn().mockResolvedValue([]),
+    getIssues: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -42,6 +44,24 @@ describe('Root Router & QueryClient Provider Integration', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('refweir.dev').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('switches views when router navigates with search params', async () => {
+    const memoryRouter = createRouter({
+      routeTree,
+      history: createMemoryHistory({ initialEntries: ['/?tab=issues'] }),
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={memoryRouter} />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/is:issue/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /new issue/i })).toBeInTheDocument();
     });
   });
 });

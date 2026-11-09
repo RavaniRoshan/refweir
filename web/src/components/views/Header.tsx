@@ -57,6 +57,7 @@ export interface HeaderProps {
   openPrCount?: number
   onOpenTour?: () => void
   onOpenManual?: () => void
+  suppressCommandPalette?: boolean
 }
 
 /**
@@ -70,6 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
   openPrCount = 1,
   onOpenTour,
   onOpenManual,
+  suppressCommandPalette = false,
 }) => {
   const [cloneModalOpen, setCloneModalOpen] = useState(false)
   const [cloneType, setCloneType] = useState<'http' | 'ssh' | 'mcp'>('http')
@@ -154,6 +156,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   // Global shortcut: "/" or Ctrl/Cmd+K toggles the command palette
   useEffect(() => {
+    if (suppressCommandPalette) return
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
       if (target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return
@@ -165,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [suppressCommandPalette])
 
   const toggleDemoMode = () => {
     const next = !isDemo
@@ -597,15 +600,17 @@ export const Header: React.FC<HeaderProps> = ({
       />
 
       {/* Command Palette (Ctrl/Cmd+K or /) */}
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        onTabChange={onTabChange}
-        onOpenTour={onOpenTour}
-        onOpenManual={onOpenManual}
-        onToggleDemoMode={toggleDemoMode}
-        isDemo={isDemo}
-      />
+      {!suppressCommandPalette && (
+        <CommandPalette
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          onTabChange={onTabChange}
+          onOpenTour={onOpenTour}
+          onOpenManual={onOpenManual}
+          onToggleDemoMode={toggleDemoMode}
+          isDemo={isDemo}
+        />
+      )}
     </>
   )
 }

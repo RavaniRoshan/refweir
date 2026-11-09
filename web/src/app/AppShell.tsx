@@ -18,6 +18,7 @@ export interface AppShellProps {
   children: React.ReactNode;
   activeNav?: string;
   onNavChange?: (nav: string) => void;
+  onTabChange?: (tab: string) => void;
 }
 
 const NAV_ITEMS = [
@@ -28,12 +29,40 @@ const NAV_ITEMS = [
   { id: 'repos', label: 'Repos', icon: FolderGit2 },
 ] as const;
 
-export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
+export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppShellProps) {
   const { sidebarOpen, setSidebarOpen, theme, setTheme } = useUIStore();
   const [internalNav, setInternalNav] = useState<string>('repos');
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const currentNav = activeNav ?? internalNav;
+
+  // Determine current active dark mode status
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' &&
+      (typeof document !== 'undefined'
+        ? document.documentElement.classList.contains('dark')
+        : false));
+
+  // Sync document root class when theme state updates
+  useEffect(() => {
+    if (theme === 'system') return;
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextIsDark = !isDark;
+    setTheme(nextIsDark ? 'dark' : 'light');
+    if (nextIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const handleNav = (id: string) => {
     if (onNavChange) {
@@ -41,10 +70,31 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
     } else {
       setInternalNav(id);
     }
+
+    if (onTabChange) {
+      if (id === 'runs') onTabChange('agents');
+      else if (id === 'reviews') onTabChange('prs');
+      else if (id === 'policies') onTabChange('rulesets');
+      else if (id === 'inbox') onTabChange('home');
+      else if (id === 'repos') onTabChange('code');
+    }
+  };
+
+  const handleCommandPaletteTab = (tab: string) => {
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+    if (tab === 'agents') handleNav('runs');
+    else if (tab === 'prs') handleNav('reviews');
+    else if (tab === 'rulesets') handleNav('policies');
+    else if (tab === 'home') handleNav('inbox');
+    else handleNav('repos');
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((prev) => !prev);
@@ -69,7 +119,7 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
           </span>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-text-2 hover:text-text-1 text-xs cursor-pointer p-1 rounded hover:bg-raised transition-colors flex items-center justify-center"
+            className="text-text-2 hover:text-text-1 text-xs cursor-pointer p-1 rounded-md hover:bg-raised transition-colors flex items-center justify-center focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-primary"
             aria-label="Toggle sidebar"
             aria-expanded={sidebarOpen}
           >
@@ -90,12 +140,13 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
                 key={item.id}
                 role="tab"
                 aria-selected={isActive}
+                aria-label={item.label}
                 onClick={() => handleNav(item.id)}
                 title={!sidebarOpen ? item.label : undefined}
                 className={cn(
-                  'flex w-full items-center gap-3 px-2.5 py-2 text-sm rounded-md transition-colors cursor-pointer text-left',
+                  'flex w-full items-center gap-3 px-2.5 py-2 text-sm rounded-md transition-colors cursor-pointer text-left focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-primary',
                   isActive
-                    ? 'bg-secondary text-foreground font-medium shadow-xs'
+                    ? 'bg-secondary text-foreground font-medium'
                     : 'text-text-2 hover:bg-raised hover:text-text-1',
                   !sidebarOpen && 'justify-center px-0'
                 )}
@@ -109,25 +160,26 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
 
         <div className="border-t border-border p-2">
           <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={toggleTheme}
             className={cn(
-              'w-full text-xs text-text-2 hover:text-text-1 flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-raised transition-colors',
+              'w-full text-xs text-text-2 hover:text-text-1 flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-raised transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-primary',
               !sidebarOpen && 'justify-center p-1.5'
             )}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={!sidebarOpen ? (isDark ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
           >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 shrink-0 text-amber-400" />
+            {isDark ? (
+              <Sun className="w-4 h-4 shrink-0 text-signal" />
             ) : (
-              <Moon className="w-4 h-4 shrink-0 text-slate-400" />
+              <Moon className="w-4 h-4 shrink-0 text-text-2" />
             )}
-            {sidebarOpen && <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>}
+            {sidebarOpen && <span>{isDark ? 'Light' : 'Dark'}</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto flex flex-col min-w-0">
+      {/* Main content container (div rather than nested main to preserve single main landmark) */}
+      <div className="flex-1 overflow-y-auto flex flex-col min-w-0">
         {/* Top bar */}
         <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center justify-between border-b border-border bg-canvas/80 px-4 backdrop-blur">
           <div className="flex items-center gap-2">
@@ -136,7 +188,7 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs text-text-3 hover:text-text-1 hover:border-hairline cursor-pointer transition-colors"
+              className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-text-3 hover:text-text-1 hover:border-hairline cursor-pointer transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-primary"
               aria-label="Open command palette"
             >
               <kbd className="font-mono text-xs">⌘K</kbd>
@@ -144,20 +196,14 @@ export function AppShell({ children, activeNav, onNavChange }: AppShellProps) {
           </div>
         </header>
 
-        <div className="flex-1 p-4">{children}</div>
-      </main>
+        <div className="flex-1 min-h-0">{children}</div>
+      </div>
 
       {/* Integrated Command Palette */}
       <CommandPalette
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
-        onTabChange={(tab) => {
-          if (tab === 'agents') handleNav('runs');
-          else if (tab === 'prs') handleNav('reviews');
-          else if (tab === 'rulesets') handleNav('policies');
-          else if (tab === 'code') handleNav('repos');
-          else if (tab === 'home') handleNav('inbox');
-        }}
+        onTabChange={handleCommandPaletteTab}
       />
     </div>
   );
