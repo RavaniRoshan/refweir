@@ -9,4 +9,4 @@ Derived from source at the current commit. CI fails when this file drifts.
 | MCP tools | 46 | `internal/mcp.BuiltinTools()` |
 | HTTP route patterns | 125 | `mux.Handle*` registrations in `internal/app` and `internal/origin` |
 | Go packages | 36 | `go list ./...` |
-| Frontend test files | 47 | `web/src/**/*.test.{ts,tsx}` |
+| Frontend test files | 48 | `web/src/**/*.test.{ts,tsx}` |
