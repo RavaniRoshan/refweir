@@ -235,11 +235,13 @@ CGO_ENABLED=0 go test -run TestAgentLoop_EndToEnd_RealServer -v ./internal/app
 examples/containment/run.sh
 ```
 
-Inspect the durable audit trail after a run:
+Inspect the durable audit trail after a run (admin authentication is required
+once an administrator exists; a fresh install has no users yet):
 
 ```bash
 tail -f "${REFWEIR_DATA_DIR:-./data}/audit.log"
-curl -s http://127.0.0.1:8080/api/v1/admin/audit-logs | jq .
+curl -s -H "Authorization: Bearer $REFWEIR_API_KEY" \
+  http://127.0.0.1:8080/api/v1/admin/audit-logs | jq .
 ```
 
 ---

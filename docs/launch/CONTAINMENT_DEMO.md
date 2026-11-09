@@ -128,6 +128,13 @@ Inspect the raw events while the workspace is kept:
 tail -n 20 /tmp/refweir-containment.XXXXXX/data/audit.log | jq .
 ```
 
+Query the live admin API while the server is running (admin auth required):
+
+```bash
+curl -s -H "Authorization: Bearer <admin-token>" \
+  http://127.0.0.1:8080/api/v1/admin/audit-logs | jq .
+```
+
 Each line is a JSON object with `id`, `timestamp`, `actor`, `actorType`,
 `action`, `resource`, `severity`, `details`, and optional `metadata` (lease ID,
 agent ID, ref prefixes, expiry).

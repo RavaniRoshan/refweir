@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -74,7 +75,8 @@ func TestAppLifecycle(t *testing.T) {
 		t.Fatalf("GET /api/v1/admin/health status = %d, want 200", recHealth.Code)
 	}
 
-	// 5. Admin audit logs endpoint returns json log records
+	// 5. Admin audit logs endpoint returns json log records (no users yet, so
+	// the fresh-install bootstrap path is allowed)
 	reqAudit := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs", nil)
 	recAudit := httptest.NewRecorder()
 	application.Handler().ServeHTTP(recAudit, reqAudit)
@@ -157,5 +159,36 @@ func TestAppOpenFailure(t *testing.T) {
 	_, err := Open(cfg)
 	if err == nil {
 		t.Fatal("expected Open to fail for blocked directory path, but got nil")
+	}
+}
+
+func TestAuditLogsRequireAuthenticationOnceInitialized(t *testing.T) {
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:8080",
+		DataDir:    t.TempDir(),
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+	}
+	application, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer func() {
+		if err := application.Close(); err != nil {
+			t.Errorf("Close: %v", err)
+		}
+	}()
+
+	if _, err := application.Store.UpsertUserByEmail(context.Background(), "admin@example.com", func() string {
+		return "usr_test_admin"
+	}); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs", nil)
+	rec := httptest.NewRecorder()
+	application.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("GET /api/v1/admin/audit-logs without auth = %d, want 401", rec.Code)
 	}
 }

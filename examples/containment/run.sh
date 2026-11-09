@@ -287,8 +287,8 @@ echo "================================================================"
 echo
 echo "Read the raw events:"
 echo "  tail -n 20 \"$AUDIT_LOG\""
-echo "Query the live admin API while the server is running:"
-echo "  curl -s $BASE/api/v1/admin/audit-logs | python3 -m json.tool"
+echo "Query the live admin API while the server is running (admin auth required):"
+echo "  curl -s -H 'Authorization: Bearer <admin-token>' $BASE/api/v1/admin/audit-logs | python3 -m json.tool"
 echo
 echo "Not recorded (and not claimed): model name, prompt hash, or human approver."
 echo "Leases scope a repository and ref prefixes; they do not scope individual verbs."

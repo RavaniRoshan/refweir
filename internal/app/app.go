@@ -282,6 +282,21 @@ func Open(cfg config.Config) (*App, error) {
 	})
 
 	mux.HandleFunc("GET /api/v1/admin/audit-logs", func(w http.ResponseWriter, r *http.Request) {
+		// A fresh install has no users yet; once initialized, require an admin.
+		if count, err := db.CountUsers(r.Context()); err != nil {
+			http.Error(w, "Failed to verify administrator", http.StatusInternalServerError)
+			return
+		} else if count > 0 {
+			caller, err := auth.ResolveUser(r.Context(), db, r)
+			if err != nil {
+				http.Error(w, "Unauthorized: Administrator authentication required", http.StatusUnauthorized)
+				return
+			}
+			if caller.Role != "admin" {
+				http.Error(w, "Forbidden: Administrator role required", http.StatusForbidden)
+				return
+			}
+		}
 		events := audit.Recent(100)
 		if events == nil {
 			events = []audit.Event{}

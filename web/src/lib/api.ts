@@ -1039,7 +1039,7 @@ export async function getAuditEvents(): Promise<AuditEvent[]> {
     return mockAuditEvents
   }
   try {
-    const res = await fetch('/api/v1/admin/audit-logs')
+    const res = await fetch('/api/v1/admin/audit-logs', { headers: getAuthHeader() })
     if (!res.ok) return []
     const data = await res.json()
     if (!Array.isArray(data?.events)) return []
