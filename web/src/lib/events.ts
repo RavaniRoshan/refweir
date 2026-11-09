@@ -46,4 +46,3 @@ export function subscribeAgentActivity(opts: SSEOptions): () => void {
 
   return () => controller.abort();
 }
-EOF

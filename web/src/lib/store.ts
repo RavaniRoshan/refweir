@@ -17,4 +17,3 @@ export const useUIStore = create<UIState>((set) => ({
   sidebarOpen: true,
   setSidebarOpen: (v) => set({ sidebarOpen: v }),
 }));
-EOF

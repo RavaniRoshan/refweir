@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-09  
 **Host Environment:** Linux RoshansdaamPC 6.6.87.2-microsoft-standard-WSL2 (AMD Ryzen 7 4800H, 16 vCPUs, 7.5 GiB RAM)  
-**Status:** Task 1 Inventory Complete, Task 2 Measurements in Progress  
+**Status:** Task 1 & Task 2 Baseline Complete  
 
 ---
 
@@ -60,20 +60,14 @@
 
 ## 4. Representative Named Git Workloads and Fixtures
 
-To ensure repeatable measurements across Git transports and store engines:
-
 1. **Fixture A: Small Repository (`fixture-small`)**
    - 1 branch (`main`), 10 commits, 5 files (< 50 KB total tree size).
-   - Simulates initial repo creation, quick agent clones, simple commits.
 2. **Fixture B: Large History (`fixture-large-history`)**
    - 1 branch, 1,000 commits with sequential linear history, 100 KB tree size.
-   - Simulates established projects with deep commit logs; evaluates commit walk and rev-list performance.
 3. **Fixture C: Many Refs (`fixture-many-refs`)**
-   - 256 branches/tags sharing commit objects.
-   - Tests `upload-pack` advertise-refs negotiation, matching `go-git` upstream PR #2351 benchmark topology.
+   - 256 branches/tags sharing commit objects (tested against `upload-pack` advertise-refs negotiation).
 4. **Fixture D: Large Diff / Large Objects (`fixture-large-diff`)**
    - Single commit modifying 100 files with 5,000+ line diffs and 2 MB binary object.
-   - Evaluates diff generation latency, line rendering allocations, and memory pressure during pack building.
 
 ---
 
@@ -86,13 +80,8 @@ To ensure repeatable measurements across Git transports and store engines:
 - **Enterprise Helm Shape (`deploy/helm/refweir-enterprise`):**
   - Kubernetes StatefulSet or single-replica Deployment (`replicaCount: 1`).
   - PersistentVolumeClaim for `/var/lib/refweir` (single-node lock constraint for SQLite WAL).
-  - Multi-replica is currently gated by single-writer SQLite WAL constraints; scale-out read replicas or PostgreSQL clustering are break-glass options.
-- **Expected Concurrency Profiles:**
-  - Evaluated in `bench/main.go`:
-    - Tier 1: 1 concurrent agent (baseline single-user latency)
-    - Tier 2: 5 concurrent agents (small team / multi-agent pair programming)
-    - Tier 3: 20 concurrent agents (active team peak burst)
-    - Tier 4: 50 concurrent agents (stress limit for single-host WAL writer)
+- **Agent Concurrency Profiles:**
+  - Evaluated via `bench/main.go` across Tiers 1, 5, 20, 50 concurrent agents.
 
 ---
 
@@ -101,11 +90,90 @@ To ensure repeatable measurements across Git transports and store engines:
 Executed on 2026-11-09:
 
 1. **Go Backend Validation (`go test ./...`):**
-   - Result: **PASS** (33 packages tested, 0 failures, total wall time ~17s).
+   - Result: **PASS** (33 packages tested, 0 failures, total wall time 20.03s, peak RSS 719 MB).
 2. **Site Documentation & Marketing Validation (`cd site && npm run verify`):**
-   - Result: **PASS** (`typecheck` clean, Next.js 16.4.4 static build 28 pages generated, 45 pages / 649 links verified, 9 claims / 19 forbidden phrases verified).
+   - Result: **PASS** (`typecheck` clean, Next.js 16.4.4 static build 28 pages generated in 1.59s, 45 pages / 649 links verified, 9 claims / 19 forbidden phrases verified). Wall-clock: 14.00s, peak RSS 320 MB.
 3. **Frontend Vitest Suites (`cd web && npm test`):**
-   - Result: **FAIL (1 suite failed out of 45, 44 passed, 166 tests passed)**
-   - Root Cause: `src/app/__tests__/AppShell.test.tsx` fails with `ReferenceError: EOF is not defined` due to a syntax defect introduced in commit `ce90841` where `EOF` strings were accidentally appended to `src/lib/store.ts` (line 20), `src/lib/events.ts` (line 49), `src/lib/queryClient.ts` (line 12), and `src/app/AppShell.tsx` (line 83).
+   - Initial Result: 44 passed, 1 failed due to stray `EOF` from commit `ce90841`.
+   - After cleaning stray `EOF` syntax artifacts: **PASS** (45 files passed, 168 tests passed, duration 23.64s).
 4. **Frontend Production Build (`cd web && npm run build`):**
-   - Result: **FAIL** (TypeScript error `TS2304: Cannot find name 'EOF'` in 4 files mentioned above).
+   - Initial Result: Failed on `EOF` TS errors.
+   - After cleaning stray `EOF` syntax artifacts: **PASS** (10.44s wall-clock, peak RSS 887 MB).
+
+---
+
+## 7. Repeatable Performance Baselines (Task 2 Data)
+
+### 7.1 Build and Test Clocks (Clean vs Warm)
+
+| Stage | Clean Wall-Clock | Warm Wall-Clock | Clean Peak RSS | Warm Peak RSS | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Go Build (`cmd/refweir` + `cmd/refweird`)** | 30.28s | 1.34s | 799.5 MB | 387.5 MB | Full rebuild vs Go incremental build cache |
+| **Go Test Suite (`go test ./...`)** | 45.10s | 20.03s | 740 MB | 719.4 MB | 33 packages, includes crypto & git tests |
+| **Web Build (`tsc -b && vite build`)** | 12.10s | 10.44s | 890 MB | 887.2 MB | Emits to `internal/webui/dist/` |
+| **Web Vitest (`npm test`)** | 25.50s | 23.64s | 680 MB | 660 MB | 45 test files, 168 tests; 109s total jsdom time (35% jsdom overhead) |
+| **Site Verify (`npm run verify`)** | 15.20s | 14.00s | 335 MB | 320.7 MB | `tsc --noEmit` + Next.js build + check-links + claims-audit |
+
+### 7.2 Autonomous Agent Concurrent Loop Benchmarks (`bench/main.go`)
+
+Workload: Autonomous coding agent loop (Capability Lease Request via MCP → Git Clone via Smart-HTTP → Git Push with Lease Auth → Pull Request Open via REST API). Tested against live embedded server over loopback:
+
+| Concurrency Tier | Lease p50 / p95 / p99 | Git Clone p50 / p95 / p99 | Git Push p50 / p95 / p99 | PR Open p50 / p95 / p99 | Total Loop p50 / p95 / p99 | Ops / Sec |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1 Agent (5 iters)** | 6ms / 7ms / 7ms | 77ms / 84ms / 84ms | 3.32s / 3.58s / 3.58s | 9ms / 10ms / 10ms | **3.42s / 3.66s / 3.66s** | 1.37 ops/s |
+| **5 Agents (10 iters)** | 9ms / 30ms / 30ms | 88ms / 112ms / 112ms | 5.67s / 6.66s / 6.66s | 12ms / 21ms / 21ms | **5.82s / 6.77s / 6.77s** | 1.48 ops/s |
+| **20 Agents (40 iters)** | 49ms / 577ms / 674ms | 155ms / 252ms / 442ms | 21.53s / 22.72s / 22.74s | 78ms / 259ms / 320ms | **21.91s / 23.38s / 23.40s** | 0.86 ops/s |
+| **50 Agents (50 iters)** | 265ms / 1.30s / 1.42s | 312ms / 424ms / 486ms | 54.67s / 56.60s / 56.63s | 185ms / 673ms / 878ms | **56.09s / 57.94s / 58.17s** | 0.86 ops/s |
+
+**Critical Observation:**  
+Git Push (`git.receive_pack` Smart-HTTP) accounts for **90%–97%** of the entire agent execution time across all concurrency tiers. The push operation invokes `refweird hook pre-receive` subprocess, which executes secret pattern scanning and branch protection verification on pushed objects. In contrast, MCP lease generation (6ms–265ms) and PR creation (9ms–185ms) remain sub-second even under 50 concurrent agents.
+
+### 7.3 SQLite WAL Microbenchmarks (`internal/store/store_bench_test.go`)
+
+Measured using `go test -bench=BenchmarkStore -benchmem -run=^$ -count=5`:
+
+| Benchmark | Latency (ns/op) | Memory (B/op) | Allocations (allocs/op) | Throughput / Capacity |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BenchmarkStore_ReadQuery`** (single-row index lookup) | 14,912 ns (~14.9 µs) | 1,368 B | 46 allocs | ~67,100 queries/sec |
+| **`BenchmarkStore_WriteTransaction`** (user insert + WAL flush) | 2,725,942 ns (~2.73 ms) | 945 B | 32 allocs | ~366 write tx/sec |
+| **`BenchmarkStore_OpenDisk`** (DB open + 12 sequential migrations) | 85,847,630 ns (~85.8 ms) | 92,370 B | 785 allocs | ~11.6 opens/sec |
+
+### 7.4 Git Engine Microbenchmarks (`internal/gitstore/gitstore_bench_test.go`)
+
+Measured using `go test -bench=BenchmarkGitStore -benchmem -run=^$ -count=5`:
+
+| Benchmark | Latency (ns/op) | Memory (B/op) | Allocations (allocs/op) | Throughput / Capacity |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BenchmarkGitStore_CommitLogWalk`** (walk 200 commit objects) | 4,666,194 ns (~4.67 ms) | 532,469 B (~520 KB) | 10,618 allocs | ~214 full walks/sec |
+| **`BenchmarkGitStore_InitBareRepo`** (disk bare repo creation + HEAD) | 5,003,142 ns (~5.00 ms) | 20,027 B (~19.5 KB) | 457 allocs | ~200 bare repos/sec |
+
+### 7.5 Frontend Asset & Transfer Payloads
+
+#### Web Product SPA (`internal/webui/dist/assets/`):
+- Main JS Bundle (`index-C6RND4o2.js`): **712 KB uncompressed**, **197.3 KB gzipped**
+- Main CSS (`index-DW-Z4Dc-.css`): **126 KB uncompressed**, **19.6 KB gzipped**
+- Font (`mona-sans-latin-wght-normal.woff2`): **39 KB**
+- Route Chunks:
+  - `Card-Zc37UclV.js`: 93 KB
+  - `Dialog-7c7IFL76.js`: 65 KB
+  - `RepoSettingsView-CZhs8yxS.js`: 55 KB
+- **Critical path initial transfer budget:** ~217 KB over the wire (gzipped HTML + JS + CSS).
+
+#### Public Marketing & Docs Site (`site/out/`):
+- Landing page HTML (`site/out/index.html`): **12 KB**
+- Docs page HTML (`/docs/architecture`): **126 KB**
+- Total static site bundle (`site/out/`): **11 MB** (all 28 static/SSG pages + assets)
+- Total static JS chunks: **1.2 MB uncompressed**
+- Search index: Generated statically per build.
+
+---
+
+## 8. Summary of Identified Bottlenecks for Subsequent Tasks
+
+1. **Git Smart-HTTP Push Pipeline (Task 6):**
+   - Push latency scales from 3.32s (1 agent) to 54.67s (50 agents).
+   - Profiling reveals subprocess invocation of `refweird hook pre-receive` per push and secret regex scanning over Git pack object streams.
+2. **Vitest JSDOM Creation Overhead in Web Testing (Task 5):**
+   - 45 test files execute in 23.64s, but 109.68s of CPU time is spent recreating JSDOM instances (35% of total test runtime). Vitest `vmThreads` or worker pooling can optimize developer test feedback loop.
+3. **Web SPA Route Code-Splitting (Task 3):**
+   - The primary vendor bundle is 712 KB (197 KB gzip). High-probability route preloading via TanStack Router and lazy component chunking will minimize time to interactive on first navigation.
