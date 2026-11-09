@@ -123,6 +123,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID, activeLease, activeLeaseToken, err := s.authenticate(ctx, r, &repo)
 	if err != nil {
+		// Git probes /info/refs without credentials first; only audit failures on
+		// an actual push POST or when a lease credential was presented.
+		if isReceive && (r.Method == http.MethodPost || activeLease != nil) {
+			ev := audit.Event{
+				Actor:     "unknown",
+				ActorType: "system",
+				Action:    "git.push_rejected",
+				Resource:  ownerSlug + "/" + repoName,
+				ClientIP:  r.RemoteAddr,
+				Severity:  audit.SeverityWarning,
+				Details:   "Push rejected before receive-pack: " + err.Error(),
+			}
+			if activeLease != nil {
+				ev.Actor = "agent:" + activeLease.AgentID
+				ev.ActorType = "agent"
+				ev.Metadata = map[string]interface{}{
+					"leaseId":         activeLease.ID,
+					"agentId":         activeLease.AgentID,
+					"leaseRepoId":     activeLease.RepoID,
+					"leaseExpiresAt":  activeLease.ExpiresAt.Format(time.RFC3339),
+					"credentialState": err.Error(),
+				}
+			}
+			_ = audit.Log(ev)
+		}
 		w.Header().Set("WWW-Authenticate", `Basic realm="refweir.dev"`)
 		http.Error(w, "Authentication required", http.StatusUnauthorized)
 		return
@@ -169,9 +194,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	metrics.DefaultRegistry.IncGitTransfers()
 
-	if isReceive {
+	if isReceive && r.Method == http.MethodPost {
 		_ = gitstore.EnsureHooks(filepath.Join(s.git.Root(), ownerSlug, repoName+".git"))
-		_ = audit.Log(audit.Event{
+		ev := audit.Event{
 			Actor:     userID,
 			ActorType: "user",
 			Action:    "git.receive_pack",
@@ -179,7 +204,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ClientIP:  r.RemoteAddr,
 			Severity:  audit.SeverityInfo,
 			Details:   "Incoming git push / receive-pack operation",
-		})
+		}
+		if activeLease != nil {
+			ev.ActorType = "agent"
+			ev.Details = "Incoming agent push / receive-pack operation under capability lease"
+			ev.Metadata = map[string]interface{}{
+				"leaseId":               activeLease.ID,
+				"agentId":               activeLease.AgentID,
+				"leaseRepoId":           activeLease.RepoID,
+				"allowedRefPrefixes":    activeLease.AllowedRefPrefixes,
+				"disallowedRefPrefixes": activeLease.DisallowedRefPrefixes,
+				"leaseExpiresAt":        activeLease.ExpiresAt.Format(time.RFC3339),
+			}
+		}
+		_ = audit.Log(ev)
 	}
 
 	s.execBackend(w, r, ownerSlug, repoName, subPath, userID, activeLease, activeLeaseToken)
@@ -189,17 +227,18 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 	// 1. Basic Auth (standard Git credential helper or capability lease)
 	if user, pass, ok := r.BasicAuth(); ok {
 		if len(s.leaseSecret) > 0 {
-			if lease, err := agentlease.Verify(s.leaseSecret, pass); err == nil {
-				if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
-					return "", nil, "", leaseErr
+			for _, candidate := range []string{pass, user} {
+				lease, lerr := agentlease.Verify(s.leaseSecret, candidate)
+				if lerr == nil {
+					if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
+						return "", lease, candidate, leaseErr
+					}
+					return "agent:" + lease.AgentID, lease, candidate, nil
 				}
-				return "agent:" + lease.AgentID, lease, pass, nil
-			}
-			if lease, err := agentlease.Verify(s.leaseSecret, user); err == nil {
-				if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
-					return "", nil, "", leaseErr
+				// Keep the decoded lease so a rejected push can be attributed.
+				if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
+					return "", lease, candidate, lerr
 				}
-				return "agent:" + lease.AgentID, lease, user, nil
 			}
 		}
 		if id, err := s.checkCredential(ctx, pass); err == nil {
@@ -222,11 +261,15 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		tok := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		if len(s.leaseSecret) > 0 {
-			if lease, err := agentlease.Verify(s.leaseSecret, tok); err == nil {
+			lease, lerr := agentlease.Verify(s.leaseSecret, tok)
+			if lerr == nil {
 				if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
-					return "", nil, "", leaseErr
+					return "", lease, tok, leaseErr
 				}
 				return "agent:" + lease.AgentID, lease, tok, nil
+			}
+			if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
+				return "", lease, tok, lerr
 			}
 		}
 		if id, err := s.checkCredential(ctx, tok); err == nil {
@@ -331,6 +374,8 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		cmd.Env = append(cmd.Env,
 			"REFWEIR_LEASE_TOKEN="+activeLeaseToken,
 			"REFWEIR_LEASE_ID="+activeLease.ID,
+			"REFWEIR_LEASE_AGENT_ID="+activeLease.AgentID,
+			"REFWEIR_LEASE_REPO_ID="+activeLease.RepoID,
 			"REFWEIR_LEASE_ALLOWED_REFS="+strings.Join(activeLease.AllowedRefPrefixes, ","),
 			"REFWEIR_LEASE_DISALLOWED_REFS="+strings.Join(activeLease.DisallowedRefPrefixes, ","),
 			"REFWEIR_LEASE_EXPIRES_AT="+activeLease.ExpiresAt.Format(time.RFC3339),

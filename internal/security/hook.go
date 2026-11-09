@@ -23,6 +23,35 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 	scanner := bufio.NewScanner(r)
 	var allViolations []SecretViolation
 
+	leaseID := os.Getenv("REFWEIR_LEASE_ID")
+	leaseAgent := os.Getenv("REFWEIR_LEASE_AGENT_ID")
+	leaseActive := os.Getenv("REFWEIR_LEASE_TOKEN") != "" || leaseID != ""
+
+	actor := "git-client"
+	actorType := "user"
+	if leaseActive {
+		actor = leaseAgent
+		if actor == "" {
+			actor = "agent:unknown"
+		}
+		actorType = "agent"
+	}
+
+	auditRejection := func(action, refName, details string) {
+		ev := audit.Event{
+			Actor:     actor,
+			ActorType: actorType,
+			Action:    action,
+			Resource:  refName,
+			Severity:  audit.SeverityWarning,
+			Details:   details,
+		}
+		if leaseID != "" {
+			ev.Metadata = map[string]interface{}{"leaseId": leaseID}
+		}
+		_ = audit.Log(ev)
+	}
+
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -40,9 +69,10 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		}
 
 		// Agent capability lease enforcement
-		if os.Getenv("REFWEIR_LEASE_TOKEN") != "" || os.Getenv("REFWEIR_LEASE_ID") != "" {
+		if leaseActive {
 			if expStr := os.Getenv("REFWEIR_LEASE_EXPIRES_AT"); expStr != "" {
 				if exp, err := time.Parse(time.RFC3339, expStr); err == nil && time.Now().UTC().After(exp) {
+					auditRejection("agent.lease_rejected", refName, "Lease expired before push was processed")
 					fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease has expired\n")
 					return fmt.Errorf("agent capability lease expired")
 				}
@@ -53,6 +83,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 				disallowed := strings.Split(disallowedStr, ",")
 				for _, dis := range disallowed {
 					if dis != "" && strings.HasPrefix(refName, dis) {
+						auditRejection("agent.lease_rejected", refName, "Lease prohibited modification of disallowed ref prefix "+dis)
 						fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease prohibited from modifying ref %s\n", refName)
 						return fmt.Errorf("agent capability lease ref prohibited: %s", refName)
 					}
@@ -73,12 +104,14 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 				}
 			}
 			if !permitted {
+				auditRejection("agent.lease_rejected", refName, "Ref is outside the lease's allowed prefixes")
 				fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease violation: ref %s is outside allowed prefixes %v\n", refName, allowed)
 				return fmt.Errorf("agent capability lease ref violation: %s", refName)
 			}
 
 			// Agents under lease cannot delete refs
 			if strings.Trim(newRev, "0") == "" {
+				auditRejection("agent.lease_rejected", refName, "Lease does not permit deleting refs")
 				fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease does not permit deleting refs (%s)\n", refName)
 				return fmt.Errorf("agent capability lease deletion prohibited")
 			}
@@ -87,6 +120,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		// Ref deletion: all zeros
 		if strings.Trim(newRev, "0") == "" {
 			if refName == "refs/heads/main" || refName == "refs/heads/master" {
+				auditRejection("security.protected_branch_blocked", refName, "Deletion of protected default branch was blocked")
 				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
 				fmt.Fprintf(stderr, "remote: error: Deletion of protected default branch is prohibited\n")
 				return fmt.Errorf("protected branch deletion rejected")
@@ -98,6 +132,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		if strings.Trim(oldRev, "0") != "" && (refName == "refs/heads/main" || refName == "refs/heads/master") {
 			ancestorCheck := exec.Command("git", "merge-base", "--is-ancestor", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 			if err := ancestorCheck.Run(); err != nil {
+				auditRejection("security.protected_branch_blocked", refName, "Non-fast-forward update to protected default branch was blocked")
 				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
 				fmt.Fprintf(stderr, "remote: error: Force-push (non-fast-forward update) to protected branch is not permitted\n")
 				return fmt.Errorf("protected branch force-push rejected")
@@ -127,14 +162,18 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 
 	if len(allViolations) > 0 {
 		metrics.DefaultRegistry.IncSecretPushBlocks()
-		_ = audit.Log(audit.Event{
-			Actor:     "git-client",
-			ActorType: "user",
+		ev := audit.Event{
+			Actor:     actor,
+			ActorType: actorType,
 			Action:    "security.secret_push_blocked",
 			Resource:  allViolations[0].Path,
 			Severity:  audit.SeverityCritical,
 			Details:   fmt.Sprintf("Blocked push containing %d detected secret(s)", len(allViolations)),
-		})
+		}
+		if leaseID != "" {
+			ev.Metadata = map[string]interface{}{"leaseId": leaseID}
+		}
+		_ = audit.Log(ev)
 		fmt.Fprintln(stderr, FormatPushRejection(allViolations))
 		return fmt.Errorf("push rejected: sensitive credentials detected")
 	}

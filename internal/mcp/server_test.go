@@ -7,13 +7,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"refweir.dev/internal/audit"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/store"
 	"refweir.dev/pkg/idgen"
-	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 func setupTestMCP(t *testing.T) (*Server, *store.DB, *gitstore.Store) {
@@ -216,6 +218,11 @@ func TestMCP_ToolCall_RepositoryAndReadOnlyGuard(t *testing.T) {
 }
 
 func TestMCP_LeaseTools(t *testing.T) {
+	var auditBuf bytes.Buffer
+	prevLogger := audit.DefaultLogger
+	audit.SetDefaultLogger(audit.NewLogger(&auditBuf))
+	t.Cleanup(func() { audit.SetDefaultLogger(prevLogger) })
+
 	srv, _, _ := setupTestMCP(t)
 	srv.SetLeaseSecret([]byte("test-super-secret-hmac-key-12345678"))
 	rwHandler := srv.Handler(false)
@@ -313,6 +320,13 @@ func TestMCP_LeaseTools(t *testing.T) {
 	_ = json.Unmarshal([]byte(content), &inspectData)
 	if inspectData["revoked"] != true {
 		t.Fatalf("expected revoked=true, got %+v", inspectData)
+	}
+
+	logged := auditBuf.String()
+	for _, want := range []string{"agent.lease_issued", "agent.lease_revoked", leaseID, "agent-claude"} {
+		if !strings.Contains(logged, want) {
+			t.Fatalf("expected lease audit stream to contain %q, got: %s", want, logged)
+		}
 	}
 }
 

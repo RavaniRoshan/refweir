@@ -27,6 +27,13 @@ type LeaseResponse struct {
 
 // Handler returns an HTTP handler for issuing signed agent capability leases.
 func Handler(signingSecret []byte) http.HandlerFunc {
+	return HandlerWithObserver(signingSecret, nil)
+}
+
+// HandlerWithObserver is Handler with a hook invoked after a lease is signed and
+// before the response is written. Use it to record durable audit events. The
+// hook may be nil.
+func HandlerWithObserver(signingSecret []byte, onIssued func(*http.Request, *Lease)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -58,6 +65,10 @@ func Handler(signingSecret []byte) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		if onIssued != nil {
+			onIssued(r, lease)
 		}
 
 		w.Header().Set("Content-Type", "application/json")

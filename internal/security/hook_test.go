@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"refweir.dev/internal/audit"
 )
 
 func TestPreReceiveHookRejection(t *testing.T) {
@@ -103,5 +105,45 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 		t.Fatal("expected expired lease push to be rejected, got nil error")
 	} else if !strings.Contains(stderrExpired.String(), "lease has expired") {
 		t.Fatalf("expected lease has expired error, got: %s", stderrExpired.String())
+	}
+}
+
+func TestPreReceiveHook_AuditsLeaseAndProtectedBranchRejections(t *testing.T) {
+	var auditBuf bytes.Buffer
+	prevLogger := audit.DefaultLogger
+	audit.SetDefaultLogger(audit.NewLogger(&auditBuf))
+	t.Cleanup(func() { audit.SetDefaultLogger(prevLogger) })
+
+	t.Setenv("REFWEIR_LEASE_TOKEN", "dummy.jwt.token")
+	t.Setenv("REFWEIR_LEASE_ID", "lease-audit-1")
+	t.Setenv("REFWEIR_LEASE_AGENT_ID", "agent-audit")
+	t.Setenv("REFWEIR_LEASE_ALLOWED_REFS", "refs/heads/agent/")
+	t.Setenv("REFWEIR_LEASE_DISALLOWED_REFS", "refs/heads/main")
+	t.Setenv("REFWEIR_LEASE_EXPIRES_AT", "2099-01-01T00:00:00Z")
+
+	// Lease rejection must be recorded with actor, lease, and ref metadata.
+	inputMain := bytes.NewBufferString("1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 refs/heads/main\n")
+	var stderrMain bytes.Buffer
+	if err := PreReceiveHook(inputMain, &stderrMain); err == nil {
+		t.Fatal("expected lease push to main to be rejected")
+	}
+	out := auditBuf.String()
+	for _, want := range []string{"agent.lease_rejected", "agent-audit", "lease-audit-1", "refs/heads/main", "warning"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("expected audit event to contain %q, got: %s", want, out)
+		}
+	}
+
+	// Protected-branch rejection outside a lease must also be audited.
+	t.Setenv("REFWEIR_LEASE_TOKEN", "")
+	t.Setenv("REFWEIR_LEASE_ID", "")
+	auditBuf.Reset()
+	inputDelete := bytes.NewBufferString("1111111111111111111111111111111111111111 0000000000000000000000000000000000000000 refs/heads/main\n")
+	var stderrDelete bytes.Buffer
+	if err := PreReceiveHook(inputDelete, &stderrDelete); err == nil {
+		t.Fatal("expected protected branch deletion to be rejected")
+	}
+	if !strings.Contains(auditBuf.String(), "security.protected_branch_blocked") {
+		t.Fatalf("expected protected branch audit event, got: %s", auditBuf.String())
 	}
 }

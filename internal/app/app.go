@@ -300,7 +300,30 @@ func Open(cfg config.Config) (*App, error) {
 		raw, _, _ := auth.GenerateSessionToken()
 		leaseSecret = []byte(raw)
 	}
-	baseLeaseHandler := agentlease.Handler(leaseSecret)
+	baseLeaseHandler := agentlease.HandlerWithObserver(leaseSecret, func(r *http.Request, lease *agentlease.Lease) {
+		actor := "anonymous"
+		actorType := "system"
+		if u, err := auth.ResolveUser(r.Context(), db, r); err == nil && u != nil {
+			actor = u.ID
+			actorType = "user"
+		}
+		_ = audit.Log(audit.Event{
+			Actor:     actor,
+			ActorType: actorType,
+			Action:    "agent.lease_issued",
+			Resource:  lease.RepoID,
+			ClientIP:  r.RemoteAddr,
+			Severity:  audit.SeverityInfo,
+			Details:   "Capability lease issued via REST API",
+			Metadata: map[string]interface{}{
+				"leaseId":               lease.ID,
+				"agentId":               lease.AgentID,
+				"allowedRefPrefixes":    lease.AllowedRefPrefixes,
+				"disallowedRefPrefixes": lease.DisallowedRefPrefixes,
+				"leaseExpiresAt":        lease.ExpiresAt.Format(time.RFC3339),
+			},
+		})
+	})
 	mux.HandleFunc("POST /api/v1/agent/leases", func(w http.ResponseWriter, r *http.Request) {
 		count, _ := db.CountUsers(r.Context())
 		if count > 0 {

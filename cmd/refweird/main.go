@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"refweir.dev/internal/app"
+	"refweir.dev/internal/audit"
 	"refweir.dev/internal/config"
 	"refweir.dev/internal/security"
 )
@@ -40,7 +41,10 @@ func main() {
 	// Check for CLI subcommands
 	if len(os.Args) > 1 && os.Args[1] == "hook" {
 		if len(os.Args) > 2 && os.Args[2] == "pre-receive" {
-			if err := security.PreReceiveHook(os.Stdin, os.Stderr); err != nil {
+			closeAudit := openHookAudit()
+			hookErr := security.PreReceiveHook(os.Stdin, os.Stderr)
+			closeAudit()
+			if hookErr != nil {
 				os.Exit(1)
 			}
 			return
@@ -141,6 +145,34 @@ func main() {
 		return
 	}
 
+	// Durable audit trail: append every event to a JSON-lines file alongside the
+	// database. The in-memory ring buffer remains available to the admin API.
+	// Set REFWEIR_AUDIT_LOG to a path to override, or "off" to disable the file.
+	auditPath := os.Getenv("REFWEIR_AUDIT_LOG")
+	if auditPath == "" {
+		auditPath = filepath.Join(cfg.DataDir, "audit.log")
+	}
+	if auditPath != "off" {
+		if mkErr := os.MkdirAll(filepath.Dir(auditPath), 0o700); mkErr != nil {
+			log.Printf("refweird: cannot create audit log directory: %v", mkErr)
+		}
+		auditLogger, aerr := audit.NewFileLogger(auditPath)
+		if aerr != nil {
+			log.Printf("refweird: file audit log unavailable (%v); audit stays on stderr and in memory", aerr)
+		} else {
+			audit.SetDefaultLogger(auditLogger)
+			// Child processes (the pre-receive hook invoked by git) inherit the
+			// environment; point them at the same durable log.
+			_ = os.Setenv("REFWEIR_AUDIT_LOG", auditPath)
+			defer func() {
+				if cerr := auditLogger.Close(); cerr != nil {
+					log.Printf("refweird: error closing audit log: %v", cerr)
+				}
+			}()
+			fmt.Printf("refweird audit log: %s\n", auditPath)
+		}
+	}
+
 	application, err := app.Open(cfg)
 	if err != nil {
 		log.Fatalf("refweird: failed to initialize application: %v", err)
@@ -192,4 +224,26 @@ func main() {
 			log.Printf("refweird: shutdown error: %v", err)
 		}
 	}
+}
+
+// openHookAudit opens the shared audit log for the pre-receive subprocess. The
+// hook is spawned by git from the daemon, so it inherits REFWEIR_AUDIT_LOG (set
+// by the parent) or REFWEIR_DATA_DIR. It returns a no-op when no durable log is
+// configured, leaving events on stderr.
+func openHookAudit() func() {
+	path := os.Getenv("REFWEIR_AUDIT_LOG")
+	if path == "" {
+		if dataDir := os.Getenv("REFWEIR_DATA_DIR"); dataDir != "" {
+			path = filepath.Join(dataDir, "audit.log")
+		}
+	}
+	if path == "" || path == "off" {
+		return func() {}
+	}
+	logger, err := audit.NewFileLogger(path)
+	if err != nil {
+		return func() {}
+	}
+	audit.SetDefaultLogger(logger)
+	return func() { _ = logger.Close() }
 }

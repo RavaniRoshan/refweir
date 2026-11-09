@@ -37,6 +37,7 @@ type Event struct {
 type Logger struct {
 	mu     sync.RWMutex
 	writer io.Writer
+	closer io.Closer
 	events []Event
 	maxBuf int
 }
@@ -91,7 +92,26 @@ func NewFileLogger(filePath string) (*Logger, error) {
 	if err != nil {
 		return nil, fmt.Errorf("audit: open log file: %w", err)
 	}
-	return NewLogger(f), nil
+	l := NewLogger(f)
+	l.closer = f
+	return l, nil
+}
+
+// Close flushes and closes the underlying log file, if the logger owns one.
+// It is safe to call on nil or on a logger without a file.
+func (l *Logger) Close() error {
+	if l == nil {
+		return nil
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.closer == nil {
+		return nil
+	}
+	err := l.closer.Close()
+	l.closer = nil
+	l.writer = nil
+	return err
 }
 
 // Record outputs an immutable JSON-encoded audit entry and buffers it in memory.

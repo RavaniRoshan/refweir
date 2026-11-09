@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"refweir.dev/internal/audit"
 	"refweir.dev/internal/engine"
 	"refweir.dev/internal/store"
 	"refweir.dev/internal/symbolsearch"
 	"refweir.dev/pkg/agentlease"
 	"refweir.dev/pkg/idgen"
-	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 // ToolDef defines an MCP tool and its execution handler.
@@ -1590,6 +1591,21 @@ func BuiltinTools() []ToolDef {
 				if err != nil {
 					return nil, fmt.Errorf("issue lease: %w", err)
 				}
+				_ = audit.Log(audit.Event{
+					Actor:     "agent:" + lease.AgentID,
+					ActorType: "agent",
+					Action:    "agent.lease_issued",
+					Resource:  lease.RepoID,
+					Severity:  audit.SeverityInfo,
+					Details:   "Capability lease issued via MCP",
+					Metadata: map[string]interface{}{
+						"leaseId":               lease.ID,
+						"agentId":               lease.AgentID,
+						"allowedRefPrefixes":    lease.AllowedRefPrefixes,
+						"disallowedRefPrefixes": lease.DisallowedRefPrefixes,
+						"leaseExpiresAt":        lease.ExpiresAt.Format(time.RFC3339),
+					},
+				})
 				return map[string]any{
 					"token":                 token,
 					"id":                    lease.ID,
@@ -1665,6 +1681,19 @@ func BuiltinTools() []ToolDef {
 				if err := s.store.RevokeAgentLease(ctx, leaseID, agentID, repoID, reason); err != nil {
 					return nil, fmt.Errorf("revoke lease: %w", err)
 				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-tool",
+					ActorType: "system",
+					Action:    "agent.lease_revoked",
+					Resource:  repoID,
+					Severity:  audit.SeverityWarning,
+					Details:   "Capability lease revoked via MCP: " + reason,
+					Metadata: map[string]interface{}{
+						"leaseId": leaseID,
+						"agentId": agentID,
+						"reason":  reason,
+					},
+				})
 				return map[string]any{
 					"revoked": true,
 					"leaseId": leaseID,
