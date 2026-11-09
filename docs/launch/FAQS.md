@@ -42,7 +42,7 @@ Refweir is distributed as a single hermetic binary (`refweird`) with the full We
 - **Docker:** `docker run -p 8080:8080 -p 2222:2222 -v /data:/data ravaniroshan/refweird:latest`.
 - **Kubernetes:** Production Helm chart available in `deploy/helm/` (labeled experimental for launch).
 
-No separate PostgreSQL, Redis, or OpenSSH server is required. SQLite WAL mode (`modernc.org/sqlite`) handles all database queries with zero lock contention.
+No separate PostgreSQL, Redis, or OpenSSH server is required. SQLite WAL mode (`modernc.org/sqlite`) provides concurrent readers and a serialized single writer. Refweir is sized for small-to-medium teams (roughly 1–25 concurrent agents/engineers), not a global forge; at 50 concurrent pushes, measured p95 push latency was 40.4 s (`docs/benchmarks.md`).
 
 ---
 
@@ -51,7 +51,7 @@ No separate PostgreSQL, Redis, or OpenSSH server is required. SQLite WAL mode (`
 Traditional Git tokens give agents full write access to all branches. An errant LLM prompt can trigger a catastrophic `git push --force origin main`.
 
 Refweir introduces **Capability Leases (`pkg/agentlease`)**:
-- Short-lived HMAC-SHA256 capability tokens (default: 15–60 minutes).
+- Short-lived HMAC-SHA256 capability tokens (default: 15 minutes, configurable).
 - Strictly isolated to specific ref prefixes (by default: `refs/heads/agent/*`).
 - Pre-receive hook rejects any attempt to push to `main` or delete existing branches with error `GH007`.
 - Secret scanners automatically inspect incoming commits for private keys and tokens before accepting the push.

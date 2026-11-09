@@ -12,9 +12,10 @@ The `refweird` server daemon and `refweir` CLI are configured through environmen
 | Variable | CLI Flag | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `REFWEIR_LISTEN_ADDR` | `--addr` | `127.0.0.1:8080` | Network address and port to bind the HTTP REST, MCP, and Web server |
-| `REFWEIR_SSH_ADDR` | `--ssh-addr` | `0.0.0.0:2222` | Network address and port for the embedded pure-Go SSH server |
-| `REFWEIR_SSH_HOST_KEY_PATH` | `--ssh-host-key` | (auto-generated) | Path to Ed25519/RSA host key PEM file for SSH server identity |
+| `REFWEIR_SSH_ADDR` | `--ssh-addr` | `127.0.0.1:2222` | Network address and port for the embedded pure-Go SSH server |
+| `REFWEIR_SSH_HOST_KEY` | `--ssh-host-key` | `<data-dir>/ssh_host_key` | Path to the SSH host key PEM file for the embedded server |
 | `REFWEIR_DATA_DIR` | `--data-dir` | `data` | Directory where SQLite metadata, Git repos, and LFS objects are stored |
+| `REFWEIR_AUDIT_LOG` | — | `<data-dir>/audit.log` | Append-only JSONL audit log path. Set to `off` to disable the file; events then stay on stderr and in memory. |
 | `REFWEIR_PUBLIC_URL` | `--public-url` | `http://127.0.0.1:8080` | Publicly reachable base URL used for webhook callbacks and SSO redirects |
 | `REFWEIR_GIT_URL` | `--git-url` | `127.0.0.1:8080` | Public host string returned in clone URLs |
 | `REFWEIR_LFS_ENABLED` | `--lfs` | `true` | Enable or disable the Git Large File Storage (LFS) v1 Batch engine |
@@ -49,22 +50,23 @@ data/
 ├── meta.db          # Primary SQLite metadata database
 ├── meta.db-wal      # SQLite Write-Ahead Log
 ├── meta.db-shm      # SQLite shared memory file
-├── ssh/             # Auto-generated or custom host keys
-│   └── id_ed25519   # Server host private key
+├── audit.log        # Append-only JSONL audit trail
+├── ssh_host_key     # Auto-generated SSH host private key
 ├── lfs/             # Git LFS Content-Addressable Storage (CAS)
 │   └── objects/
 │       └── 4a/
 │           └── f3/
 │               └── 4af3a8... (SHA-256 payload)
-└── repos/           # Bare Git repositories (go-git engine)
+└── git/             # Bare Git repositories (go-git engine)
     └── acme/
         ├── demo-app.git/
         └── backend.git/
 ```
 
 - **`meta.db`**: Stores users, password hashes, web sessions, tokens, namespaces, repository records, permissions, pull requests, review comments, status checks, rulesets, CIDR allowlists, SSH CAs, and SSO configurations.
+- **`audit.log`**: Append-only JSON Lines file written by the daemon and the pre-receive hook. Records actor, actor type, action, resource, client IP, severity, details, and lease metadata. It is operator-controlled and not cryptographically sealed or remotely replicated.
 - **`lfs/objects/{oid[0:2]}/{oid[2:4]}/{oid}`**: Sharded directory storing raw binary payloads indexed by their cryptographic SHA-256 hash.
-- **`repos/{owner}/{repo}.git`**: Standard bare Git repositories storing commits, trees, blobs, refs, and packfiles managed via `go-git/v6`.
+- **`git/{owner}/{repo}.git`**: Standard bare Git repositories storing commits, trees, blobs, refs, and packfiles managed via `go-git/v6`.
 
 ---
 
@@ -72,7 +74,7 @@ data/
 
 `refweird` automatically applies the following database pragmas upon connection:
 
-- `PRAGMA journal_mode = WAL`: High-concurrency Write-Ahead Logging for zero-lock multi-reader execution.
+- `PRAGMA journal_mode = WAL`: Write-Ahead Logging lets readers proceed during a write; writers are still serialized.
 - `PRAGMA busy_timeout = 5000`: 5-second wait on lock contention before returning busy error.
 - `PRAGMA foreign_keys = ON`: Strict relational integrity for cascading deletes and reference checks.
-- Connection limit: Single writer connection pool to eliminate SQLite database lock contention entirely.
+- Connection limit: A single writer connection serializes writes while readers run concurrently under WAL. This bounds write throughput; size deployments for small-to-medium teams.

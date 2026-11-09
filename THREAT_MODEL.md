@@ -88,11 +88,13 @@ This section analyzes the primary attack vectors available to a malicious, misco
 - **Attack Vector:** An agent attempts to delete audit logs, rewrite event histories, or inject false compliance records to conceal unauthorized branch modifications or secret leaks.
 - **Impact:** Loss of enterprise audit trail, undetected compliance violations (SOC 2, ISO 27001).
 - **Mitigation:**
-  - **Append-Only Architecture:** The `audit_logs` table in SQLite has no `DELETE` or `UPDATE` operations exposed through REST or MCP interfaces.
-  - **Process-Space Isolation:** Audit entries are written directly by internal server components (`internal/audit/audit.go`) during transport events, lease creation, and PR merges. Agents have no direct access to the database layer.
-  - **Immutable JSON Records:** Every audit entry contains immutable metadata: unique audit ID (`aud-*`), nanosecond timestamp, authenticated actor ID, actor type (`agent`, `user`), action, target resource, client IP, severity, and details.
+  - **Append-Only Writer:** Audit events are appended as JSON lines to `$REFWEIR_DATA_DIR/audit.log` and buffered in memory (last 1,000 events). No REST or MCP interface exposes a `DELETE` or `UPDATE` operation for audit events.
+  - **Process-Space Isolation:** Audit entries are written directly by internal server components (`internal/audit/audit.go`) during transport events, lease issuance/revocation, and push rejection. Agents have no direct access to the database or log file.
+  - **Structured Records:** Every audit entry contains an audit ID (`aud-*`), timestamp, authenticated actor ID, actor type (`agent`, `user`, `system`), action, target resource, client IP, severity, details, and optional lease metadata (lease ID, agent ID, ref prefixes, expiry).
+  - **Operator-Controlled Storage:** The log is durable across restarts but is a plain file on the operator's filesystem. There is no remote immutable sink, cryptographic sealing, or built-in rotation; an operator with filesystem access can alter it. Use filesystem permissions, backups, and log shipping for stronger guarantees.
 - **Verification & Test:**
-  - Audit tests in [`internal/audit/audit_test.go`](internal/audit/audit_test.go).
+  - Audit tests in [`internal/audit/audit_test.go`](internal/audit/audit_test.go), including file persistence and close behaviour.
+  - Lease and rejection audit events in [`internal/security/hook_test.go`](internal/security/hook_test.go) and [`internal/mcp/server_test.go`](internal/mcp/server_test.go).
 
 ---
 
@@ -112,4 +114,4 @@ This section analyzes the primary attack vectors available to a malicious, misco
 1. **Localhost Default:** The daemon binds to `127.0.0.1` by default; public internet exposure requires explicit operator configuration.
 2. **Ephemeral Capability Leases:** Autonomous agents must operate under short-lived capability leases restricted to `refs/heads/agent/*`.
 3. **Pre-Receive Defense:** Secrets, private keys, and unauthorized ref pushes are blocked before Git commits are written to bare repos.
-4. **Append-Only Auditing:** Every agent transport action is irreversibly recorded in the local SQLite WAL audit trail.
+4. **Append-Only Auditing:** Every agent transport action and lease lifecycle event is appended to the local JSONL audit log (`$REFWEIR_DATA_DIR/audit.log`) and the in-memory ring buffer. The log is durable across restarts but operator-controlled; it is not cryptographically sealed or shipped to an immutable sink.

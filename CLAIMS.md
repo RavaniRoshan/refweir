@@ -36,6 +36,7 @@ This ledger documents every technical and product claim made in the README, docu
 | 19 | **Litestream sync status active in admin health API** | `internal/app/app.go:137` | **False** | Retained as experimental stub; documented in audit report. | 53bce30 |
 | 20 | **Single canonical documentation URL** | `README.md`, `site/next.config.mjs` | **Remediated** | Unified on `https://refweir.dev/` and GitHub Pages base `/refweir` (`https://ravaniroshan.github.io/refweir/`). Old paths are mapped in `MIGRATION.md`. | — |
 | 21 | **Marketing + docs site rewrite (2026-11) introduces no new capability claims** | `site/` copy vs this ledger; `site/scripts/audit-claims.mjs`; `internal/claims/coherence_test.go` (now scans `site/{content,app,components}`) | **Verified** | Every capability statement on the landing traces to prior entries (#3–8, #10, #11, #14, #16–18). Claims gate re-pointed at the migrated docs path and extended to the site sources; `npm run claims-audit` enforced in CI. | 81720f9 |
+| 22 | **Durable append-only audit trail with lease lifecycle events** | `internal/audit/audit.go` (`NewFileLogger`, `Close`), `cmd/refweird/main.go` (wires `$REFWEIR_DATA_DIR/audit.log`, passes path to the pre-receive subprocess), `internal/gittransport/server.go`, `internal/security/hook.go`, `internal/mcp/tools.go`, `pkg/agentlease/handler.go`; tests in `internal/audit/audit_test.go`, `internal/security/hook_test.go`, `internal/mcp/server_test.go`, `pkg/agentlease/handler_test.go` | **Verified** | Events are appended as JSONL to an operator-controlled file and buffered in memory (last 1,000). Logs record actor, actor type, action, resource, client IP, severity, details, and lease metadata. No remote immutable sink, cryptographic sealing, or rotation; not tamper-evident against the operator. | — |
 
 ---
 
@@ -57,4 +58,8 @@ enterprise-ready
 Space UI
 production-ready Terraform/OpenTofu provider
 37 suites, 137 tests
+zero lock contention
+zero-lock multi-reader
+eliminate SQLite database lock contention entirely
+irreversibly recorded in the local SQLite WAL audit trail
 <!-- forbidden-claims:end -->

@@ -156,12 +156,14 @@ Private beta ──► Pricing decision ──► Launch assets ──► Launch
 **Owner:** Security/Infra + Backend
 **Output:** `docs/security/THREAT_MODEL.md`
 **Tasks:**
-- [ ] Define assets: repos, refs, tokens, leases, audit logs, secrets.
-- [ ] Define adversaries: over-permissioned agent, prompt-injected agent, compromised agent, malicious dependency, insider.
-- [ ] Map controls: lease scope, ref-prefix isolation, pre-receive hook, read-only mode, secret scanning, audit, revocation, expiry.
-- [ ] List residual risks and non-goals.
+- [x] Define assets: repos, refs, tokens, leases, audit logs, secrets. → §2
+- [x] Define adversaries: over-permissioned agent, prompt-injected agent, compromised agent, malicious dependency, insider. → §4
+- [x] Map controls: lease scope, ref-prefix isolation, pre-receive hook, read-only mode, secret scanning, audit, revocation, expiry. → §5
+- [x] List residual risks and non-goals. → §7–§8
 
-**Acceptance:** Reviewed; controls map to tests or demo steps.
+**Acceptance:** Reviewed; controls map to tests or demo steps. → every control in
+`docs/security/THREAT_MODEL.md` §5 names a test or demo step; security review
+checklist in §10 remains open.
 
 ### 1.3 Reproducible containment demo — P0
 **Owner:** Backend + DevRel
@@ -173,9 +175,11 @@ Private beta ──► Pricing decision ──► Launch assets ──► Launch
 3. Agent A pushes successfully.
 4. Agent B attempts `refs/heads/main` and is rejected.
 5. Attempt an expired/revoked lease and show rejection.
-6. Show the audit log: agent identity, model, prompt hash, scope, expiry, approver.
+6. Show the durable audit log: actor, actor type, lease ID, ref scope, expiry, and rejection reason. Model, prompt hash, and approver are **not** recorded — see the threat-model non-goals.
 
-**Acceptance:** A fresh machine can run `examples/containment/run.sh` and reproduce every step; a 60–90s recording with captions exists.
+**Implementation:** `examples/containment/run.sh` + `docs/launch/CONTAINMENT_DEMO.md`.
+
+**Acceptance:** A fresh machine can run `examples/containment/run.sh` and reproduce every step; a 60–90s recording with captions exists. → script passes locally; recording outstanding (shot list in `docs/launch/CONTAINMENT_DEMO.md` §6).
 
 ### 1.4 Hosted demo — P0
 **Owner:** Backend + Security/Infra

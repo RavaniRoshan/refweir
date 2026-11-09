@@ -72,7 +72,7 @@ refweir/
 │   ├── agentactivity/       # Bounded memory ring buffer for agent telemetry stream
 │   ├── agentreviewer/       # Autonomous PR review agent with static AST & secret scanner
 │   ├── app/                 # Forge REST API v1 handlers, route mux, and HTTP server
-│   ├── audit/               # Immutable compliance audit log engine
+│   ├── audit/               # Append-only JSONL audit log (file + in-memory buffer)
 │   ├── auth/                # Password hashing (bcrypt), PAT tokens, and session manager
 │   ├── config/              # Environment and YAML configuration parser
 │   ├── gitlfs/              # Git LFS v1 Batch & CAS engine with SHA-256 chunk storage
