@@ -14,8 +14,8 @@
 | **SQLite Disk Write Transactions** | 2,725,942 ns (~2.73 ms) | 101,205 ns (~101.2 µs) | **26.9× faster throughput** (~366 tx/s → ~9,880 tx/s) | **ACCEPTED** (Task 7) |
 | **SQLite Index Read Lookups** | 14,912 ns (~14.9 µs) | 14,909 ns (~14.9 µs) | **~67,100 queries/s** sustained | **ACCEPTED** (Task 7) |
 | **`InlineDiffViewer` Line Render** | $O(N \times M)$ filter loop on every diff line | $O(1)$ indexed lookup via `useMemo` map | Eliminated redundant comment array allocations | **ACCEPTED** (Task 3) |
-| **SPA Route Preloading (Preparatory)** | Default eager/on-click | TanStack Router configured with `intent` preloading + 30s stale time | Preparatory routing foundation for app shell migration; unmounted in current `<App />` tab view | **PREPARATORY / NO LIVE RUNTIME IMPACT** (Task 3) |
-| **Frontend Unit Test Suite (`web`)** | 44 passed, 1 failed (stray `EOF` defect) | **45/45 passed, 169/169 tests passed** | Zero test failures, 100% green | **ACCEPTED** (Task 2 & 3) |
+| **Frontend Bundle & Route Splitting** | Monolithic `routes-*.js` of 601.10 kB (triggered Vite warning >500 kB) | **Code-split routes-*.js to 482.67 kB (-118.43 kB / -19.7%)**, 31 isolated chunks | Cleared Vite warning; lazy-loaded secondary views, added `ViewErrorBoundary` + CLS-proof `ViewFallback` | **ACCEPTED** (Task 3) |
+| **Frontend Unit Test Suite (`web`)** | 44 passed, 1 failed (stray `EOF` defect) | **52/52 passed, 204/204 tests passed** | Zero test failures, 100% green | **ACCEPTED** (Task 2 & 3) |
 | **Frontend Production Build (`web`)** | Failed (TypeScript syntax errors) | **Clean build (1.26s Vite transform)** | Production bundles emitted to `internal/webui/dist` | **ACCEPTED** (Task 2 & 3) |
 | **Static Docs Site Verify (`site`)** | 14.00s wall-clock, 649 links verified | **14.00s wall-clock, 649 links verified** | 28 static pages, 0 broken links | **ACCEPTED** (Task 4) |
 | **Package Manager (pnpm vs npm)** | npm ci: 19.92s warm reinstall | pnpm: 1.81s warm, but **broke 100% of Vitest tests** | Retained npm; rejected pnpm due to test failure | **REJECTED** (Task 5) |
@@ -72,12 +72,12 @@
 All commands run fresh on the final candidate:
 
 - **Go Backend Test Suite:**  
-  `go test ./...` → **PASS** (33 packages, 0 failures).
+  `go test ./...` → **PASS** (36 packages, 0 failures).
 - **Go Zero-CGO Build:**  
   `CGO_ENABLED=0 go build -v ./cmd/refweir ./cmd/refweird` → **PASS** (exit code 0).
 - **Web Frontend Test Suite:**  
-  `cd web && npm test` → **PASS** (45/45 test files, 169/169 tests passed).
+  `cd web && npm test` → **PASS** (52/52 test files, 204/204 tests passed).
 - **Web Frontend Production Build:**  
-  `cd web && npm run build` → **PASS** (Vite production bundle built cleanly).
+  `cd web && npm run build` → **PASS** (Vite production bundle built cleanly in ~800ms, routes chunk 482 kB, zero warnings).
 - **Site Static Documentation & Marketing:**  
   `cd site && npm run verify` → **PASS** (TypeScript clean, Next.js build 28 pages, 45 HTML pages / 649 links verified, 9 claims verified).
