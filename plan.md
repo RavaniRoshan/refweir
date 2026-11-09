@@ -281,6 +281,8 @@ checklist in §10 remains open.
 
 ## Phase 3 — IA and design system (Weeks 3–6)
 
+Template research: `docs/launch/FRONTEND_TEMPLATES.md` (free templates: Velora UI, Aceternity, Magic UI, Animata, Cruip, Launch UI; copy-paste component libraries; motion stack; "lowest effort, highest ROI" 5-day plan).
+
 Research input: `docs/launch/FRONTEND_RESEARCH.md` (best-in-class landing pages,
 component libraries, motion, and PH launch patterns; recommends keeping
 Patina/React Aria/Tailwind/Vite and adding TanStack Router/Query, SSE, Motion on
