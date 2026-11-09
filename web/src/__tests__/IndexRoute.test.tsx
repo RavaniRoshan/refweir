@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Route } from '../index';
+import { Route } from '@/routes/index';
 
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<any>('@/lib/api');
