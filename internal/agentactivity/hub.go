@@ -139,6 +139,7 @@ func (h *Hub) Clear() {
 func Handler(h *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		limit := 50
 		activities := h.Recent(limit)
 		_ = json.NewEncoder(w).Encode(map[string]any{

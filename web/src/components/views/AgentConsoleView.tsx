@@ -67,41 +67,83 @@ export const AgentConsoleView: React.FC = () => {
   }
 
   useEffect(() => {
-    if (isDemoModeActive()) {
-      loadActivities()
-      const interval = setInterval(loadActivities, 4000)
-      const onModeChange = () => loadActivities()
-      window.addEventListener('refweir_mode_changed', onModeChange)
+    let active = true
+    let unsubscribe: (() => void) | null = null
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null
+    let demoInterval: ReturnType<typeof setInterval> | null = null
 
-      return () => {
-        clearInterval(interval)
-        window.removeEventListener('refweir_mode_changed', onModeChange)
+    function cleanup() {
+      if (unsubscribe) {
+        unsubscribe()
+        unsubscribe = null
+      }
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval)
+        fallbackInterval = null
+      }
+      if (demoInterval) {
+        clearInterval(demoInterval)
+        demoInterval = null
       }
     }
 
-    setLoadingActivities(true)
-    const unsubscribe = subscribeAgentActivity({
-      onSnapshot: (items) => {
-        setActivities(items)
-        setLoadingActivities(false)
-      },
-      onActivity: (item) => {
-        setActivities((prev) => {
-          if (prev.some((a) => a.id === item.id)) return prev
-          return [item, ...prev].slice(0, 100)
-        })
-        setLoadingActivities(false)
-      },
-      onError: () => {
-        loadActivities()
-      },
-    })
+    function initTransport() {
+      cleanup()
+      if (!active) return
 
-    const onModeChange = () => loadActivities()
+      if (isDemoModeActive()) {
+        loadActivities()
+        demoInterval = setInterval(() => {
+          if (active) loadActivities()
+        }, 4000)
+        return
+      }
+
+      setLoadingActivities(true)
+      unsubscribe = subscribeAgentActivity({
+        onSnapshot: (items) => {
+          if (!active) return
+          setActivities(items)
+          setLoadingActivities(false)
+          if (fallbackInterval) {
+            clearInterval(fallbackInterval)
+            fallbackInterval = null
+          }
+        },
+        onActivity: (item) => {
+          if (!active) return
+          setActivities((prev) => {
+            if (prev.some((a) => a.id === item.id)) return prev
+            return [item, ...prev].slice(0, 100)
+          })
+          setLoadingActivities(false)
+          if (fallbackInterval) {
+            clearInterval(fallbackInterval)
+            fallbackInterval = null
+          }
+        },
+        onError: () => {
+          if (!active) return
+          loadActivities()
+          if (!fallbackInterval) {
+            fallbackInterval = setInterval(() => {
+              if (active) loadActivities()
+            }, 5000)
+          }
+        },
+      })
+    }
+
+    initTransport()
+
+    const onModeChange = () => {
+      initTransport()
+    }
     window.addEventListener('refweir_mode_changed', onModeChange)
 
     return () => {
-      unsubscribe()
+      active = false
+      cleanup()
       window.removeEventListener('refweir_mode_changed', onModeChange)
     }
   }, [])

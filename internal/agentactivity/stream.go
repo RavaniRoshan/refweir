@@ -23,15 +23,18 @@ func StreamHandler(h *Hub) http.HandlerFunc {
 		w.Header().Set("X-Accel-Buffering", "no")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
+		// Subscribe to real-time broadcasts before taking the snapshot to ensure
+		// zero event loss during handshake and initial network flush.
+		subCh, cancel := h.Subscribe(64)
+		defer cancel()
+
 		// Send initial snapshot
 		activities := h.Recent(50)
 		data, _ := json.Marshal(map[string]any{"activities": activities})
-		fmt.Fprintf(w, "event: snapshot\ndata: %s\n\n", data)
+		if _, err := fmt.Fprintf(w, "event: snapshot\ndata: %s\n\n", data); err != nil {
+			return
+		}
 		flusher.Flush()
-
-		// Subscribe to real-time broadcasts
-		subCh, cancel := h.Subscribe(64)
-		defer cancel()
 
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
@@ -46,12 +49,16 @@ func StreamHandler(h *Hub) http.HandlerFunc {
 				}
 				actData, err := json.Marshal(act)
 				if err == nil {
-					fmt.Fprintf(w, "event: activity\ndata: %s\n\n", actData)
+					if _, err := fmt.Fprintf(w, "event: activity\ndata: %s\n\n", actData); err != nil {
+						return
+					}
 					flusher.Flush()
 				}
 			case <-ticker.C:
 				// Periodic heartbeat for reverse-proxy keepalive
-				fmt.Fprintf(w, "event: heartbeat\ndata: {\"ts\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
+				if _, err := fmt.Fprintf(w, "event: heartbeat\ndata: {\"ts\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339)); err != nil {
+					return
+				}
 				flusher.Flush()
 			}
 		}

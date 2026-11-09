@@ -32,6 +32,7 @@ import type {
   RepoWebhookItem,
   RepoWebhookDeliveryItem,
 } from './types'
+import { normalizeAgentActivity } from './events'
 
 import {
   mockDefaultRepo,
@@ -865,17 +866,7 @@ export async function getAgentActivities(): Promise<AgentActivityItem[]> {
     if (!res.ok) return []
     const data = await res.json()
     if (!Array.isArray(data?.activities)) return []
-    return data.activities.map((a: any) => ({
-      id: a.id || `act-${Date.now()}`,
-      agentName: a.agentName || 'refweir-agent',
-      agentType: (a.agentType as any) || 'refweir-mcp',
-      toolName: a.toolName || a.action || 'operation',
-      status: a.status === 'success' ? 'success' : a.status === 'failed' ? 'error' : 'executing',
-      latencyMs: a.durationMs || 14,
-      timestamp: a.timestamp ? new Date(a.timestamp).toLocaleTimeString() : 'Just now',
-      requestPayload: { resource: a.resource, action: a.action },
-      responseSummary: a.details || 'Completed autonomously',
-    }))
+    return data.activities.map(normalizeAgentActivity)
   } catch {
     return []
   }
