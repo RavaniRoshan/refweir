@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { IconCheck } from './icons';
 
 const ROWS = [
@@ -34,7 +34,10 @@ const ROWS = [
 export function ForgeDemo() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(true);
+  const [inView, setInView] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Reduced motion preference
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setStep(ROWS.length);
@@ -42,19 +45,53 @@ export function ForgeDemo() {
     }
   }, []);
 
+  // IntersectionObserver: pause animation when scrolled off-screen to preserve Core Web Vitals
   useEffect(() => {
-    if (!playing) return;
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Playback timer
+  useEffect(() => {
+    if (!playing || !inView) return;
     const delay = step === 0 ? 650 : step >= ROWS.length ? 3400 : 900;
     const timer = window.setTimeout(() => {
       setStep((value) => (value >= ROWS.length ? 0 : value + 1));
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [playing, step]);
+  }, [playing, step, inView]);
+
+  // Keyboard shortcut listener (Space to pause/play, R to replay)
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    if (e.code === 'Space') {
+      e.preventDefault();
+      setPlaying((prev) => !prev);
+    } else if (e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      setStep(0);
+      setPlaying(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const complete = step >= ROWS.length;
 
   return (
-    <div className="window relative" data-testid="forge-demo">
+    <div ref={containerRef} className="window relative" data-testid="forge-demo">
       <div className="window-bar">
         <span className="window-dots" aria-hidden="true">
           <span />
@@ -63,8 +100,8 @@ export function ForgeDemo() {
         </span>
         <span className="window-title">acme/demo — agent/capture</span>
         <span className="mono ml-auto flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-text-3">
-          <span className={`status-dot !h-1.5 !w-1.5 ${playing ? '' : 'opacity-40'}`} aria-hidden="true" />
-          {playing ? 'live' : 'paused'}
+          <span className={`status-dot !h-1.5 !w-1.5 ${playing && inView ? '' : 'opacity-40'}`} aria-hidden="true" />
+          {playing && inView ? 'live' : 'paused'}
         </span>
       </div>
 
@@ -82,6 +119,7 @@ export function ForgeDemo() {
               className="mono flex h-8 items-center gap-1.5 rounded-md border border-line bg-slab px-2.5 text-[10px] uppercase tracking-[0.12em] text-text-2 transition-colors hover:border-line-strong hover:text-text-1"
               onClick={() => setPlaying((value) => !value)}
               aria-pressed={!playing}
+              title="Toggle animation (Shortcut: Space)"
             >
               {playing ? <IconPause /> : <IconPlay />}
               {playing ? 'pause' : 'play'}
@@ -93,7 +131,8 @@ export function ForgeDemo() {
                 setStep(0);
                 setPlaying(true);
               }}
-              aria-label="Replay the merge sequence"
+              aria-label="Replay the merge sequence (Shortcut: R)"
+              title="Replay sequence (Shortcut: R)"
             >
               <IconReplay />
             </button>
@@ -167,7 +206,10 @@ export function ForgeDemo() {
         </ol>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-          <span className="mono text-[10px] text-text-3">lease 15m · hmac-sha256 · revocable</span>
+          <div className="flex items-center gap-2">
+            <span className="mono text-[10px] text-text-3">lease 15m · hmac-sha256 · revocable</span>
+            <span className="mono text-[9px] text-text-3/70 hidden sm:inline">[Space] pause · [R] replay</span>
+          </div>
           <span className="mono rounded border border-line bg-raised px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] text-text-2">
             audit #a-1042
           </span>
