@@ -2,8 +2,8 @@ apiVersion: v2
 name: refweir-enterprise
 description: Enterprise Self-Hosted Git Forge with Pure-Go SSH, Git LFS, and SQLite WAL
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+version: 0.6.0-beta
+appVersion: "v0.6.0-beta"
 keywords:
   - git
   - git-forge
