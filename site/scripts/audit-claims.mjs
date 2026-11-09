@@ -23,7 +23,7 @@ const required = [
   ['the self-hosted forge for', 'hero headline'],
   ['coding agents.', 'hero accent'],
   ['install.sh | bash', 'install command'],
-  ['existd bootstrap --email admin@example.com', 'bootstrap command'],
+  ['refweird bootstrap --email admin@example.com', 'bootstrap command'],
   ['refs/heads/agent/*', 'lease isolation'],
   ['v0.6.0-beta', 'current release'],
   ['apache-2.0', 'license'],

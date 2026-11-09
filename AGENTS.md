@@ -1,4 +1,4 @@
-# exist.io — Autonomous Agent Operational Handbook (`AGENTS.md`)
+# Refweir — Autonomous Agent Operational Handbook (`AGENTS.md`)
 
 <p align="center">
   <strong>Master Architecture, Operational Invariants, and Pair-Programming Runbook for AI Coding Agents.</strong>
@@ -8,9 +8,9 @@
 
 ## 1. Project Mission & Identity
 
-**exist.io** is the next-generation, self-hosted Git forge engineered from first principles for both **human engineering teams** and **autonomous AI coding agents**.
+**Refweir** is the next-generation, self-hosted Git forge engineered from first principles for both **human engineering teams** and **autonomous AI coding agents**.
 
-Traditional Git platforms were built 15+ years ago for human browser interaction. exist.io bridges this generational shift by treating autonomous coding agents as first-class citizens alongside human developers:
+Traditional Git platforms were built 15+ years ago for human browser interaction. Refweir bridges this generational shift by treating autonomous coding agents as first-class citizens alongside human developers:
 - **Dual Transports:** Pure-Go Smart-HTTP (`:8080`) and standalone embedded pure-Go SSH server (`:2222`, zero cgo, zero host OpenSSH dependency).
 - **Git LFS v1 CAS Engine:** Content-Addressable Storage with SHA-256 validation, streaming chunked transfer, and binary file locking protocol (`/info/lfs/locks`).
 - **AI Agent Native Ecosystem:** Native Model Context Protocol (MCP) server at `/mcp` (full tool set) and sandboxed `/mcp/readonly`, ephemeral HMAC-SHA256 capability leases (`pkg/agentlease`) with ref-prefix isolation (`refs/heads/agent/*`), autonomous PR review agent (`internal/agentreviewer`), and pure-Go semantic AST symbol search (`internal/symbolsearch`).
@@ -61,13 +61,13 @@ All agents working on this codebase MUST uphold these invariants at all times:
 ## 3. Directory Layout & Architecture Map
 
 ```text
-exist.io/
+refweir/
 ├── cmd/
-│   ├── exist/               # Developer & operator companion CLI
-│   └── existd/              # Production forge daemon (HTTP :8080 + SSH :2222)
+│   ├── refweir/             # Developer & operator companion CLI
+│   └── refweird/              # Production forge daemon (HTTP :8080 + SSH :2222)
 ├── deploy/
 │   ├── helm/                # Production Kubernetes Helm chart
-│   └── terraform-provider-exist/ # Official Terraform / OpenTofu provider
+│   └── terraform-provider-refweir/ # Official Terraform / OpenTofu provider
 ├── internal/
 │   ├── agentactivity/       # Bounded memory ring buffer for agent telemetry stream
 │   ├── agentreviewer/       # Autonomous PR review agent with static AST & secret scanner
@@ -89,7 +89,7 @@ exist.io/
 │   ├── agentlease/          # Cryptographic capability leases with ref-prefix isolation
 │   ├── idgen/               # Canonical prefixed UUID generator (repo-*, pr-*, usr-*)
 │   └── scopes/              # OAuth & PAT token permission matrix
-├── site/                    # Unified marketing + docs site (Next.js static export → GitHub Pages at /exist.io)
+├── site/                    # Unified marketing + docs site (Next.js static export → GitHub Pages at /refweir)
 │   ├── app/                 # Marketing landing at /, docs under /docs, icon.svg, metadata
 │   ├── components/           # marketing/ (landing sections) + Fumadocs chrome
 │   ├── content/docs/         # MDX documentation (fumadocs-mdx)
@@ -159,9 +159,9 @@ go test ./...
 # Run tests without cache for specific packages
 go test -v -count=1 ./internal/app ./internal/store ./internal/sshserver ./internal/security
 
-# Build the exist companion CLI and existd daemon
-go build -o bin/exist ./cmd/exist
-go build -o bin/existd ./cmd/existd
+# Build the exist companion CLI and refweird daemon
+go build -o bin/refweir ./cmd/refweir
+go build -o bin/refweird ./cmd/refweird
 ```
 
 ### Site (unified marketing + docs)
@@ -178,9 +178,9 @@ npm run build         # next build → out/ (+ postbuild legacy redirect stubs)
 npm run check-links   # validates every internal link in out/
 npm run claims-audit  # CLAIMS.md needles must pass; forbidden phrases must be absent
 ```
-Deploys to GitHub Pages at `https://ravaniroshan.github.io/exist.io/` on push to
+Deploys to GitHub Pages at `https://ravaniroshan.github.io/refweir/` on push to
 `main` (see `.github/workflows/pages.yml`). Docs are served under `/docs/`;
-`/exist.io/<page>/` legacy URLs are static redirect stubs. Any copy change on the
+`/refweir/<page>/` legacy URLs are static redirect stubs. Any copy change on the
 landing MUST keep `npm run claims-audit` green — update needles only together
 with a CLAIMS.md ledger entry.
 

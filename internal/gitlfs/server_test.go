@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestGitLFSFullLifecycle(t *testing.T) {

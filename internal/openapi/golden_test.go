@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/origin"
-	"exist.io/internal/store"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/origin"
+	"refweir.dev/internal/store"
 )
 
 func TestOpenAPI_Coverage(t *testing.T) {

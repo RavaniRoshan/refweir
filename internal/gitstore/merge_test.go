@@ -11,7 +11,7 @@ import (
 func author() object.Signature {
 	return object.Signature{
 		Name:  "Test Dev",
-		Email: "dev@exist.io",
+		Email: "dev@refweir.dev",
 		When:  time.Now(),
 	}
 }

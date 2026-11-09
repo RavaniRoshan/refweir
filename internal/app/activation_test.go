@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestRecordActivationWritesOnce(t *testing.T) {

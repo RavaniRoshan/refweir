@@ -1,4 +1,4 @@
--- 0001_init.sql — exist.io metadata schema.
+-- 0001_init.sql — refweir.dev metadata schema.
 --
 -- One migration creates the full stable schema. Later phases add typed helpers
 -- over these tables; the shape is fixed here so the first migration is the

@@ -24,7 +24,7 @@ export interface ReleasesViewProps {
 
 export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
   const owner = repo?.ownerSlug || 'shiva'
-  const repoName = repo?.name || 'exist.io'
+  const repoName = repo?.name || 'refweir.dev'
 
   const [activeSubTab, setActiveSubTab] = useState<'releases' | 'tags'>('releases')
   const [releases, setReleases] = useState<ReleaseItem[]>([])

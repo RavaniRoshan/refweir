@@ -3,30 +3,30 @@ title: Configuration and environment reference
 description: Full reference for server flags, environment variables, storage layout, and enterprise protocol settings.
 ---
 
-The `existd` server daemon and `exist` CLI are configured through environment variables or command-line flags. Flags take precedence over environment variables.
+The `refweird` server daemon and `refweir` CLI are configured through environment variables or command-line flags. Flags take precedence over environment variables.
 
-## Server Daemon (`existd`)
+## Server Daemon (`refweird`)
 
 ### Environment Variables & Network Flags
 
 | Variable | CLI Flag | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `EXIST_LISTEN_ADDR` | `--addr` | `127.0.0.1:8080` | Network address and port to bind the HTTP REST, MCP, and Web server |
-| `EXIST_SSH_ADDR` | `--ssh-addr` | `0.0.0.0:2222` | Network address and port for the embedded pure-Go SSH server |
-| `EXIST_SSH_HOST_KEY_PATH` | `--ssh-host-key` | (auto-generated) | Path to Ed25519/RSA host key PEM file for SSH server identity |
-| `EXIST_DATA_DIR` | `--data-dir` | `data` | Directory where SQLite metadata, Git repos, and LFS objects are stored |
-| `EXIST_PUBLIC_URL` | `--public-url` | `http://127.0.0.1:8080` | Publicly reachable base URL used for webhook callbacks and SSO redirects |
-| `EXIST_GIT_URL` | `--git-url` | `127.0.0.1:8080` | Public host string returned in clone URLs |
-| `EXIST_LFS_ENABLED` | `--lfs` | `true` | Enable or disable the Git Large File Storage (LFS) v1 Batch engine |
-| `EXIST_LFS_STORAGE_DIR` | `--lfs-dir` | `<data-dir>/lfs` | Path to store Content-Addressable (CAS) binary objects |
-| `EXIST_LOG_LEVEL` | `--log-level` | `info` | Minimum log verbosity level (`debug`, `info`, `warn`, `error`) |
+| `REFWEIR_LISTEN_ADDR` | `--addr` | `127.0.0.1:8080` | Network address and port to bind the HTTP REST, MCP, and Web server |
+| `REFWEIR_SSH_ADDR` | `--ssh-addr` | `0.0.0.0:2222` | Network address and port for the embedded pure-Go SSH server |
+| `REFWEIR_SSH_HOST_KEY_PATH` | `--ssh-host-key` | (auto-generated) | Path to Ed25519/RSA host key PEM file for SSH server identity |
+| `REFWEIR_DATA_DIR` | `--data-dir` | `data` | Directory where SQLite metadata, Git repos, and LFS objects are stored |
+| `REFWEIR_PUBLIC_URL` | `--public-url` | `http://127.0.0.1:8080` | Publicly reachable base URL used for webhook callbacks and SSO redirects |
+| `REFWEIR_GIT_URL` | `--git-url` | `127.0.0.1:8080` | Public host string returned in clone URLs |
+| `REFWEIR_LFS_ENABLED` | `--lfs` | `true` | Enable or disable the Git Large File Storage (LFS) v1 Batch engine |
+| `REFWEIR_LFS_STORAGE_DIR` | `--lfs-dir` | `<data-dir>/lfs` | Path to store Content-Addressable (CAS) binary objects |
+| `REFWEIR_LOG_LEVEL` | `--log-level` | `info` | Minimum log verbosity level (`debug`, `info`, `warn`, `error`) |
 
 ### Subcommand: `bootstrap`
 
 Used for offline, one-time initialization of the SQLite database and creation of the primary administrator account:
 
 ```bash
-existd bootstrap \
+refweird bootstrap \
   --email <admin-email> \
   --namespace <namespace-slug> \
   [--data-dir <path>]
@@ -42,7 +42,7 @@ existd bootstrap \
 
 ## On-Disk Storage Layout
 
-When `--data-dir` is configured (for example, `./data`), `existd` organizes files in the following structure:
+When `--data-dir` is configured (for example, `./data`), `refweird` organizes files in the following structure:
 
 ```text
 data/
@@ -70,7 +70,7 @@ data/
 
 ## SQLite Pragmas
 
-`existd` automatically applies the following database pragmas upon connection:
+`refweird` automatically applies the following database pragmas upon connection:
 
 - `PRAGMA journal_mode = WAL`: High-concurrency Write-Ahead Logging for zero-lock multi-reader execution.
 - `PRAGMA busy_timeout = 5000`: 5-second wait on lock contention before returning busy error.

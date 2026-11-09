@@ -1,37 +1,37 @@
-# exist.io Beta Tester Runbook
+# Refweir Beta Tester Runbook
 
-Welcome to the **exist.io** early beta!
+Welcome to the **Refweir** early beta!
 
-exist.io is the neutral, self-hosted Git forge built specifically for coding agents (Claude Code, Cursor, Cline, Codex).
+Refweir is the neutral, self-hosted Git forge built specifically for coding agents (Claude Code, Cursor, Cline, Codex).
 
 The goal of this beta test is simple:
-> **Can a new user install exist.io in under 5 minutes and watch their coding agent go from an ephemeral capability lease to a merged Pull Request?**
+> **Can a new user install Refweir in under 5 minutes and watch their coding agent go from an ephemeral capability lease to a merged Pull Request?**
 
 ---
 
-## ⏱️ Step 1: Install exist.io (< 60 Seconds)
+## ⏱️ Step 1: Install Refweir (< 60 Seconds)
 
 ### Option A: One-Line Automated Install
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 ```
 
 ### Option B: Pre-Compiled GitHub Release Archive
-Download the binary archive matching your platform from [GitHub Releases](https://github.com/RavaniRoshan/exist.io/releases):
+Download the binary archive matching your platform from [GitHub Releases](https://github.com/RavaniRoshan/refweir/releases):
 ```bash
 # E.g. Linux amd64
 tar -xzf exist_v0.5.0-beta_linux_amd64.tar.gz
-sudo mv exist existd /usr/local/bin/
+sudo mv exist refweird /usr/local/bin/
 ```
 
 ### Option C: Build from Source (Go 1.22+ and Node 18+)
 ```bash
-git clone https://github.com/RavaniRoshan/exist.io.git
-cd exist.io
+git clone https://github.com/RavaniRoshan/refweir.git
+cd refweir
 cd web && npm install && npm run build && cd ..
-go build -o bin/existd ./cmd/existd
-go build -o bin/exist ./cmd/exist
-sudo cp bin/exist bin/existd /usr/local/bin/
+go build -o bin/refweird ./cmd/refweird
+go build -o bin/refweir ./cmd/refweir
+sudo cp bin/refweir bin/refweird /usr/local/bin/
 ```
 
 ---
@@ -40,14 +40,14 @@ sudo cp bin/exist bin/existd /usr/local/bin/
 
 In a terminal window:
 ```bash
-existd
+refweird
 ```
 
 You will see:
 ```text
-[existd] Listening on HTTP :8080 (Smart-HTTP, MCP, Web UI)
-[existd] Listening on SSH :2222 (pure-Go Git transport)
-[existd] Embedded Web UI ready at http://localhost:8080/
+[refweird] Listening on HTTP :8080 (Smart-HTTP, MCP, Web UI)
+[refweird] Listening on SSH :2222 (pure-Go Git transport)
+[refweird] Embedded Web UI ready at http://localhost:8080/
 ```
 
 Open your browser to [http://localhost:8080](http://localhost:8080) to confirm the GitHub Primer UI is running.
@@ -62,7 +62,7 @@ exist init demo-repo
 cd demo-repo
 ```
 
-This creates a local Git repository, bootstraps it in `existd`, and outputs MCP configuration snippets tailored for your agent.
+This creates a local Git repository, bootstraps it in `refweird`, and outputs MCP configuration snippets tailored for your agent.
 
 ---
 
@@ -71,9 +71,9 @@ This creates a local Git repository, bootstraps it in `existd`, and outputs MCP 
 Choose your agent:
 
 ### A. Claude Code
-Run Claude Code with the exist.io MCP server:
+Run Claude Code with the Refweir MCP server:
 ```bash
-claude mcp add exist-forge http://localhost:8080/mcp
+claude mcp add refweir-forge http://localhost:8080/mcp
 ```
 Or start Claude Code inside `demo-repo`:
 ```bash
@@ -128,6 +128,6 @@ Connect to the exist-forge MCP server. Request an agent capability lease for rep
 
 Did the install take under 5 minutes? Did your agent complete the loop?
 
-👉 **[Submit Your 1-Click Beta Feedback Here](https://github.com/RavaniRoshan/exist.io/issues/new?template=beta_feedback.yml)**
+👉 **[Submit Your 1-Click Beta Feedback Here](https://github.com/RavaniRoshan/refweir/issues/new?template=beta_feedback.yml)**
 
 Every report directly shapes the public release. Thank you for helping build the forge for autonomous agents!

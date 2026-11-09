@@ -23,7 +23,7 @@ describe('RenameRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        currentName="exist-core"
+        currentName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -44,7 +44,7 @@ describe('RenameRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        currentName="exist-core"
+        currentName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -54,12 +54,12 @@ describe('RenameRepoModal Component', () => {
     const submitBtn = screen.getByTestId('rename-submit-btn')
 
     // If new name is same as current name, stays disabled
-    fireEvent.change(newNameInput, { target: { value: 'exist-core' } })
-    fireEvent.change(confirmInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(newNameInput, { target: { value: 'refweir-core' } })
+    fireEvent.change(confirmInput, { target: { value: 'shiva/refweir-core' } })
     expect(submitBtn).toBeDisabled()
 
     // If new name is different, enables
-    fireEvent.change(newNameInput, { target: { value: 'exist-platform' } })
+    fireEvent.change(newNameInput, { target: { value: 'refweir-platform' } })
     expect(submitBtn).not.toBeDisabled()
   })
 
@@ -72,7 +72,7 @@ describe('RenameRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        currentName="exist-core"
+        currentName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -81,12 +81,12 @@ describe('RenameRepoModal Component', () => {
     const confirmInput = screen.getByTestId('rename-confirm-name-input')
     const submitBtn = screen.getByTestId('rename-submit-btn')
 
-    fireEvent.change(newNameInput, { target: { value: 'exist-platform' } })
-    fireEvent.change(confirmInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(newNameInput, { target: { value: 'refweir-platform' } })
+    fireEvent.change(confirmInput, { target: { value: 'shiva/refweir-core' } })
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledWith('exist-platform')
+      expect(onSuccess).toHaveBeenCalledWith('refweir-platform')
       expect(onClose).toHaveBeenCalled()
     })
   })
@@ -100,7 +100,7 @@ describe('RenameRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        currentName="exist-core"
+        currentName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -110,7 +110,7 @@ describe('RenameRepoModal Component', () => {
     const submitBtn = screen.getByTestId('rename-submit-btn')
 
     fireEvent.change(newNameInput, { target: { value: 'existing-repo' } })
-    fireEvent.change(confirmInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(confirmInput, { target: { value: 'shiva/refweir-core' } })
     fireEvent.click(submitBtn)
 
     await waitFor(() => {

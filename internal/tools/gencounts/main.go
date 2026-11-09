@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"exist.io/internal/mcp"
+	"refweir.dev/internal/mcp"
 )
 
 var routePattern = regexp.MustCompile(`mux\.Handle(?:Func)?\("(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) ([^"]+)"`)

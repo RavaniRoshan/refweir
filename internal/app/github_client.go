@@ -138,7 +138,7 @@ func fetchAllPages[T any](c *GitHubClient, initialURL string) ([]T, error) {
 		}
 
 		req.Header.Set("Accept", "application/vnd.github+json")
-		req.Header.Set("User-Agent", "exist.io-migration")
+		req.Header.Set("User-Agent", "refweir.dev-migration")
 		if c.token != "" {
 			if strings.HasPrefix(c.token, "Bearer ") || strings.HasPrefix(c.token, "token ") {
 				req.Header.Set("Authorization", c.token)

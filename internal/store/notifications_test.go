@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestInAppNotifications(t *testing.T) {

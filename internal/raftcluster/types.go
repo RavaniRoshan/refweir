@@ -1,5 +1,5 @@
 // Package raftcluster provides pure-Go Raft consensus state machine and cluster coordination
-// for active-active metadata replication across geographically distributed exist.io nodes.
+// for active-active metadata replication across geographically distributed refweir.dev nodes.
 package raftcluster
 
 // NodeState represents the role of a Raft node in the cluster.

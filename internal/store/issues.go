@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 // Issue is a stored repository issue.

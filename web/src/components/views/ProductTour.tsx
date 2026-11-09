@@ -49,7 +49,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
   }
 
   const handleFinish = () => {
-    localStorage.setItem('exist_onboarding_tour_completed', 'true')
+    localStorage.setItem('refweir_onboarding_tour_completed', 'true')
     onClose()
   }
 
@@ -64,7 +64,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            exist.io runs as a self-contained daemon (<code className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-mono">existd</code>) that unifies repository storage, Git wire protocols, and agent orchestration into a single sovereign service.
+            refweir.dev runs as a self-contained daemon (<code className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-mono">refweird</code>) that unifies repository storage, Git wire protocols, and agent orchestration into a single sovereign service.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -118,16 +118,16 @@ export const ProductTour: React.FC<ProductTourProps> = ({
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            exist.io speaks standard Git protocol v2. You can use your existing Git CLI, IDEs (VS Code, Cursor, JetBrains), and CI/CD pipelines without any plugins.
+            refweir.dev speaks standard Git protocol v2. You can use your existing Git CLI, IDEs (VS Code, Cursor, JetBrains), and CI/CD pipelines without any plugins.
           </p>
 
           <div className="space-y-2.5">
             <div className="space-y-1">
               <span className="text-[11px] font-medium text-foreground">1. Clone or Push over Smart-HTTP (:8080)</span>
               <div className="relative flex items-center rounded-md bg-secondary/50 border border-border px-3 py-2 font-mono text-xs text-foreground">
-                <span className="truncate pr-8">git remote add origin http://localhost:8080/shiva/exist.io.git</span>
+                <span className="truncate pr-8">git remote add origin http://localhost:8080/shiva/refweir.dev.git</span>
                 <button
-                  onClick={() => handleCopy('git remote add origin http://localhost:8080/shiva/exist.io.git')}
+                  onClick={() => handleCopy('git remote add origin http://localhost:8080/shiva/refweir.dev.git')}
                   className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   {copiedText?.includes('http://localhost:8080') ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -138,9 +138,9 @@ export const ProductTour: React.FC<ProductTourProps> = ({
             <div className="space-y-1">
               <span className="text-[11px] font-medium text-foreground">2. Clone or Push over Pure-Go SSH (:2222)</span>
               <div className="relative flex items-center rounded-md bg-secondary/50 border border-border px-3 py-2 font-mono text-xs text-foreground">
-                <span className="truncate pr-8">git remote add origin ssh://git@localhost:2222/shiva/exist.io.git</span>
+                <span className="truncate pr-8">git remote add origin ssh://git@localhost:2222/shiva/refweir.dev.git</span>
                 <button
-                  onClick={() => handleCopy('git remote add origin ssh://git@localhost:2222/shiva/exist.io.git')}
+                  onClick={() => handleCopy('git remote add origin ssh://git@localhost:2222/shiva/refweir.dev.git')}
                   className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   {copiedText?.includes('ssh://git@localhost:2222') ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -165,7 +165,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            exist.io is the first Git server built for autonomous AI agents. Any MCP-compatible agent (Claude Code, Cursor, Windsurf, Devin) connects to your cluster to review PRs, triage issues, and run checks.
+            refweir.dev is the first Git server built for autonomous AI agents. Any MCP-compatible agent (Claude Code, Cursor, Windsurf, Devin) connects to your cluster to review PRs, triage issues, and run checks.
           </p>
 
           <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">

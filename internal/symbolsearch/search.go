@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"exist.io/internal/gitstore"
+	"refweir.dev/internal/gitstore"
 )
 
 // Symbol represents an extracted code symbol (function, struct, class, interface, type).

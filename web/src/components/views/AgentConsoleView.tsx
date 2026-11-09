@@ -70,11 +70,11 @@ export const AgentConsoleView: React.FC = () => {
     const interval = setInterval(loadActivities, 4000)
 
     const onModeChange = () => loadActivities()
-    window.addEventListener('exist_mode_changed', onModeChange)
+    window.addEventListener('refweir_mode_changed', onModeChange)
 
     return () => {
       clearInterval(interval)
-      window.removeEventListener('exist_mode_changed', onModeChange)
+      window.removeEventListener('refweir_mode_changed', onModeChange)
     }
   }, [])
 
@@ -92,7 +92,7 @@ export const AgentConsoleView: React.FC = () => {
           { name: 'create_pull_request_inline_comment', description: 'Start review thread on file line' },
           { name: 'checks_read', description: 'Read check runs and suites for a commit SHA' },
           { name: 'list_rulesets', description: 'List rulesets configured on a repository' },
-          { name: 'list_namespaces', description: 'List all namespaces in exist.io' },
+          { name: 'list_namespaces', description: 'List all namespaces in refweir.dev' },
         ])
       }
     }

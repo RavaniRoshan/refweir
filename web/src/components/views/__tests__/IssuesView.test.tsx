@@ -22,7 +22,7 @@ vi.mock('@/lib/api', async () => {
         comments: [
           {
             id: 'ic-1',
-            author: 'Exist Agent',
+            author: 'Refweir Agent',
             isAgent: true,
             body: 'Inspected auth handlers. Ready to implement.',
             createdAt: '1 day ago',
@@ -74,7 +74,7 @@ vi.mock('@/lib/api', async () => {
         ok: true,
         comment: {
           id: 'ic-agent-123',
-          author: 'Exist Agent (Autonomous)',
+          author: 'Refweir Agent (Autonomous)',
           isAgent: true,
           body: '🤖 Autonomous Triage: Draft pull request created.',
           createdAt: 'Just now',
@@ -128,12 +128,12 @@ describe('IssuesView', () => {
     fireEvent.click(commentBtn)
 
     await waitFor(() => {
-      expect(api.addIssueComment).toHaveBeenCalledWith('shiva', 'exist.io', 1, 'Testing issue reply')
+      expect(api.addIssueComment).toHaveBeenCalledWith('shiva', 'refweir.dev', 1, 'Testing issue reply')
       expect(screen.getByText('Testing issue reply')).toBeInTheDocument()
     })
   })
 
-  it('delegates issue to Exist Agent and displays autonomous agent response', async () => {
+  it('delegates issue to Refweir Agent and displays autonomous agent response', async () => {
     render(<IssuesView />)
 
     await waitFor(() => {
@@ -147,7 +147,7 @@ describe('IssuesView', () => {
     fireEvent.click(delegateBtn)
 
     await waitFor(() => {
-      expect(api.delegateIssueToAgent).toHaveBeenCalledWith('shiva', 'exist.io', 1)
+      expect(api.delegateIssueToAgent).toHaveBeenCalledWith('shiva', 'refweir.dev', 1)
       expect(screen.getByText(/Draft pull request created/i)).toBeInTheDocument()
     })
   })
@@ -165,7 +165,7 @@ describe('IssuesView', () => {
     fireEvent.click(closeBtn)
 
     await waitFor(() => {
-      expect(api.toggleIssueState).toHaveBeenCalledWith('shiva', 'exist.io', 1, 'open')
+      expect(api.toggleIssueState).toHaveBeenCalledWith('shiva', 'refweir.dev', 1, 'open')
     })
   })
 

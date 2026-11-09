@@ -1,13 +1,13 @@
 ---
 title: How to authenticate and push with Git Smart-HTTP
-description: Clone, fetch, and push code using standard Git clients and credential helpers with exist.io.
+description: Clone, fetch, and push code using standard Git clients and credential helpers with refweir.dev.
 ---
 
-exist.io provides a pure-Go Git Smart-HTTP server compatible with all standard Git clients (`git clone`, `git fetch`, `git push`).
+refweir.dev provides a pure-Go Git Smart-HTTP server compatible with all standard Git clients (`git clone`, `git fetch`, `git push`).
 
 ## Repository URL format
 
-Every repository in exist.io is served at:
+Every repository in refweir.dev is served at:
 
 ```text
 http://<host>:<port>/{namespace}/{repo-name}.git
@@ -62,13 +62,13 @@ echo "<div>Login</div>" > login.html
 git add login.html
 git commit -m "feat: add login page template"
 
-# Push branch to exist.io
+# Push branch to refweir.dev
 git push -u origin feature/login-page
 ```
 
 ## Step 3: Permission enforcement during push
 
-Before accepting incoming packfiles via `git-receive-pack`, exist.io performs permission checks:
+Before accepting incoming packfiles via `git-receive-pack`, refweir.dev performs permission checks:
 
 1. **Repository Access:** The caller must hold at least `write` permission on the repository or parent namespace.
 2. **Branch Protections:** If a branch is protected by a ruleset (e.g. `main`), direct pushes will be rejected with an informative error message:

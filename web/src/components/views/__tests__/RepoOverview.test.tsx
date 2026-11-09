@@ -18,15 +18,15 @@ vi.mock('@/lib/api', async () => {
 describe('RepoOverview Component', () => {
   const mockRepo = {
     ownerSlug: 'shiva',
-    name: 'exist.io',
-    description: 'Enterprise repository on exist.io',
+    name: 'refweir.dev',
+    description: 'Enterprise repository on refweir.dev',
     defaultBranch: 'main',
     isPrivate: false,
     starsCount: 12,
     forksCount: 3,
     updatedAt: 'Just now',
-    cloneUrlHttp: 'http://127.0.0.1:8080/shiva/exist.io.git',
-    cloneUrlSsh: 'git@127.0.0.1:2222/shiva/exist.io.git',
+    cloneUrlHttp: 'http://127.0.0.1:8080/shiva/refweir.dev.git',
+    cloneUrlSsh: 'git@127.0.0.1:2222/shiva/refweir.dev.git',
   }
 
   beforeEach(() => {
@@ -74,7 +74,7 @@ describe('RepoOverview Component', () => {
         lastCommitDate: 'Just now',
       },
     ])
-    vi.mocked(api.getFileContent).mockResolvedValueOnce('# exist.io\n\nPure Go Git Forge')
+    vi.mocked(api.getFileContent).mockResolvedValueOnce('# refweir.dev\n\nPure Go Git Forge')
 
     render(
       <RepoOverview

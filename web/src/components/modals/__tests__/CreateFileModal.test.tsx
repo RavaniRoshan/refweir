@@ -22,7 +22,7 @@ describe('CreateFileModal Component', () => {
         isOpen={true}
         onClose={vi.fn()}
         owner="shiva"
-        name="exist.io"
+        name="refweir.dev"
         branch="main"
         initialPath="README.md"
         onCommitSuccess={vi.fn()}
@@ -40,7 +40,7 @@ describe('CreateFileModal Component', () => {
         isOpen={true}
         onClose={vi.fn()}
         owner="shiva"
-        name="exist.io"
+        name="refweir.dev"
         branch="main"
         initialPath="README.md"
         onCommitSuccess={vi.fn()}
@@ -63,7 +63,7 @@ describe('CreateFileModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        name="exist.io"
+        name="refweir.dev"
         branch="main"
         initialPath="README.md"
         onCommitSuccess={onCommitSuccess}
@@ -76,7 +76,7 @@ describe('CreateFileModal Component', () => {
       expect(api.commitFile).toHaveBeenCalledWith(
         expect.objectContaining({
           owner: 'shiva',
-          name: 'exist.io',
+          name: 'refweir.dev',
           path: 'README.md',
           branch: 'main',
         })

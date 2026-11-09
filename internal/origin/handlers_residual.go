@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/pkg/scopes"
+	"refweir.dev/pkg/scopes"
 )
 
 var (
@@ -158,8 +158,8 @@ func (s *Server) getTag(w http.ResponseWriter, r *http.Request) {
 		"tag":     "v1.0.0",
 		"message": "release tag",
 		"tagger": map[string]any{
-			"name":  "Exist Release Bot",
-			"email": "bot@exist.io",
+			"name":  "Refweir Release Bot",
+			"email": "bot@refweir.dev",
 			"date":  time.Now().UTC().Format(time.RFC3339),
 		},
 	})

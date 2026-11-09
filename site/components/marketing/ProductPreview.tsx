@@ -9,7 +9,7 @@ const TABS = [
     id: 'home',
     label: 'forge home',
     src: '/product/forge-home.png',
-    alt: 'exist.io web UI — repository overview with agent activity feed and cluster telemetry',
+    alt: 'refweir.dev web UI — repository overview with agent activity feed and cluster telemetry',
     caption: 'fig. 2 — web ui · repository activity feed',
     meta: '1440 × 900 · real ui',
   },
@@ -17,7 +17,7 @@ const TABS = [
     id: 'agents',
     label: 'agent console',
     src: '/product/forge-agents.png',
-    alt: 'exist.io agent console — live MCP invocations, capability leases and tool catalog',
+    alt: 'refweir.dev agent console — live MCP invocations, capability leases and tool catalog',
     caption: 'fig. 3 — agent console · MCP invocations and leases',
     meta: '1440 × 900 · real ui',
   },
@@ -25,7 +25,7 @@ const TABS = [
     id: 'pr',
     label: 'pull request',
     src: '/product/forge-pr.png',
-    alt: 'exist.io pull request view — checks passing, capability lease verified, merge gate ready',
+    alt: 'refweir.dev pull request view — checks passing, capability lease verified, merge gate ready',
     caption: 'fig. 4 — pull request · checks passed · merge gate',
     meta: '1440 × 900 · real ui',
   },
@@ -57,7 +57,7 @@ export function ProductPreview() {
           <span />
           <span />
         </span>
-        <span className="window-title">acme/demo — existd :8080</span>
+        <span className="window-title">acme/demo — refweird :8080</span>
         <span className="mono ml-auto hidden text-[9.5px] uppercase tracking-[0.16em] text-text-3 sm:inline">
           live ui
         </span>

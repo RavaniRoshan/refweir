@@ -1,4 +1,4 @@
-# exist.io — Performance & Concurrency Benchmarks (`docs/benchmarks.md`)
+# Refweir — Performance & Concurrency Benchmarks (`docs/benchmarks.md`)
 
 Conducted on: November 1, 2026  
 Harness: [`bench/main.go`](../bench/main.go)  

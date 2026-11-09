@@ -1,12 +1,12 @@
 ---
 title: Getting started
-description: Install, bootstrap, and run your self-hosted exist.io Git forge and agent server.
+description: Install, bootstrap, and run your self-hosted refweir.dev Git forge and agent server.
 ---
 
 ## ⚡ 90-Second Agent Demo
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/assets/demo.gif" alt="exist.io 90-second agent loop demo" width="100%" />
+  <img src="https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/assets/demo.gif" alt="refweir.dev 90-second agent loop demo" width="100%" />
 </p>
 
 *Watch an autonomous agent acquire an ephemeral capability lease, clone over Smart-HTTP, push to `refs/heads/agent/*`, open an MCP PR, and merge in under 90 seconds.*
@@ -18,14 +18,14 @@ description: Install, bootstrap, and run your self-hosted exist.io Git forge and
 Install the pre-compiled binary release in under 60 seconds across Linux, macOS, and Windows:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/scripts/install.sh | bash
 ```
 
 The installer script automatically:
 1. Detects your operating system (`linux`, `darwin`, `windows`) and architecture (`amd64`, `arm64`).
 2. Downloads the official release package with the embedded React 19 Web UI.
 3. Verifies the cryptographic SHA-256 checksum against `SHA256SUMS`.
-4. Installs `existd` (forge daemon) and `exist` (CLI) to `/usr/local/bin` (or `~/.local/bin`).
+4. Installs `refweird` (forge daemon) and `refweir` (CLI) to `/usr/local/bin` (or `~/.local/bin`).
 
 ### Option B: Build from Source
 
@@ -33,14 +33,14 @@ If you prefer building from source, ensure you have **Go 1.22+** and **Git 2.30+
 
 ```bash
 # Clone the repository
-git clone https://github.com/RavaniRoshan/exist.io.git
-cd exist.io
+git clone https://github.com/RavaniRoshan/refweir.git
+cd refweir.dev
 
 # Build the forge daemon (single binary with embedded Web UI, zero CGO)
-go build -o bin/existd ./cmd/existd
+go build -o bin/refweird ./cmd/refweird
 
 # Build the companion CLI
-go build -o bin/exist ./cmd/exist
+go build -o bin/refweir ./cmd/refweir
 ```
 
 ## 2. Bootstrap your first administrator
@@ -49,30 +49,30 @@ Before launching the server, run the one-time offline bootstrap command to set u
 
 ```bash
 # If installed via 1-line script:
-existd bootstrap \
-  --email admin@corp.exist.io \
+refweird bootstrap \
+  --email admin@corp.refweir.dev \
   --namespace acme \
   --data-dir ./data
 
 # Or if built from source:
-# ./bin/existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data
+# ./bin/refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data
 ```
 
 This command:
-1. Applies database migrations to `./data/exist.db` in SQLite WAL mode.
+1. Applies database migrations to `./data/refweir.db` in SQLite WAL mode.
 2. Creates the root namespace (`acme`) and primary administrator user.
 3. Outputs an administrative API token (prefixed with `token_`). **Save this token securely.**
 
 ## 3. Start the forge daemon
 
-Launch `existd`:
+Launch `refweird`:
 
 ```bash
 # If installed via 1-line script:
-existd
+refweird
 
 # Or if built from source:
-# ./bin/existd
+# ./bin/refweird
 ```
 
 The server binds to port `8080` and is immediately ready to accept Git Smart-HTTP connections, REST requests, and MCP sessions.
@@ -95,22 +95,22 @@ SCIM 2.0 and SSO are experimental and frozen for launch; the SSO callback fails 
 When opening the web console (`http://localhost:8080` in production or `http://localhost:3000` during dev):
 1. **Interactive 5-step Onboarding Walkthrough**: Automatically greets first-time administrators, detailing cluster network topology (:8080, :2222, /mcp), git client configuration, and agent leases.
 2. **In-App User Manual & System Guide**: Accessible anytime via the **"Manual"** icon in the header, complete with live network port tables and copyable quick-start commands.
-3. **Canonical Quick Setup Screen**: When a repository is newly created (0 commits), exist.io displays the canonical GitHub Quick Setup screen with HTTPS and SSH command blocks, git push instructions, and agent lease initialization commands.
+3. **Canonical Quick Setup Screen**: When a repository is newly created (0 commits), refweir.dev displays the canonical GitHub Quick Setup screen with HTTPS and SSH command blocks, git push instructions, and agent lease initialization commands.
 4. **In-Browser File Creation**: Directly create and commit files (such as `README.md` or `main.go`) directly from the browser using the **"Add file"** button without touching your terminal.
 5. **Native SQLite Issues & Comments**: Full issues lifecycle tracking with monotonic numbering, thread commenting, and state transitions backed by SQLite WAL storage.
 
-Configure the `exist` CLI using your bootstrap API token:
+Configure the `refweir` CLI using your bootstrap API token:
 
 ```bash
-export EXIST_ENDPOINT="http://localhost:8080/v1/origin"
-export EXIST_TOKEN="<your-admin-token>"
+export REFWEIR_ENDPOINT="http://localhost:8080/v1/origin"
+export REFWEIR_TOKEN="<your-admin-token>"
 ```
 
 ### Create and clone a repository
 
 ```bash
 # Create a new repository in your namespace
-./bin/exist repo create acme/demo-app
+./bin/refweir repo create acme/demo-app
 
 # Clone the repository using Git Smart-HTTP
 git clone http://localhost:8080/acme/demo-app.git
@@ -128,13 +128,13 @@ git push -u origin main
 ```bash
 # Create a feature branch
 git checkout -b feature/greet
-echo "Hello exist.io!" >> hello.txt
+echo "Hello refweir.dev!" >> hello.txt
 git add hello.txt
 git commit -m "feat: add greeting"
 git push origin feature/greet
 
 # Open a pull request with the CLI
-./bin/exist pr create \
+./bin/refweir pr create \
   -R acme/demo-app \
   --title "Add greeting feature" \
   --head feature/greet \
@@ -143,14 +143,14 @@ git push origin feature/greet
 
 ## 5. Connecting AI coding agents via MCP
 
-exist.io includes an embedded Model Context Protocol (MCP) server that grants AI coding agents structured access to read trees, inspect diffs, open pull requests, and review code.
+refweir.dev includes an embedded Model Context Protocol (MCP) server that grants AI coding agents structured access to read trees, inspect diffs, open pull requests, and review code.
 
-Add the exist.io MCP server to your agent's configuration file (e.g., Claude Desktop, Cursor, Cline):
+Add the refweir.dev MCP server to your agent's configuration file (e.g., Claude Desktop, Cursor, Cline):
 
 ```json
 {
   "mcpServers": {
-    "exist-io": {
+    "refweir": {
       "url": "http://localhost:8080/mcp",
       "headers": {
         "Authorization": "Bearer <your-admin-token>"

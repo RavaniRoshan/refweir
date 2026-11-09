@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# exist.io — One-line automated installer
+# Refweir — One-line automated installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 #
 # Environment variables:
-#   EXIST_VERSION: Specific release tag to install (default: newest GitHub release)
+#   REFWEIR_VERSION: Specific release tag to install (default: newest GitHub release)
 #   INSTALL_DIR: Directory where binaries will be installed (default: /usr/local/bin or ~/.local/bin)
-#   EXIST_INSTALL_INSECURE=1: Bypass checksum verification when no hashing tool exists (warned)
+#   REFWEIR_INSTALL_INSECURE=1: Bypass checksum verification when no hashing tool exists (warned)
 
 set -euo pipefail
 
-REPO="RavaniRoshan/exist.io"
-VERSION="${EXIST_VERSION:-}"
+REPO="RavaniRoshan/refweir"
+VERSION="${REFWEIR_VERSION:-}"
 
 # Color output helpers
 RED='\033[0;31m'
@@ -20,7 +20,7 @@ BLUE='\033[0;34m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}${BOLD}==> exist.io Installer${NC}"
+echo -e "${BLUE}${BOLD}==> Refweir Installer${NC}"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -63,7 +63,7 @@ resolve_latest() {
 if [ -z "$VERSION" ]; then
     if ! VERSION="$(resolve_latest)"; then
         echo -e "${RED}Error: could not resolve the latest release from the GitHub API.${NC}" >&2
-        echo -e "Set EXIST_VERSION=<tag> or pass --version <tag> to install a specific release." >&2
+        echo -e "Set REFWEIR_VERSION=<tag> or pass --version <tag> to install a specific release." >&2
         exit 1
     fi
 fi
@@ -108,7 +108,7 @@ if [ "$OS" = "windows" ]; then
     EXT="zip"
 fi
 
-ARCHIVE_NAME="exist_${VERSION}_${OS}_${ARCH}.${EXT}"
+ARCHIVE_NAME="refweir_${VERSION}_${OS}_${ARCH}.${EXT}"
 RELEASE_BASE_URL="${RELEASE_BASE_URL:-https://github.com/${REPO}/releases/download/${VERSION}}"
 DOWNLOAD_URL="${RELEASE_BASE_URL}/${ARCHIVE_NAME}"
 CHECKSUMS_URL="${RELEASE_BASE_URL}/SHA256SUMS"
@@ -149,12 +149,12 @@ elif command -v shasum >/dev/null 2>&1; then
 fi
 
 if [ -z "$HASH_TOOL" ]; then
-    if [ "${EXIST_INSTALL_INSECURE:-0}" = "1" ]; then
-        echo -e "${RED}${BOLD}WARNING: EXIST_INSTALL_INSECURE=1 — checksum verification bypassed.${NC}" >&2
+    if [ "${REFWEIR_INSTALL_INSECURE:-0}" = "1" ]; then
+        echo -e "${RED}${BOLD}WARNING: REFWEIR_INSTALL_INSECURE=1 — checksum verification bypassed.${NC}" >&2
         echo -e "${RED}The downloaded binary is UNVERIFIED. Do not do this in production.${NC}" >&2
     else
         echo -e "${RED}Error: no SHA-256 tool available (sha256sum or shasum required).${NC}" >&2
-        echo -e "Refusing to install an unverified binary. Set EXIST_INSTALL_INSECURE=1 to override." >&2
+        echo -e "Refusing to install an unverified binary. Set REFWEIR_INSTALL_INSECURE=1 to override." >&2
         exit 1
     fi
 else
@@ -181,7 +181,7 @@ else
 fi
 
 # Locate extracted binaries
-STAGE_SUBDIR="$(find "$TMP_DIR/extracted" -maxdepth 2 -type f \( -name "exist" -o -name "exist.exe" \) -exec dirname {} \; | head -n 1)"
+STAGE_SUBDIR="$(find "$TMP_DIR/extracted" -maxdepth 2 -type f \( -name "refweir" -o -name "refweir.exe" \) -exec dirname {} \; | head -n 1)"
 if [ -z "$STAGE_SUBDIR" ]; then
     STAGE_SUBDIR="$TMP_DIR/extracted"
 fi
@@ -207,11 +207,13 @@ if [ "$OS" = "windows" ]; then
 fi
 
 if [ "${USE_SUDO:-0}" = "1" ]; then
-    sudo cp "$STAGE_SUBDIR/existd$BIN_EXT" "$STAGE_SUBDIR/exist$BIN_EXT" "$TARGET_DIR/"
-    sudo chmod 755 "$TARGET_DIR/existd$BIN_EXT" "$TARGET_DIR/exist$BIN_EXT"
+    sudo cp "$STAGE_SUBDIR/refweird$BIN_EXT" "$TARGET_DIR/refweird$BIN_EXT"
+    sudo cp "$STAGE_SUBDIR/refweir$BIN_EXT" "$TARGET_DIR/refweir$BIN_EXT"
+    sudo chmod 755 "$TARGET_DIR/refweird$BIN_EXT" "$TARGET_DIR/refweir$BIN_EXT"
 else
-    cp "$STAGE_SUBDIR/existd$BIN_EXT" "$STAGE_SUBDIR/exist$BIN_EXT" "$TARGET_DIR/"
-    chmod 755 "$TARGET_DIR/existd$BIN_EXT" "$TARGET_DIR/exist$BIN_EXT"
+    cp "$STAGE_SUBDIR/refweird$BIN_EXT" "$TARGET_DIR/refweird$BIN_EXT"
+    cp "$STAGE_SUBDIR/refweir$BIN_EXT" "$TARGET_DIR/refweir$BIN_EXT"
+    chmod 755 "$TARGET_DIR/refweird$BIN_EXT" "$TARGET_DIR/refweir$BIN_EXT"
 fi
 
 # PATH check
@@ -226,20 +228,20 @@ esac
 
 echo ""
 echo -e "${GREEN}${BOLD}================================================================${NC}"
-echo -e "${GREEN}${BOLD}         exist.io successfully installed!                      ${NC}"
+echo -e "${GREEN}${BOLD}         Refweir successfully installed!                      ${NC}"
 echo -e "${GREEN}${BOLD}================================================================${NC}"
 echo ""
 echo -e "Installed binaries:"
-echo -e "  - ${BOLD}$TARGET_DIR/existd$BIN_EXT${NC} (Forge daemon: Smart-HTTP, SSH, MCP, Web UI)"
-echo -e "  - ${BOLD}$TARGET_DIR/exist$BIN_EXT${NC}  (Operator CLI & Agent integration)"
+echo -e "  - ${BOLD}$TARGET_DIR/refweird$BIN_EXT${NC} (Forge daemon: Smart-HTTP, SSH, MCP, Web UI)"
+echo -e "  - ${BOLD}$TARGET_DIR/refweir$BIN_EXT${NC}  (Operator CLI & Agent integration)"
 echo ""
 echo -e "${BOLD}Quickstart (5-Minute Agent Run):${NC}"
 echo -e "  1. Bootstrap your forge administrator and starter repository:"
-echo -e "     ${BLUE}$ existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data${NC}"
+echo -e "     ${BLUE}$ refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data${NC}"
 echo -e "     Store the API key printed once by bootstrap."
 echo ""
 echo -e "  2. Start the forge daemon:"
-echo -e "     ${BLUE}$ existd${NC}"
+echo -e "     ${BLUE}$ refweird${NC}"
 echo ""
 echo -e "  3. Connect your coding agent (Claude Code, Cursor, Cline) using the MCP snippet printed by bootstrap."
 echo -e "     Replace <your-admin-token> with the printed API key:"
@@ -247,6 +249,6 @@ echo -e "     - MCP JSON-RPC Server: ${BOLD}http://localhost:8080/mcp${NC}"
 echo -e "     - Read-only Sandbox:   ${BOLD}http://localhost:8080/mcp/readonly${NC}"
 echo -e "     - Web UI:              ${BOLD}http://localhost:8080/${NC}"
 echo ""
-echo -e "Documentation & Tutorials: ${BLUE}https://ravaniroshan.github.io/exist.io/?ref=installer${NC}"
+echo -e "Documentation & Tutorials: ${BLUE}https://ravaniroshan.github.io/refweir/?ref=installer${NC}"
 echo -e "Submit Beta Feedback:      ${BLUE}https://github.com/${REPO}/issues/new?template=beta_feedback.yml&ref=installer${NC}"
 echo ""

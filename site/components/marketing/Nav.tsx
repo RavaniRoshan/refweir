@@ -28,9 +28,9 @@ export function Nav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-canvas/85 backdrop-blur-md">
       <div className="container-site flex h-14 items-center justify-between gap-6">
-        <a href={asset('/')} className="flex items-center gap-2.5" aria-label="exist.io — home">
+        <a href={asset('/')} className="flex items-center gap-2.5" aria-label="refweir.dev — home">
           <Logomark size={20} />
-          <span className="text-[19px] font-semibold tracking-[-0.03em] text-text-1">exist.io</span>
+          <span className="text-[19px] font-semibold tracking-[-0.03em] text-text-1">refweir.dev</span>
           <span className="mono ml-1 hidden rounded-sm border border-line bg-slab px-1.5 py-0.5 text-[9px] uppercase tracking-[0.12em] text-text-3 sm:inline">
             v0.6.0-beta
           </span>
@@ -49,7 +49,7 @@ export function Nav() {
           <ThemeToggle />
           <a
             className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-text-2 transition-colors hover:border-line hover:bg-slab hover:text-text-1"
-            href="https://github.com/RavaniRoshan/exist.io"
+            href="https://github.com/RavaniRoshan/refweir"
             aria-label="GitHub repository"
             rel="noreferrer"
           >
@@ -96,7 +96,7 @@ export function Nav() {
               className="btn btn-signal mt-4 justify-center"
               onClick={() => setOpen(false)}
             >
-              Install exist.io
+              Install refweir.dev
               <span className="btn-chip" aria-hidden="true"><IconArrowUpRight width={14} height={14} strokeWidth={2} /></span>
             </a>
           </nav>

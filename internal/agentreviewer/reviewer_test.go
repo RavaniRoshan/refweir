@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 func author() object.Signature {
 	return object.Signature{
 		Name:  "Test Dev",
-		Email: "dev@exist.io",
+		Email: "dev@refweir.dev",
 		When:  time.Now(),
 	}
 }

@@ -6,17 +6,17 @@ import { CopyButton } from './CopyButton';
 const STEPS = [
   {
     label: 'install',
-    command: 'curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash',
-    output: ['resolving v0.6.0-beta', 'sha-256 manifest verified', 'installed existd to ~/bin'],
+    command: 'curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/scripts/install.sh | bash',
+    output: ['resolving v0.6.0-beta', 'sha-256 manifest verified', 'installed refweird to ~/bin'],
   },
   {
     label: 'bootstrap',
-    command: 'existd bootstrap --email admin@example.com --namespace acme --data-dir ./data',
+    command: 'refweird bootstrap --email admin@example.com --namespace acme --data-dir ./data',
     output: ['namespace acme created', 'repository acme/demo created', 'admin api key printed once'],
   },
   {
     label: 'run',
-    command: 'existd',
+    command: 'refweird',
     output: ['ui · rest · smart-http · mcp on :8080', 'embedded ssh on :2222', 'ready — open http://localhost:8080'],
   },
 ] as const;
@@ -88,7 +88,7 @@ export function QuickstartTerminal() {
   return (
     <div ref={ref} className="window">
       <div className="sr-only">
-        <p>Terminal commands to install, bootstrap, and run exist.io:</p>
+        <p>Terminal commands to install, bootstrap, and run refweir.dev:</p>
         {STEPS.map((item) => (
           <p key={item.label}>
             {item.label}: <code>{item.command}</code>
@@ -101,7 +101,7 @@ export function QuickstartTerminal() {
           <span />
           <span />
         </span>
-        <span className="window-title">bash — existd</span>
+        <span className="window-title">bash — refweird</span>
         <span className="mono ml-auto text-[9.5px] uppercase tracking-[0.16em] text-text-3">{status}</span>
         <CopyButton text={ALL} label="Copy all install commands" />
       </div>

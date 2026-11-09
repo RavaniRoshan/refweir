@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 // resolveUserID determines the active user ID from the request context, session, or default admin.
@@ -17,7 +17,7 @@ func resolveUserID(r *http.Request, db *store.DB) string {
 	if tok, ok := auth.ContextToken(r.Context()); ok && tok.Type() == scopes.TypeUser {
 		return tok.Subject()
 	}
-	if cookie, err := r.Cookie("exist_session"); err == nil && cookie.Value != "" {
+	if cookie, err := r.Cookie("refweir_session"); err == nil && cookie.Value != "" {
 		hash := auth.HashCredential(cookie.Value)
 		if _, user, err := db.GetSessionByHash(r.Context(), hash); err == nil && user.ID != "" {
 			return user.ID

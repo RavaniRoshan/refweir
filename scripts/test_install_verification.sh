@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALLER="$ROOT_DIR/scripts/install.sh"
 VERSION="v9.9.9"
-ARCHIVE="exist_${VERSION}_linux_amd64.tar.gz"
+ARCHIVE="refweir_${VERSION}_linux_amd64.tar.gz"
 
 WORK="$(mktemp -d)"
 SERVER_PID=""
@@ -26,9 +26,9 @@ fail() {
 
 # Fixture release.
 mkdir -p "$WORK/release" "$WORK/stage"
-printf '#!/bin/sh\necho existd\n' > "$WORK/stage/existd"
-printf '#!/bin/sh\necho exist\n' > "$WORK/stage/exist"
-chmod +x "$WORK/stage/existd" "$WORK/stage/exist"
+printf '#!/bin/sh\necho refweird\n' > "$WORK/stage/refweird"
+printf '#!/bin/sh\necho refweir\n' > "$WORK/stage/refweir"
+chmod +x "$WORK/stage/refweird" "$WORK/stage/refweir"
 tar -czf "$WORK/release/$ARCHIVE" -C "$WORK/stage" .
 (cd "$WORK/release" && sha256sum "$ARCHIVE" > SHA256SUMS)
 
@@ -51,16 +51,16 @@ run_installer() {
     if [ -n "$shim" ]; then path="$shim"; fi
     env PATH="$path" \
         RELEASE_BASE_URL="http://127.0.0.1:$PORT" \
-        EXIST_VERSION="$VERSION" \
+        REFWEIR_VERSION="$VERSION" \
         INSTALL_DIR="$out" \
-        EXIST_INSTALL_INSECURE="$insecure" \
+        REFWEIR_INSTALL_INSECURE="$insecure" \
         /bin/bash "$INSTALLER" >"$WORK/stdout.log" 2>"$WORK/stderr.log"
 }
 
 # Case 1: correct manifest.
 run_installer "$WORK/out-ok" && true
-[ -f "$WORK/out-ok/existd" ] || fail "case 1: existd was not installed"
-[ -f "$WORK/out-ok/exist" ] || fail "case 1: exist was not installed"
+[ -f "$WORK/out-ok/refweird" ] || fail "case 1: refweird was not installed"
+[ -f "$WORK/out-ok/refweir" ] || fail "case 1: refweir was not installed"
 echo "PASS: case 1 (manifest present and correct)"
 
 # Case 2: manifest present but mismatched.
@@ -91,8 +91,8 @@ echo "PASS: case 4 (no hashing tool, install refused)"
 
 # Case 5: explicit warned override.
 run_installer "$WORK/out-insecure" "$SHIM" 1 || fail "case 5: override did not proceed"
-grep -q "WARNING: EXIST_INSTALL_INSECURE=1" "$WORK/stderr.log" || fail "case 5: override warning missing"
-[ -f "$WORK/out-insecure/existd" ] || fail "case 5: override did not install"
+grep -q "WARNING: REFWEIR_INSTALL_INSECURE=1" "$WORK/stderr.log" || fail "case 5: override warning missing"
+[ -f "$WORK/out-insecure/refweird" ] || fail "case 5: override did not install"
 echo "PASS: case 5 (explicit override warns and installs)"
 
 echo "All installer verification cases passed."

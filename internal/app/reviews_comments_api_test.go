@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
@@ -54,7 +54,7 @@ func TestCommentsReviewsAndAutoMergeAPI(t *testing.T) {
 		t.Fatalf("git init: %v", err)
 	}
 
-	sig := object.Signature{Name: "Tester", Email: "test@exist.io", When: time.Now()}
+	sig := object.Signature{Name: "Tester", Email: "test@refweir.dev", When: time.Now()}
 	baseHash, err := application.Git.WriteFiles("acme", "widget", "main", []gitstore.FileChange{
 		{Path: "main.go", Content: "package main\n\nfunc main() {\n\tprintln(\"hello world\")\n}\n"},
 	}, sig, "initial commit")
@@ -63,7 +63,7 @@ func TestCommentsReviewsAndAutoMergeAPI(t *testing.T) {
 	}
 
 	headHash, err := application.Git.WriteFiles("acme", "widget", "feature", []gitstore.FileChange{
-		{Path: "main.go", Content: "package main\n\nfunc main() {\n\tprintln(\"hello exist.io\")\n}\n"},
+		{Path: "main.go", Content: "package main\n\nfunc main() {\n\tprintln(\"hello refweir.dev\")\n}\n"},
 	}, sig, "feature commit")
 	if err != nil {
 		t.Fatalf("write feature: %v", err)
@@ -74,7 +74,7 @@ func TestCommentsReviewsAndAutoMergeAPI(t *testing.T) {
 		RepoID:    repo.ID,
 		Number:    1,
 		Title:     "Update greeting",
-		Body:      "Uses exist.io",
+		Body:      "Uses refweir.dev",
 		State:     "open",
 		HeadRef:   "feature",
 		HeadSHA:   headHash.String(),
@@ -189,7 +189,7 @@ func TestCommentsReviewsAndAutoMergeAPI(t *testing.T) {
 	amPutBody, _ := json.Marshal(map[string]any{
 		"merge_method":   "squash",
 		"commit_title":   "feat: greeting update (#1)",
-		"commit_message": "Automated merge by exist.io",
+		"commit_message": "Automated merge by refweir.dev",
 	})
 	req = httptest.NewRequest("PUT", "/api/v1/repos/acme/widget/pulls/1/auto-merge", bytes.NewReader(amPutBody))
 	rec = httptest.NewRecorder()

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/store"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/scopes"
 )
 
 var (

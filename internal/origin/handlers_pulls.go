@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/agentreviewer"
-	"exist.io/internal/auth"
-	"exist.io/internal/engine"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/agentreviewer"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
@@ -776,8 +776,8 @@ func (s *Server) mergePullRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authorSig := object.Signature{
-		Name:  "Exist Engine",
-		Email: "merge@exist.io",
+		Name:  "Refweir Engine",
+		Email: "merge@refweir.dev",
 		When:  time.Now(),
 	}
 	msg := fmt.Sprintf("Merge pull request #%d from %s\n\n%s", pr.Number, pr.HeadRef, pr.Title)
@@ -932,8 +932,8 @@ func (s *Server) preparePullRequestMergeRef(w http.ResponseWriter, r *http.Reque
 	}
 
 	authorSig := object.Signature{
-		Name:  "Exist Engine",
-		Email: "merge-preview@exist.io",
+		Name:  "Refweir Engine",
+		Email: "merge-preview@refweir.dev",
 		When:  time.Now(),
 	}
 

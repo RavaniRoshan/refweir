@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/config"
+	"refweir.dev/internal/config"
 )
 
 func TestReleasesRulesetsAndWebhooksLifecycle(t *testing.T) {

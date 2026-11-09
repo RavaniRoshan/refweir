@@ -57,7 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     <Dialog
       isOpen={isOpen}
       onClose={onClose}
-      title={tab === 'login' ? 'Sign In to exist.io' : 'Create Enterprise Account'}
+      title={tab === 'login' ? 'Sign In to refweir.dev' : 'Create Enterprise Account'}
       description={
         tab === 'login'
           ? 'Authenticate to access private repositories, submit reviews, and manage enterprise policies.'
@@ -193,7 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </form>
 
         <div className="pt-2 border-t border-border text-center text-muted-foreground text-[11px]">
-          <span>Protected by exist.io Argon2id credential hashing & session encryption</span>
+          <span>Protected by refweir.dev Argon2id credential hashing & session encryption</span>
         </div>
       </div>
     </Dialog>

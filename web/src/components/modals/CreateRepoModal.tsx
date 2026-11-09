@@ -72,7 +72,7 @@ export const CreateRepoModal: React.FC<CreateRepoModalProps> = ({
           <span>Create a new repository</span>
         </DialogTitle>
         <DialogDescription>
-          A repository contains all project files, revision history, and agent policies hosted on your sovereign exist.io cluster.
+          A repository contains all project files, revision history, and agent policies hosted on your sovereign refweir.dev cluster.
         </DialogDescription>
       </DialogHeader>
 
@@ -108,7 +108,7 @@ export const CreateRepoModal: React.FC<CreateRepoModalProps> = ({
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. backend-api or exist-docs"
+              placeholder="e.g. backend-api or refweir-docs"
               className="w-full px-2.5 py-1.5 text-xs rounded-md bg-input border border-border text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
             />
           </div>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# exist.io — Multi-Architecture Release Packaging Script
+# Refweir — Multi-Architecture Release Packaging Script
 # Builds hermetic pure-Go binaries (CGO_ENABLED=0) and packages release archives with SHA256 checksums.
 
 set -euo pipefail
@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="${1:-${VERSION:-$(tr -d '[:space:]' < "${ROOT_DIR}/VERSION")}}"
 OUTPUT_DIR="${ROOT_DIR}/dist/release"
 
-echo "==> Building exist.io release ${VERSION}"
+echo "==> Building Refweir release ${VERSION}"
 echo "    Root directory:   ${ROOT_DIR}"
 echo "    Output directory: ${OUTPUT_DIR}"
 
@@ -44,20 +44,20 @@ for target in "${PLATFORMS[@]}"; do
   # Build binaries
   CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" go build \
     -trimpath \
-    -ldflags="-s -w -X main.version=${VERSION} -X exist.io/internal/cli.Version=${VERSION}" \
-    -o "${STAGE_DIR}/existd${BIN_EXT}" \
-    "${ROOT_DIR}/cmd/existd"
+    -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" \
+    -o "${STAGE_DIR}/refweird${BIN_EXT}" \
+    "${ROOT_DIR}/cmd/refweird"
 
   CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" go build \
     -trimpath \
-    -ldflags="-s -w -X main.version=${VERSION} -X exist.io/internal/cli.Version=${VERSION}" \
-    -o "${STAGE_DIR}/exist${BIN_EXT}" \
-    "${ROOT_DIR}/cmd/exist"
+    -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" \
+    -o "${STAGE_DIR}/refweir${BIN_EXT}" \
+    "${ROOT_DIR}/cmd/refweir"
 
   cp "${ROOT_DIR}/README.md" "${STAGE_DIR}/"
   cp "${ROOT_DIR}/LICENSE" "${STAGE_DIR}/"
 
-  ARCHIVE_NAME="exist_${VERSION}_${GOOS}_${GOARCH}.${EXT}"
+  ARCHIVE_NAME="refweir_${VERSION}_${GOOS}_${GOARCH}.${EXT}"
   ARCHIVE_PATH="${OUTPUT_DIR}/${ARCHIVE_NAME}"
 
   echo "--> Packaging ${ARCHIVE_NAME}..."
@@ -74,9 +74,9 @@ echo "--> Generating SHA256SUMS..."
 (
   cd "${OUTPUT_DIR}"
   if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum exist_* > SHA256SUMS
+    sha256sum refweir_* > SHA256SUMS
   elif command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 exist_* > SHA256SUMS
+    shasum -a 256 refweir_* > SHA256SUMS
   fi
 )
 

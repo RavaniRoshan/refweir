@@ -167,7 +167,7 @@ export const MigrateRepoModal: React.FC<MigrateRepoModalProps> = ({
           <span>Migrate Repository</span>
         </DialogTitle>
         <DialogDescription>
-          Import code, revision history, issues, and PRs into your sovereign exist.io cluster.
+          Import code, revision history, issues, and PRs into your sovereign refweir.dev cluster.
         </DialogDescription>
       </DialogHeader>
 

@@ -1,5 +1,5 @@
 // Package mcp implements the Model Context Protocol (MCP) JSON-RPC 2.0 server
-// and tool definitions, providing AI coding agents with structured access to exist.io.
+// and tool definitions, providing AI coding agents with structured access to refweir.dev.
 package mcp
 
 import (
@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"exist.io/internal/agentactivity"
-	"exist.io/internal/audit"
-	"exist.io/internal/auth"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/metrics"
-	"exist.io/internal/store"
+	"refweir.dev/internal/agentactivity"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/store"
 )
 
 // Server implements the Model Context Protocol (MCP) HTTP JSON-RPC 2.0 server.
@@ -126,7 +126,7 @@ func (s *Server) Handler(readonly bool) http.Handler {
 					"tools": map[string]any{},
 				},
 				"serverInfo": map[string]any{
-					"name":    "exist.io",
+					"name":    "refweir.dev",
 					"version": "1.0.0",
 				},
 			})
@@ -200,7 +200,7 @@ func (s *Server) Handler(readonly bool) http.Handler {
 
 			agentactivity.DefaultHub.Record(agentactivity.Activity{
 				AgentName:  "MCP Agent",
-				AgentType:  "exist-mcp",
+				AgentType:  "refweir-mcp",
 				Action:     "tool_call",
 				ToolName:   params.Name,
 				Resource:   repoName,

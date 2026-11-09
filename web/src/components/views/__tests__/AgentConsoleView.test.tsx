@@ -11,8 +11,8 @@ vi.mock('@/lib/api', async () => {
     getAgentActivities: vi.fn().mockResolvedValue([
       {
         id: 'act-1',
-        agentName: 'exist-agent',
-        agentType: 'exist-mcp',
+        agentName: 'refweir-agent',
+        agentType: 'refweir-mcp',
         toolName: 'list_pull_requests',
         status: 'success',
         latencyMs: 24,
@@ -57,7 +57,7 @@ describe('AgentConsoleView Component', () => {
     render(<AgentConsoleView />)
 
     await waitFor(() => {
-      expect(screen.getByText('exist-agent')).toBeInTheDocument()
+      expect(screen.getByText('refweir-agent')).toBeInTheDocument()
     })
 
     expect(screen.getByText('list_pull_requests')).toBeInTheDocument()

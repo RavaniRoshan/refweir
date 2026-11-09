@@ -60,7 +60,7 @@ interface PinnedRepo {
 
 const pinnedReposData: PinnedRepo[] = [
   {
-    name: 'exist.io',
+    name: 'refweir.dev',
     owner: 'shiva',
     description: 'Autonomous Git server, MCP agent bridge, and sovereign enterprise GitHub alternative powered by SQLite WAL.',
     language: 'Go',
@@ -131,7 +131,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
     id: 'user-1',
     login: 'shiva',
     name: 'Roshan Ravani',
-    email: 'roshan@exist.io',
+    email: 'roshan@refweir.dev',
     role: 'admin',
     status: 'active',
     createdAt: '2026-01-01T00:00:00Z',
@@ -189,7 +189,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             live.map((r) => ({
               name: r.name,
               owner: r.full_name?.split('/')[0] || 'shiva',
-              description: r.description || 'Enterprise repository on exist.io',
+              description: r.description || 'Enterprise repository on refweir.dev',
               language: r.language || 'Go',
               languageColor: r.languageColor || '#00ADD8',
               stars: r.stars || 0,
@@ -348,7 +348,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
               title="Current status"
             >
               <span>🎯</span>
-              <span className="hidden sm:inline">Building exist.io</span>
+              <span className="hidden sm:inline">Building refweir.dev</span>
             </div>
           </div>
 
@@ -427,7 +427,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
           <div className="pt-3 border-t border-border space-y-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <Building className="w-4 h-4 shrink-0" />
-              <span className="text-foreground">exist.io Inc.</span>
+              <span className="text-foreground">refweir.dev Inc.</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 shrink-0" />
@@ -445,14 +445,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             </div>
             <div className="flex items-center gap-2">
               <LinkIcon className="w-4 h-4 shrink-0" />
-              <a href="https://exist.io" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                https://exist.io
+              <a href="https://refweir.dev" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                https://refweir.dev
               </a>
             </div>
             <div className="flex items-center gap-2">
               <Globe className="w-4 h-4 shrink-0" />
-              <a href="https://twitter.com/exist_io" target="_blank" rel="noreferrer" className="hover:underline">
-                @exist_io
+              <a href="https://twitter.com/refweir_io" target="_blank" rel="noreferrer" className="hover:underline">
+                @refweir_io
               </a>
             </div>
           </div>
@@ -465,7 +465,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             <div className="flex items-center gap-2">
               <div
                 className="w-8 h-8 rounded-md bg-secondary border border-border flex items-center justify-center font-bold text-xs shadow-2xs hover:border-primary cursor-pointer"
-                title="exist-enterprise"
+                title="refweir-enterprise"
               >
                 EE
               </div>
@@ -647,14 +647,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
                     <BoxRow className="flex items-center justify-between text-xs py-3">
                       <div className="flex items-center gap-3">
                         <GitPullRequest className="w-4 h-4 text-emerald-400" />
-                        <span>Opened 4 pull requests in <strong className="text-foreground">shiva/exist.io</strong></span>
+                        <span>Opened 4 pull requests in <strong className="text-foreground">shiva/refweir.dev</strong></span>
                       </div>
                       <span className="text-muted-foreground font-mono">Oct 14</span>
                     </BoxRow>
                     <BoxRow className="flex items-center justify-between text-xs py-3">
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-4 h-4 text-accent" />
-                        <span>Approved and autonomously merged PR #4 via Exist Agent</span>
+                        <span>Approved and autonomously merged PR #4 via Refweir Agent</span>
                       </div>
                       <span className="text-muted-foreground font-mono">Oct 14</span>
                     </BoxRow>
@@ -872,7 +872,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
                 <div>
                   <h3 className="text-base font-semibold text-foreground">Personal Access Tokens</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Tokens you have generated that can be used to authenticate with the existd Git daemon and MCP Agent Bridge.
+                    Tokens you have generated that can be used to authenticate with the refweird Git daemon and MCP Agent Bridge.
                   </p>
                 </div>
                 <Button
@@ -1140,7 +1140,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             {
               name: newRepo.name,
               owner: newRepo.full_name?.split('/')[0] || user.login,
-              description: newRepo.description || 'Enterprise repository on exist.io',
+              description: newRepo.description || 'Enterprise repository on refweir.dev',
               language: newRepo.language || 'Go',
               languageColor: newRepo.languageColor || '#00ADD8',
               stars: 0,

@@ -9,7 +9,7 @@ Drafted announcements tailored for developer communities and social networks on 
 ### Tweet 1 (Hook & Announcement)
 Traditional Git platforms were built 15+ years ago for humans clicking in browsers.
 
-Today, we're launching **exist.io**: the neutral, self-hosted Git forge built from first principles for autonomous AI coding agents.
+Today, we're launching **Refweir**: the neutral, self-hosted Git forge built from first principles for autonomous AI coding agents.
 
 Single binary. Pure Go. Zero cgo. Zero cloud lock-in. 🧵👇
 
@@ -18,12 +18,12 @@ Single binary. Pure Go. Zero cgo. Zero cloud lock-in. 🧵👇
 ### Tweet 2 (The Problem with Current Tools)
 Cursor Origin proved the world wants an agent-first forge—but tying your Git infrastructure to a single proprietary editor or cloud account is a non-starter for self-hosters and teams.
 
-exist.io is 100% vendor-neutral: Claude Code, Cursor, Cline, or Codex all connect over native MCP.
+Refweir is 100% vendor-neutral: Claude Code, Cursor, Cline, or Codex all connect over native MCP.
 
 ### Tweet 3 (Agent Capability Leases)
 The nightmare of agent pair programming is a hallucinated `git push --force origin main`.
 
-exist.io solves this with **Capability Leases**:
+Refweir solves this with **Capability Leases**:
 • Ephemeral HMAC-SHA256 tokens (15–60 min TTL)
 • Strictly isolated to `refs/heads/agent/*`
 • Pre-receive hook blocks pushes to main (GH007)
@@ -31,17 +31,17 @@ exist.io solves this with **Capability Leases**:
 
 ### Tweet 4 (Architecture & Performance)
 Under the hood:
-• Single Go binary (`existd`) with embedded React 19 UI
+• Single Go binary (`refweird`) with embedded React 19 UI
 • Embedded pure-Go SSH server on :2222 (no host OpenSSH daemon)
 • SQLite WAL mode with zero lock contention
 • Sub-10ms MCP tool latency, sub-3s full agent loop (clone, push, PR)
 
 ### Tweet 5 (Try it in 60s)
 Install it in 60 seconds on any Linux, macOS, or Windows machine:
-`go build ./cmd/existd && ./existd bootstrap`
+`go build ./cmd/refweird && ./refweird bootstrap`
 
 We published an empirical claims ledger verifying every single technical claim in our README:
-https://github.com/RavaniRoshan/exist.io/blob/main/CLAIMS.md
+https://github.com/RavaniRoshan/refweir/blob/main/CLAIMS.md
 
 Feedback and stars welcome! ⭐🚀
 
@@ -49,16 +49,16 @@ Feedback and stars welcome! ⭐🚀
 
 ## 2. Hacker News (`Show HN`)
 
-**Title:** Show HN: exist.io – Neutral, self-hosted Git forge built for AI coding agents
+**Title:** Show HN: Refweir – Neutral, self-hosted Git forge built for AI coding agents
 
-**URL:** https://github.com/RavaniRoshan/exist.io
+**URL:** https://github.com/RavaniRoshan/refweir
 
 **Text:**
 Hey HN,
 
 Over the past year, my daily workflow moved from writing code manually to directing autonomous AI agents (Claude Code, Cline, Cursor). But traditional Git platforms weren't designed for agents pushing dozens of automated commits an hour, and proprietary agent forges tie your repo to closed cloud ecosystems.
 
-I built exist.io to be an open, self-hosted forge where coding agents are first-class citizens alongside human engineers.
+I built Refweir to be an open, self-hosted forge where coding agents are first-class citizens alongside human engineers.
 
 Key technical decisions:
 1. **Hermetic pure-Go architecture:** Zero CGO, zero host OpenSSH dependency. It compiles with `CGO_ENABLED=0` and ships as a single binary with the React 19 web UI embedded via `go:embed`.
@@ -73,12 +73,12 @@ Code is Apache-2.0 licensed. Would love your thoughts on agent permissions, self
 
 ## 3. Reddit — r/selfhosted
 
-**Title:** I built exist.io: A lightweight, self-hosted Git forge built for AI coding agents (Pure Go, single binary, embedded UI & SSH)
+**Title:** I built Refweir: A lightweight, self-hosted Git forge built for AI coding agents (Pure Go, single binary, embedded UI & SSH)
 
 **Post:**
 Hey r/selfhosted,
 
-I wanted to share a project I've been working on: **exist.io** (https://github.com/RavaniRoshan/exist.io).
+I wanted to share a project I've been working on: **Refweir** (https://github.com/RavaniRoshan/refweir).
 
 Like many of you, I self-host my development stack and dislike being forced into proprietary cloud accounts to use new developer tools. As I started using agents like Claude Code and Cline more often, giving them unrestricted PATs to my repos felt dangerous.
 
@@ -94,8 +94,8 @@ A self-hosted Git forge (think lightweight, agent-native Gitea/Forgejo) designed
 
 You can try it with a single command:
 ```bash
-existd bootstrap --email admin@exist.io --namespace myteam
-./existd
+refweird bootstrap --email admin@refweir.dev --namespace myteam
+./refweird
 ```
 
 Check out our claims audit (`CLAIMS.md`) and let me know what you think!
@@ -104,14 +104,14 @@ Check out our claims audit (`CLAIMS.md`) and let me know what you think!
 
 ## 4. Reddit — r/LocalLLaMA
 
-**Title:** exist.io — An open-source, self-hosted Git forge with native MCP & capability lease isolation for local agents
+**Title:** Refweir — An open-source, self-hosted Git forge with native MCP & capability lease isolation for local agents
 
 **Post:**
 Hey r/LocalLLaMA,
 
 If you run local coding models or pair with tools like Claude Code, Cline, or Cursor, you've probably noticed that giving an autonomous agent direct write access to your Git branches is risky.
 
-We just released **exist.io** (https://github.com/RavaniRoshan/exist.io), an open-source (Apache-2.0) Git forge built specifically for agentic workflows:
+We just released **Refweir** (https://github.com/RavaniRoshan/refweir), an open-source (Apache-2.0) Git forge built specifically for agentic workflows:
 
 - **Native Model Context Protocol (MCP) server at `/mcp`:** 8 core tools (`repo_tree`, `file_read`, `diff_compare`, `symbol_search`, `pull_request_create`, `thread_comment`, `pull_request_merge`) plus lease management.
 - **Capability Leases:** Ephemeral HMAC-signed leases that lock agents into `refs/heads/agent/*`. Pushing to main or deleting branches is intercepted and blocked at the Git protocol level.
@@ -129,7 +129,7 @@ Let me know what local agent integrations or tool primitives you'd like to see n
 **Post:**
 Traditional version control platforms were designed for human beings interacting via browser tabs. But software engineering is undergoing a generational shift: autonomous AI coding agents now read code, generate diffs, and push commits continuously.
 
-Today, we're introducing **exist.io** — the neutral, self-hosted Git forge built from first principles for autonomous coding agents (Claude Code, Cursor, Cline, Codex) alongside engineering teams.
+Today, we're introducing **Refweir** — the neutral, self-hosted Git forge built from first principles for autonomous coding agents (Claude Code, Cursor, Cline, Codex) alongside engineering teams.
 
 Key Highlights:
 🔹 **Vendor-Neutral Sovereignty:** Runs on your own server or private cloud. Zero external proprietary dependencies.
@@ -139,6 +139,6 @@ Key Highlights:
 🔹 **Empirical Transparency:** Every claim backed by our verified claims ledger and reproducible benchmarks.
 
 Explore the open-source repository (Apache-2.0):
-https://github.com/RavaniRoshan/exist.io
+https://github.com/RavaniRoshan/refweir
 
 #DevOps #OpenSource #SoftwareEngineering #ArtificialIntelligence #Git #AIagents #MCP

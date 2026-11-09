@@ -1,5 +1,5 @@
-// exist.io Production API Client & Mode Switcher
-// Provides clean separation between Live Production existd API and isolated Sandbox Demo Mode.
+// refweir.dev Production API Client & Mode Switcher
+// Provides clean separation between Live Production refweird API and isolated Sandbox Demo Mode.
 
 import type {
   RepoInfo,
@@ -60,15 +60,15 @@ export function isDemoModeActive(): boolean {
   // If explicitly forced via Vite environment
   if (import.meta.env.VITE_DEMO_MODE === 'true') return true
   // Allow interactive user toggle in localStorage
-  const stored = localStorage.getItem('exist_sandbox_demo_mode')
+  const stored = localStorage.getItem('refweir_sandbox_demo_mode')
   if (stored !== null) return stored === 'true'
   // Default to PRODUCTION mode
   return false
 }
 
 export function setDemoModeActive(enabled: boolean) {
-  localStorage.setItem('exist_sandbox_demo_mode', enabled ? 'true' : 'false')
-  window.dispatchEvent(new Event('exist_mode_changed'))
+  localStorage.setItem('refweir_sandbox_demo_mode', enabled ? 'true' : 'false')
+  window.dispatchEvent(new Event('refweir_mode_changed'))
 }
 
 // -------------------------------------------------------------
@@ -76,7 +76,7 @@ export function setDemoModeActive(enabled: boolean) {
 // -------------------------------------------------------------
 
 function getAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem('exist_token') || ''
+  const token = localStorage.getItem('refweir_token') || ''
   if (!token) return {}
   return { Authorization: `Bearer ${token}` }
 }
@@ -110,7 +110,7 @@ export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo
       return {
         ownerSlug: owner,
         name: name,
-        description: data.description || 'Enterprise repository on exist.io',
+        description: data.description || 'Enterprise repository on refweir.dev',
         defaultBranch: data.defaultBranch || data.default_branch || 'main',
         isPrivate: Boolean(data.isPrivate || data.is_private || data.visibility === 'private'),
         isArchived: Boolean(data.archived || data.is_archived || data.isArchived),
@@ -134,7 +134,7 @@ export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo
     return {
       ownerSlug: owner,
       name: name,
-      description: data.description || 'Enterprise repository on exist.io',
+      description: data.description || 'Enterprise repository on refweir.dev',
       defaultBranch: data.defaultBranch || data.default_branch || 'main',
       isPrivate: Boolean(data.isPrivate || data.is_private || data.visibility === 'private'),
       isArchived: Boolean(data.archived || data.is_archived || data.isArchived),
@@ -145,11 +145,11 @@ export async function getRepoInfo(owner: string, name: string): Promise<RepoInfo
       cloneUrlSsh: `git@${window.location.hostname}:2222/${owner}/${name}.git`,
     }
   } catch (err) {
-    console.warn(`[exist.io API] Production fetch for repo ${owner}/${name} failed, presenting empty shell:`, err)
+    console.warn(`[refweir.dev API] Production fetch for repo ${owner}/${name} failed, presenting empty shell:`, err)
     return {
       ownerSlug: owner,
       name: name,
-      description: 'Repository initialized on existd daemon',
+      description: 'Repository initialized on refweird daemon',
       defaultBranch: 'main',
       isPrivate: false,
       starsCount: 0,
@@ -166,13 +166,13 @@ export async function getRepositories(): Promise<RepositoryRecord[]> {
     return [
       {
         id: 'repo-demo-1',
-        name: 'exist.io',
-        full_name: 'shiva/exist.io',
+        name: 'refweir.dev',
+        full_name: 'shiva/refweir.dev',
         default_branch: 'main',
         visibility: 'public',
         is_private: false,
-        clone_url: 'http://localhost:8080/shiva/exist.io.git',
-        web_url: 'http://localhost:8080/shiva/exist.io',
+        clone_url: 'http://localhost:8080/shiva/refweir.dev.git',
+        web_url: 'http://localhost:8080/shiva/refweir.dev',
         description: 'Sovereign GitHub Enterprise alternative with MCP and SQLite WAL engine',
         stars: 284,
         forks: 36,
@@ -224,7 +224,7 @@ export async function getRepositories(): Promise<RepositoryRecord[]> {
     if (!Array.isArray(data?.repositories)) return []
     return data.repositories.map((r: any) => ({
       ...r,
-      description: r.description || 'Enterprise repository on exist.io',
+      description: r.description || 'Enterprise repository on refweir.dev',
       language: r.language || 'Go',
       languageColor: r.languageColor || '#00ADD8',
       stars: r.stars || 0,
@@ -418,7 +418,7 @@ export async function getCommits(owner: string, name: string, ref = 'main'): Pro
       message: c.commit?.message || c.message || 'Commit',
       author: {
         name: c.commit?.author?.name || c.author?.name || c.author_name || 'Developer',
-        email: c.commit?.author?.email || c.author?.email || c.author_email || 'dev@exist.io',
+        email: c.commit?.author?.email || c.author?.email || c.author_email || 'dev@refweir.dev',
         isAgent: Boolean(c.author?.is_agent || c.commit?.author?.is_agent),
       },
       timestamp: c.commit?.author?.date || c.timestamp || c.author_date || 'Recently',
@@ -538,7 +538,7 @@ export async function getPullRequests(owner: string, name: string): Promise<Pull
       branch: p.head?.ref || p.branch || 'feature',
       comments: p.comments || [],
       checks: p.checks || [
-        { id: 'chk-1', name: 'Exist Policy Guard', status: 'completed', conclusion: 'success', duration: '0.1s' }
+        { id: 'chk-1', name: 'Refweir Policy Guard', status: 'completed', conclusion: 'success', duration: '0.1s' }
       ],
       diffHunks: p.diffHunks || [],
       labels: p.labels || [],
@@ -571,7 +571,7 @@ export async function createPullRequest(
       createdAt: 'Just now',
       labels: [{ name: 'enhancement', color: '#1d76db' }],
       diffStats: { additions: 15, deletions: 2, filesChanged: 1 },
-      checks: [{ id: 'chk-1', name: 'Exist Policy Guard', status: 'completed', conclusion: 'success', duration: '0.1s' }],
+      checks: [{ id: 'chk-1', name: 'Refweir Policy Guard', status: 'completed', conclusion: 'success', duration: '0.1s' }],
       comments: [],
       mergeable: true,
       diffHunks: [],
@@ -867,8 +867,8 @@ export async function getAgentActivities(): Promise<AgentActivityItem[]> {
     if (!Array.isArray(data?.activities)) return []
     return data.activities.map((a: any) => ({
       id: a.id || `act-${Date.now()}`,
-      agentName: a.agentName || 'exist-agent',
-      agentType: (a.agentType as any) || 'exist-mcp',
+      agentName: a.agentName || 'refweir-agent',
+      agentType: (a.agentType as any) || 'refweir-mcp',
       toolName: a.toolName || a.action || 'operation',
       status: a.status === 'success' ? 'success' : a.status === 'failed' ? 'error' : 'executing',
       latencyMs: a.durationMs || 14,
@@ -1071,7 +1071,7 @@ export async function getClusterMetrics(): Promise<ClusterMetrics> {
       return {
         serverStatus: data.serverStatus || 'healthy',
         uptime: data.uptime || 'Active',
-        version: data.version || 'existd v0.2.0-enterprise',
+        version: data.version || 'refweird v0.2.0-enterprise',
         activeGitSessions: data.activeGitSessions || 0,
         sqliteWalSizeBytes: data.sqliteWalSizeBytes || 1048576,
         databasePath: data.databasePath || 'SQLite WAL storage',
@@ -1084,14 +1084,14 @@ export async function getClusterMetrics(): Promise<ClusterMetrics> {
       }
     }
   } catch (err) {
-    console.warn('[exist.io Admin] Live metrics fetch failed, fallback to ping:', err)
+    console.warn('[refweir.dev Admin] Live metrics fetch failed, fallback to ping:', err)
   }
 
   const liveStatus = await fetchLiveServerStatus()
   return {
     serverStatus: liveStatus.ok ? 'healthy' : 'degraded',
     uptime: 'Active session',
-    version: 'existd v0.2.0-enterprise',
+    version: 'refweird v0.2.0-enterprise',
     activeGitSessions: 0,
     sqliteWalSizeBytes: 1048576,
     databasePath: 'Local bare repository storage (SQLite WAL enabled)',
@@ -1288,7 +1288,7 @@ export async function fetchUserTokens(): Promise<PersonalAccessToken[]> {
     return [
       {
         id: 'pat_live_1',
-        name: 'CI/CD GitHub Actions & exist-agent',
+        name: 'CI/CD GitHub Actions & refweir-agent',
         token_prefix: 'ghp_7a9B',
         scopes: ['repo', 'workflow', 'write:packages'],
         expires_at: '2027-10-15T00:00:00Z',
@@ -1379,7 +1379,7 @@ export async function updateUserProfile(profile: Partial<UserProfile>): Promise<
     id: 'user-enterprise-1',
     login: profile.login || 'shiva',
     name: profile.name || 'Roshan Ravani',
-    email: profile.email || 'roshan@exist.io',
+    email: profile.email || 'roshan@refweir.dev',
     role: 'admin',
     status: 'active',
     createdAt: '2026-01-01T00:00:00Z',
@@ -1413,7 +1413,7 @@ export async function loginUser(email: string, password: string): Promise<{ ok: 
     }
     const data = await res.json()
     if (data.sessionToken) {
-      localStorage.setItem('exist_token', data.sessionToken)
+      localStorage.setItem('refweir_token', data.sessionToken)
     }
     return { ok: true, user: data.user }
   } catch (err: any) {
@@ -1434,7 +1434,7 @@ export async function registerUser(email: string, login: string, name: string, p
     }
     const data = await res.json()
     if (data.sessionToken) {
-      localStorage.setItem('exist_token', data.sessionToken)
+      localStorage.setItem('refweir_token', data.sessionToken)
     }
     return { ok: true, user: data.user }
   } catch (err: any) {
@@ -1448,10 +1448,10 @@ export async function logoutUser(): Promise<void> {
   } catch {
     // ignore
   }
-  localStorage.removeItem('exist_token')
+  localStorage.removeItem('refweir_token')
 }
 
-// Live MCP Caller to local existd daemon
+// Live MCP Caller to local refweird daemon
 export async function queryLocalMcpTools(): Promise<any[]> {
   try {
     const res = await fetch('/mcp', {
@@ -1475,7 +1475,7 @@ export async function queryLocalMcpTools(): Promise<any[]> {
         { name: 'create_pull_request_inline_comment', description: 'Start review thread on file line' },
         { name: 'checks_read', description: 'Read check runs and suites for a commit SHA' },
         { name: 'list_rulesets', description: 'List rulesets configured on a repository' },
-        { name: 'list_namespaces', description: 'List all namespaces in exist.io' },
+        { name: 'list_namespaces', description: 'List all namespaces in refweir.dev' },
       ]
     }
     return []
@@ -1820,9 +1820,9 @@ export async function delegateIssueToAgent(
     ok: true,
     comment: {
       id: `ic_agent_${Date.now()}`,
-      author: 'Exist Agent (Autonomous)',
+      author: 'Refweir Agent (Autonomous)',
       isAgent: true,
-      body: `🤖 **Autonomous Triage by Exist Agent**:
+      body: `🤖 **Autonomous Triage by Refweir Agent**:
 I have reviewed this issue and generated isolated reproduction tests in branch \`agent/fix-issue-${issueNumber}\`. Pull request **#${issueNumber + 3}** has been automatically drafted with verified changes.`,
       createdAt: 'Just now',
     },
@@ -2061,7 +2061,7 @@ export async function getDeployKeys(owner: string, name: string): Promise<Deploy
         id: 'depk-demo-1',
         repo_id: 'repo-demo',
         title: 'Production CI Runner',
-        key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG7n2X6B4m1j0k8c9p2r3s4t5u6v7w8x9y0z1a2b3c4d ci-runner@exist.io',
+        key: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG7n2X6B4m1j0k8c9p2r3s4t5u6v7w8x9y0z1a2b3c4d ci-runner@refweir.dev',
         fingerprint: 'SHA256:7uK+N9xL2pQ1rT5wV8yZ4bA6cD8eF0gH2jK4mN6pQ8s',
         read_only: true,
         last_used_at: '2026-10-15T12:00:00Z',

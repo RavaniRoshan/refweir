@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 // ErrUnauthenticated is returned when a request carries no valid session or token.

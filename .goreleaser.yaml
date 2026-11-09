@@ -1,11 +1,11 @@
 version: 2
-project_name: exist
+project_name: refweir
 
 builds:
-  - id: existd
+  - id: refweird
     dir: .
-    main: ./cmd/existd
-    binary: existd
+    main: ./cmd/refweird
+    binary: refweird
     env:
       - CGO_ENABLED=0
     goos:
@@ -19,12 +19,12 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X 'main.version={{ .Version }}' -X 'exist.io/internal/cli.Version={{ .Version }}'
+      - -s -w -X 'main.version={{ .Version }}' -X 'refweir.dev/internal/cli.Version={{ .Version }}'
 
-  - id: exist
+  - id: refweir
     dir: .
-    main: ./cmd/exist
-    binary: exist
+    main: ./cmd/refweir
+    binary: refweir
     env:
       - CGO_ENABLED=0
     goos:
@@ -38,7 +38,7 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X 'main.version={{ .Version }}' -X 'exist.io/internal/cli.Version={{ .Version }}'
+      - -s -w -X 'main.version={{ .Version }}' -X 'refweir.dev/internal/cli.Version={{ .Version }}'
 
 archives:
   - id: default

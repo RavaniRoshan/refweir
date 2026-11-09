@@ -141,7 +141,7 @@ type GrantPrincipal struct {
 
 // UpsertUserByEmail finds or creates a user by email, returning the user id.
 // newID generates the id when a new user must be created; this keeps the store
-// free of an idgen dependency (callers own ID generation). This is exist.io's
+// free of an idgen dependency (callers own ID generation). This is refweir.dev's
 // own equivalent of Origin's /teams/members admin bridge.
 func (db *DB) UpsertUserByEmail(ctx context.Context, email string, newID func() string) (string, error) {
 	var id string
@@ -184,7 +184,7 @@ func (db *DB) GetUser(ctx context.Context, id string) (User, error) {
 
 // UpsertGroupByName finds or creates a group by (namespace, name), returning
 // its id. newID generates the id when a new group must be created. This is
-// exist.io's own equivalent of Origin's /organizations/groups.
+// refweir.dev's own equivalent of Origin's /organizations/groups.
 func (db *DB) UpsertGroupByName(ctx context.Context, namespaceID, name string, newID func() string) (string, error) {
 	var id string
 	err := db.sql.QueryRowContext(ctx, `SELECT id FROM groups WHERE namespace_id=? AND name=?`, namespaceID, name).Scan(&id)

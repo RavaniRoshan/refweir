@@ -9,10 +9,10 @@ import (
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 
-	"exist.io/internal/engine"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func setupAutoMergeTestEnv(t *testing.T) (*store.DB, *gitstore.Store, store.Repo, *store.User) {
@@ -36,7 +36,7 @@ func setupAutoMergeTestEnv(t *testing.T) (*store.DB, *gitstore.Store, store.Repo
 		ID:    idgen.NewUser(),
 		Login: "developer",
 		Name:  "Test Developer",
-		Email: "dev@exist.io",
+		Email: "dev@refweir.dev",
 	}
 	if err := db.CreateUserWithPassword(ctx, u); err != nil {
 		t.Fatalf("CreateUser: %v", err)
@@ -460,7 +460,7 @@ func TestAutoMergeEngine_BlockedByRequiredApprovals(t *testing.T) {
 	u2 := store.User{
 		ID:    idgen.NewUser(),
 		Login: "reviewer2",
-		Email: "reviewer2@exist.io",
+		Email: "reviewer2@refweir.dev",
 	}
 	if err := db.CreateUserWithPassword(ctx, u2); err != nil {
 		t.Fatalf("CreateUser u2: %v", err)
@@ -499,7 +499,7 @@ func TestAutoMergeEngine_BlockedByRequiredApprovals(t *testing.T) {
 	u3 := store.User{
 		ID:    idgen.NewUser(),
 		Login: "reviewer3",
-		Email: "reviewer3@exist.io",
+		Email: "reviewer3@refweir.dev",
 	}
 	if err := db.CreateUserWithPassword(ctx, u3); err != nil {
 		t.Fatalf("CreateUser u3: %v", err)

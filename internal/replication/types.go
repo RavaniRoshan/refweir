@@ -1,12 +1,12 @@
 // Package replication provides high-availability disaster recovery, WAL checkpointing,
-// snapshot replication, and automated failover control for exist.io clusters.
+// snapshot replication, and automated failover control for refweir.dev clusters.
 package replication
 
 import (
 	"time"
 )
 
-// Role represents the high-availability role of an exist.io cluster node.
+// Role represents the high-availability role of an refweir.dev cluster node.
 type Role string
 
 const (

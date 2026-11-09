@@ -1,23 +1,23 @@
 services:
   # ----------------------------------------------------------------------------
-  # exist.io Enterprise Core Server Daemon
+  # Refweir Enterprise Core Server Daemon
   # ----------------------------------------------------------------------------
-  existd:
+  refweird:
     build:
       context: .
       dockerfile: Dockerfile
-    image: exist-io/existd:v0.2.0-enterprise
-    container_name: existd-enterprise
+    image: refweir/refweird:v0.2.0-enterprise
+    container_name: refweird-enterprise
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
-      - EXIST_LISTEN_ADDR=0.0.0.0:8080
-      - EXIST_DATA_DIR=/var/lib/exist
-      - EXIST_PUBLIC_URL=http://localhost:8080
-      - EXIST_GIT_URL=localhost:8080
+      - REFWEIR_LISTEN_ADDR=0.0.0.0:8080
+      - REFWEIR_DATA_DIR=/var/lib/refweir
+      - REFWEIR_PUBLIC_URL=http://localhost:8080
+      - REFWEIR_GIT_URL=localhost:8080
     volumes:
-      - exist-storage:/var/lib/exist
+      - refweir-storage:/var/lib/refweir
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -37,15 +37,15 @@ services:
   # ----------------------------------------------------------------------------
   minio:
     image: minio/minio:RELEASE.2024-11-07T00-52-20Z
-    container_name: existd-minio
+    container_name: refweird-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=exist-enterprise-admin
-      - MINIO_ROOT_PASSWORD=exist-secure-cluster-key-change-in-production
+      - MINIO_ROOT_USER=refweir-enterprise-admin
+      - MINIO_ROOT_PASSWORD=refweir-secure-cluster-key-change-in-production
     volumes:
       - minio-storage:/data
     healthcheck:
@@ -59,7 +59,7 @@ services:
   # ----------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:v2.54.1
-    container_name: existd-prometheus
+    container_name: refweird-prometheus
     restart: unless-stopped
     ports:
       - "9090:9090"
@@ -71,12 +71,12 @@ services:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-storage:/prometheus
     depends_on:
-      - existd
+      - refweird
 
 volumes:
-  exist-storage:
-    name: exist-enterprise-storage
+  refweir-storage:
+    name: refweir-enterprise-storage
   minio-storage:
-    name: exist-enterprise-lfs-blobs
+    name: refweir-enterprise-lfs-blobs
   prometheus-storage:
-    name: exist-enterprise-metrics
+    name: refweir-enterprise-metrics

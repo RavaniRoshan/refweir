@@ -10,7 +10,7 @@ COPY web/ ./
 RUN npm run build
 
 # ------------------------------------------------------------------------------
-# Stage 2: Build exist.io Enterprise Daemon and CLI
+# Stage 2: Build Refweir Enterprise Daemon and CLI
 # ------------------------------------------------------------------------------
 FROM golang:1.26-alpine AS go-builder
 ARG VERSION=v0.6.0-beta
@@ -21,8 +21,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X exist.io/internal/cli.Version=${VERSION}" -o /bin/existd ./cmd/existd && \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X exist.io/internal/cli.Version=${VERSION}" -o /bin/exist ./cmd/exist
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" -o /bin/refweird ./cmd/refweird && \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${VERSION} -X refweir.dev/internal/cli.Version=${VERSION}" -o /bin/refweir ./cmd/refweir
 
 # ------------------------------------------------------------------------------
 # Stage 3: Hardened, Non-Root Enterprise Production Container
@@ -34,32 +34,32 @@ RUN apk add --no-cache git ca-certificates tzdata \
     && rm -rf /var/cache/apk/*
 
 # Create unprivileged service user and group
-RUN addgroup -g 1000 exist && \
-    adduser -u 1000 -G exist -s /bin/sh -D exist
+RUN addgroup -g 1000 refweir && \
+    adduser -u 1000 -G refweir -s /bin/sh -D refweir
 
 # Create persistent storage directories with strict access permissions
-RUN mkdir -p /var/lib/exist/git /var/lib/exist/audit && \
-    chown -R exist:exist /var/lib/exist && \
-    chmod 700 /var/lib/exist
+RUN mkdir -p /var/lib/refweir/git /var/lib/refweir/audit && \
+    chown -R refweir:refweir /var/lib/refweir && \
+    chmod 700 /var/lib/refweir
 
 # Copy binaries from builder
-COPY --from=go-builder /bin/existd /usr/local/bin/existd
-COPY --from=go-builder /bin/exist /usr/local/bin/exist
+COPY --from=go-builder /bin/refweird /usr/local/bin/refweird
+COPY --from=go-builder /bin/refweir /usr/local/bin/refweir
 
 # Copy static Web UI assets into daemon directory
-COPY --from=web-builder /app/web/dist /var/lib/exist/web/dist
+COPY --from=web-builder /app/web/dist /var/lib/refweir/web/dist
 
-USER exist:exist
-WORKDIR /var/lib/exist
+USER refweir:refweir
+WORKDIR /var/lib/refweir
 
-ENV EXIST_DATA_DIR=/var/lib/exist \
-    EXIST_LISTEN_ADDR=0.0.0.0:8080 \
-    EXIST_PUBLIC_URL=http://localhost:8080 \
-    EXIST_GIT_URL=localhost:8080
+ENV REFWEIR_DATA_DIR=/var/lib/refweir \
+    REFWEIR_LISTEN_ADDR=0.0.0.0:8080 \
+    REFWEIR_PUBLIC_URL=http://localhost:8080 \
+    REFWEIR_GIT_URL=localhost:8080
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
     CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
 
-ENTRYPOINT ["/usr/local/bin/existd"]
+ENTRYPOINT ["/usr/local/bin/refweird"]

@@ -54,7 +54,7 @@ const enterpriseFeed: ActivityEvent[] = [
   {
     id: 'evt-1',
     type: 'agent',
-    actor: 'Exist Agent (Autonomous)',
+    actor: 'Refweir Agent (Autonomous)',
     action: 'approved and autonomously merged pull request',
     target: '#4 feat: add SAML/OIDC SSO enterprise authentication',
     timestamp: '12 minutes ago',
@@ -75,7 +75,7 @@ const enterpriseFeed: ActivityEvent[] = [
     type: 'commit',
     actor: 'Roshan Ravani',
     action: 'pushed 3 commits to branch',
-    target: 'shiva/exist.io (main)',
+    target: 'shiva/refweir.dev (main)',
     timestamp: '3 hours ago',
     sha: 'e92bc41',
   },
@@ -102,13 +102,13 @@ const enterpriseFeed: ActivityEvent[] = [
 const defaultDemoRepos: RepositoryRecord[] = [
   {
     id: 'repo-1',
-    name: 'exist.io',
-    full_name: 'shiva/exist.io',
+    name: 'refweir.dev',
+    full_name: 'shiva/refweir.dev',
     default_branch: 'main',
     visibility: 'public',
     is_private: false,
-    clone_url: 'http://localhost:8080/shiva/exist.io.git',
-    web_url: 'http://localhost:8080/shiva/exist.io',
+    clone_url: 'http://localhost:8080/shiva/refweir.dev.git',
+    web_url: 'http://localhost:8080/shiva/refweir.dev',
     description: 'Sovereign GitHub Enterprise alternative with MCP',
     updated_at: 'Just now',
   },
@@ -208,7 +208,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                 combinedEvents.push({
                   id: a.id || `agent-${idx}`,
                   type: 'agent',
-                  actor: a.agentName || 'exist-agent',
+                  actor: a.agentName || 'refweir-agent',
                   action: `executed ${a.toolName}`,
                   target: typeof a.requestPayload?.resource === 'string' ? a.requestPayload.resource : 'repository',
                   timestamp: a.timestamp || 'Recently',
@@ -318,8 +318,8 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   })
 
   const primaryRepo = repos[0] || {
-    full_name: 'shiva/exist.io',
-    clone_url: 'http://localhost:8080/shiva/exist.io.git',
+    full_name: 'shiva/refweir.dev',
+    clone_url: 'http://localhost:8080/shiva/refweir.dev.git',
   }
   const quickCloneUrl = primaryRepo.clone_url || `http://localhost:8080/${primaryRepo.full_name}.git`
 
@@ -462,7 +462,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
               <div className="w-6 h-6 rounded bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center">
                 E
               </div>
-              <div className="text-xs font-medium text-foreground">exist-enterprise</div>
+              <div className="text-xs font-medium text-foreground">refweir-enterprise</div>
             </div>
           </div>
         </aside>
@@ -477,7 +477,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                   <Compass className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-foreground">Welcome to your sovereign exist.io cluster</h2>
+                  <h2 className="text-sm font-semibold text-foreground">Welcome to your sovereign refweir.dev cluster</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Your single-binary Git forge is running with SQLite WAL storage and MCP autonomous agent capabilities.
                   </p>
@@ -685,7 +685,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
             </BoxHeader>
             <BoxBody className="space-y-3 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">existd Daemon:</span>
+                <span className="text-muted-foreground">refweird Daemon:</span>
                 <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Online (8080)</span>
@@ -742,7 +742,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                 <span>Cluster Navigation</span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                First time using exist.io? Explore how everything is connected.
+                First time using refweir.dev? Explore how everything is connected.
               </p>
               <div className="flex items-center gap-2 pt-1">
                 {onOpenTour && (

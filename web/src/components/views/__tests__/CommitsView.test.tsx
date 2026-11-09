@@ -21,14 +21,14 @@ describe('CommitsView Component', () => {
       verified: true,
       author: {
         name: 'Roshan Ravani',
-        email: 'roshan@exist.io',
+        email: 'roshan@refweir.dev',
         isAgent: false,
       },
       verification: {
         verified: true,
         key_type: 'ssh',
         key_id: 'SHA256:4Xk9p0vV+eM3p0eQ4rT2Y9z8lM1nO7kP8wJ2lQ5rS0=',
-        signer_email: 'roshan@exist.io',
+        signer_email: 'roshan@refweir.dev',
         reason: 'Signed with enrolled SSH key',
       },
     },
@@ -40,7 +40,7 @@ describe('CommitsView Component', () => {
       verified: false,
       author: {
         name: 'Dev Bot',
-        email: 'bot@exist.io',
+        email: 'bot@refweir.dev',
         isAgent: true,
       },
     },

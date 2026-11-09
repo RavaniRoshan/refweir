@@ -3,7 +3,7 @@ package origin
 import (
 	"net/http"
 
-	"exist.io/pkg/scopes"
+	"refweir.dev/pkg/scopes"
 )
 
 // Handler returns the fully wired Origin HTTP handler, mounting every resource

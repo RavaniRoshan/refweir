@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/config"
+	"refweir.dev/internal/config"
 )
 
 func TestAppLifecycle(t *testing.T) {

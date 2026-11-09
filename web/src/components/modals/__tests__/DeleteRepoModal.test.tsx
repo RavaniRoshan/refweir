@@ -23,14 +23,14 @@ describe('DeleteRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         onSuccess={onSuccess}
       />
     )
 
     expect(screen.getByText(/delete repository confirmation/i)).toBeInTheDocument()
     expect(screen.getByText(/this action cannot be undone/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/shiva\/exist-core/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/shiva\/refweir-core/i).length).toBeGreaterThan(0)
     expect(screen.getByTestId('delete-acknowledge-checkbox')).toBeInTheDocument()
     expect(screen.getByTestId('delete-confirm-name-input')).toBeInTheDocument()
     expect(screen.getByTestId('delete-sudo-secret-input')).toBeInTheDocument()
@@ -46,7 +46,7 @@ describe('DeleteRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -65,7 +65,7 @@ describe('DeleteRepoModal Component', () => {
     expect(submitBtn).toBeDisabled()
 
     // 3. Type matching repo name
-    fireEvent.change(nameInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(nameInput, { target: { value: 'shiva/refweir-core' } })
     expect(submitBtn).toBeDisabled()
 
     // 4. Enter sudo secret
@@ -83,7 +83,7 @@ describe('DeleteRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         onSuccess={onSuccess}
       />
     )
@@ -92,7 +92,7 @@ describe('DeleteRepoModal Component', () => {
     fireEvent.click(checkbox)
 
     const nameInput = screen.getByTestId('delete-confirm-name-input')
-    fireEvent.change(nameInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(nameInput, { target: { value: 'shiva/refweir-core' } })
 
     const secretInput = screen.getByTestId('delete-sudo-secret-input')
     fireEvent.change(secretInput, { target: { value: 'super-secret' } })
@@ -116,13 +116,13 @@ describe('DeleteRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         onSuccess={onSuccess}
       />
     )
 
     fireEvent.click(screen.getByTestId('delete-acknowledge-checkbox'))
-    fireEvent.change(screen.getByTestId('delete-confirm-name-input'), { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(screen.getByTestId('delete-confirm-name-input'), { target: { value: 'shiva/refweir-core' } })
     fireEvent.change(screen.getByTestId('delete-sudo-secret-input'), { target: { value: 'wrong-secret' } })
 
     fireEvent.click(screen.getByTestId('delete-submit-btn'))

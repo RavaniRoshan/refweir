@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/slug"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/slug"
 )
 
 // MigrateRequest defines the parameters for a repository migration.

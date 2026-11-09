@@ -12,7 +12,7 @@ vi.mock('@/lib/api', async () => {
       {
         id: 'whd-1',
         event: 'push',
-        targetUrl: 'https://ci.internal.exist.io/hooks/forge',
+        targetUrl: 'https://ci.internal.refweir.dev/hooks/forge',
         statusCode: 200,
         status: 200,
         durationMs: 42,
@@ -26,7 +26,7 @@ vi.mock('@/lib/api', async () => {
       {
         id: 'whd-2',
         event: 'pull_request',
-        targetUrl: 'https://security-bot.exist.io/audit',
+        targetUrl: 'https://security-bot.refweir.dev/audit',
         statusCode: 200,
         status: 200,
         durationMs: 88,
@@ -58,8 +58,8 @@ describe('WebhooksView', () => {
       expect(screen.getByText('Webhook Delivery Log')).toBeInTheDocument()
       expect(screen.getByText('push')).toBeInTheDocument()
       expect(screen.getByText('pull_request')).toBeInTheDocument()
-      expect(screen.getByText('https://ci.internal.exist.io/hooks/forge')).toBeInTheDocument()
-      expect(screen.getByText('https://security-bot.exist.io/audit')).toBeInTheDocument()
+      expect(screen.getByText('https://ci.internal.refweir.dev/hooks/forge')).toBeInTheDocument()
+      expect(screen.getByText('https://security-bot.refweir.dev/audit')).toBeInTheDocument()
     })
     expect(screen.getAllByText('HTTP 200').length).toBe(2)
   })

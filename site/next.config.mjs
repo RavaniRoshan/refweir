@@ -1,6 +1,6 @@
 import { createMDX } from 'fumadocs-mdx/next';
 
-const basePath = '/exist.io';
+const basePath = '/refweir';
 
 // Make the base path available while the app renders during `next build`,
 // not only in the client bundle.

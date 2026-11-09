@@ -1,5 +1,5 @@
 ---
-title: How to manage exist.io with Terraform and Helm (experimental)
+title: How to manage refweir.dev with Terraform and Helm (experimental)
 description: Experimental reference for the Terraform / OpenTofu provider and Kubernetes Helm chart.
 ---
 
@@ -7,27 +7,27 @@ description: Experimental reference for the Terraform / OpenTofu provider and Ku
 The Terraform provider and Helm chart are provided as source in `deploy/` without support. They are not part of the supported launch surface.
 :::
 
-exist.io provides experimental Infrastructure as Code (IaC) tooling, including a dedicated **Terraform / OpenTofu Provider** and a **Kubernetes Helm Chart**.
+refweir.dev provides experimental Infrastructure as Code (IaC) tooling, including a dedicated **Terraform / OpenTofu Provider** and a **Kubernetes Helm Chart**.
 
 ## Step 1: Manage resources with Terraform / OpenTofu
 
-The provider lives in `deploy/terraform-provider-exist` and communicates directly with the exist.io REST API.
+The provider lives in `deploy/terraform-provider-refweir` and communicates directly with the refweir.dev REST API.
 
 ### Provider Configuration
 
 ```hcl
 terraform {
   required_providers {
-    exist = {
-      source  = "exist.io/enterprise/exist"
+    refweir = {
+      source  = "RavaniRoshan/refweir"
       version = ">= 0.1.0"
     }
   }
 }
 
-provider "exist" {
-  endpoint = var.exist_endpoint # e.g. "https://git.corp.exist.io"
-  token    = var.exist_token    # Bearer token or PAT
+provider "refweir" {
+  endpoint = var.refweir_endpoint # e.g. "https://git.corp.refweir.dev"
+  token    = var.refweir_token    # Bearer token or PAT
 }
 ```
 
@@ -35,7 +35,7 @@ provider "exist" {
 
 ```hcl
 # 1. Create an engineering organization namespace
-resource "exist_namespace" "core_eng" {
+resource "refweir_namespace" "core_eng" {
   slug         = "core-eng"
   display_name = "Core Engineering"
   description  = "Mission-critical enterprise services and microservices."
@@ -43,8 +43,8 @@ resource "exist_namespace" "core_eng" {
 }
 
 # 2. Inbound IP Allowlist perimeter
-resource "exist_ip_allowlist" "vpc_perimeter" {
-  namespace_slug = exist_namespace.core_eng.slug
+resource "refweir_ip_allowlist" "vpc_perimeter" {
+  namespace_slug = refweir_namespace.core_eng.slug
   enabled        = true
   entries = [
     { cidr = "10.0.0.0/8", description = "Internal Kubernetes Service Mesh" },
@@ -53,8 +53,8 @@ resource "exist_ip_allowlist" "vpc_perimeter" {
 }
 
 # 3. Create a Git repository
-resource "exist_repository" "payment_service" {
-  namespace_slug = exist_namespace.core_eng.slug
+resource "refweir_repository" "payment_service" {
+  namespace_slug = refweir_namespace.core_eng.slug
   name           = "payment-service"
   description    = "PCI-DSS compliant payment processing engine."
   default_branch = "main"
@@ -62,9 +62,9 @@ resource "exist_repository" "payment_service" {
 }
 
 # 4. Enforce branch protection ruleset
-resource "exist_ruleset" "mainline_protection" {
-  namespace_slug = exist_namespace.core_eng.slug
-  repo_name      = exist_repository.payment_service.name
+resource "refweir_ruleset" "mainline_protection" {
+  namespace_slug = refweir_namespace.core_eng.slug
+  repo_name      = refweir_repository.payment_service.name
   name           = "PCI-DSS Mainline Merge Gate"
   enforcement    = "active"
   kind           = "branch"
@@ -101,16 +101,16 @@ resource "exist_ruleset" "mainline_protection" {
 
 ## Step 2: Deploy to Kubernetes with Helm
 
-The Helm chart in `deploy/helm/exist-enterprise` packages all Kubernetes manifests required for high availability.
+The Helm chart in `deploy/helm/refweir-enterprise` packages all Kubernetes manifests required for high availability.
 
 ### Installation
 
 ```bash
 # Add or package the local Helm chart
-cd deploy/helm/exist-enterprise
+cd deploy/helm/refweir-enterprise
 
 # Install release into 'forge' namespace
-helm upgrade --install exist-enterprise . \
+helm upgrade --install refweir-enterprise . \
   --namespace forge \
   --create-namespace \
   -f values.yaml
@@ -122,7 +122,7 @@ helm upgrade --install exist-enterprise . \
 replicaCount: 1
 
 image:
-  repository: existio/existd
+  repository: existio/refweird
   tag: "v0.2.0-enterprise"
   pullPolicy: IfNotPresent
 
@@ -144,14 +144,14 @@ ingress:
   enabled: true
   className: "nginx"
   hosts:
-    - host: git.corp.exist.io
+    - host: git.corp.refweir.dev
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: exist-tls-cert
+    - secretName: refweir-tls-cert
       hosts:
-        - git.corp.exist.io
+        - git.corp.refweir.dev
 
 # Prometheus Operator ServiceMonitor
 monitoring:

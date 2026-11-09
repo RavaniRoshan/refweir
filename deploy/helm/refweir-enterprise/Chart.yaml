@@ -1,5 +1,5 @@
 apiVersion: v2
-name: exist-enterprise
+name: refweir-enterprise
 description: Enterprise Self-Hosted Git Forge with Pure-Go SSH, Git LFS, and SQLite WAL
 type: application
 version: 1.0.0
@@ -12,9 +12,9 @@ keywords:
   - enterprise
   - git-lfs
   - ssh
-home: https://github.com/exist-io/exist
+home: https://github.com/RavaniRoshan/refweir
 sources:
-  - https://github.com/exist-io/exist
+  - https://github.com/RavaniRoshan/refweir
 maintainers:
-  - name: exist.io Core Platform Team
-    email: platform@exist.io
+  - name: refweir.dev Core Platform Team
+    email: platform@refweir.dev

@@ -1,4 +1,4 @@
-// Package sshserver implements an embedded pure-Go Git SSH server for exist.io.
+// Package sshserver implements an embedded pure-Go Git SSH server for refweir.dev.
 // It authenticates Git clients against public keys enrolled in SQLite and trusted
 // SSH Certificate Authorities, executing Git transport commands in bare repositories.
 package sshserver
@@ -19,10 +19,10 @@ import (
 	"sync"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/metrics"
-	"exist.io/internal/store"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/store"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -140,7 +140,7 @@ func New(addr string, db *store.DB, git *gitstore.Store, hostKeyPath string) (*S
 				"hmac-sha2-512",
 			},
 		},
-		ServerVersion: "SSH-2.0-exist.io",
+		ServerVersion: "SSH-2.0-refweir.dev",
 	}
 	config.AddHostKey(signer)
 	s.sshConfig = config
@@ -256,7 +256,7 @@ func (s *Server) handleSession(conn *ssh.ServerConn, channel ssh.Channel, reques
 func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, rawCmd string) {
 	parts := strings.Fields(rawCmd)
 	if len(parts) < 2 {
-		fmt.Fprintf(channel.Stderr(), "exist.io: invalid git command %q\n", rawCmd)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: invalid git command %q\n", rawCmd)
 		sendExitStatus(channel, 1)
 		return
 	}
@@ -268,7 +268,7 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 
 	pathParts := strings.Split(repoPath, "/")
 	if len(pathParts) != 2 {
-		fmt.Fprintf(channel.Stderr(), "exist.io: invalid repository path %q\n", repoPath)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: invalid repository path %q\n", repoPath)
 		sendExitStatus(channel, 1)
 		return
 	}
@@ -277,7 +277,7 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	isReceive := subCmd == "git-receive-pack"
 	isUpload := subCmd == "git-upload-pack"
 	if !isReceive && !isUpload {
-		fmt.Fprintf(channel.Stderr(), "exist.io: unsupported command %q\n", subCmd)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: unsupported command %q\n", subCmd)
 		sendExitStatus(channel, 1)
 		return
 	}
@@ -285,13 +285,13 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	ctx := context.Background()
 	repo, err := s.store.GetRepo(ctx, ownerSlug, repoName)
 	if err != nil {
-		fmt.Fprintf(channel.Stderr(), "exist.io: repository %s/%s not found\n", ownerSlug, repoName)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: repository %s/%s not found\n", ownerSlug, repoName)
 		sendExitStatus(channel, 1)
 		return
 	}
 
 	if isReceive && repo.Archived {
-		fmt.Fprintf(channel.Stderr(), "exist.io: repository %s/%s is archived and read-only\n", ownerSlug, repoName)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: repository %s/%s is archived and read-only\n", ownerSlug, repoName)
 		sendExitStatus(channel, 1)
 		return
 	}
@@ -302,12 +302,12 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 		userID = "deploy_key:" + deployKeyID
 		boundRepoID := conn.Permissions.Extensions["repo_id"]
 		if boundRepoID != repo.ID {
-			fmt.Fprintf(channel.Stderr(), "exist.io: deploy key is not authorized for repository %s/%s\n", ownerSlug, repoName)
+			fmt.Fprintf(channel.Stderr(), "refweir.dev: deploy key is not authorized for repository %s/%s\n", ownerSlug, repoName)
 			sendExitStatus(channel, 1)
 			return
 		}
 		if isReceive && conn.Permissions.Extensions["read_only"] == "true" {
-			fmt.Fprintf(channel.Stderr(), "exist.io: deploy key does not have write access to repository %s/%s\n", ownerSlug, repoName)
+			fmt.Fprintf(channel.Stderr(), "refweir.dev: deploy key does not have write access to repository %s/%s\n", ownerSlug, repoName)
 			sendExitStatus(channel, 1)
 			return
 		}
@@ -315,7 +315,7 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	} else {
 		allowed, err := s.store.CheckRepoAccess(ctx, repo, userID, isReceive)
 		if err != nil || !allowed {
-			fmt.Fprintf(channel.Stderr(), "exist.io: access denied to %s/%s\n", ownerSlug, repoName)
+			fmt.Fprintf(channel.Stderr(), "refweir.dev: access denied to %s/%s\n", ownerSlug, repoName)
 			sendExitStatus(channel, 1)
 			return
 		}
@@ -347,7 +347,7 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	case s.sem <- struct{}{}:
 		defer func() { <-s.sem }()
 	default:
-		fmt.Fprintf(channel.Stderr(), "exist.io: server busy: git concurrency limit reached\n")
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: server busy: git concurrency limit reached\n")
 		sendExitStatus(channel, 1)
 		return
 	}
@@ -362,20 +362,20 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		fmt.Fprintf(channel.Stderr(), "exist.io: stdin error: %v\n", err)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: stdin error: %v\n", err)
 		sendExitStatus(channel, 1)
 		return
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Fprintf(channel.Stderr(), "exist.io: stdout error: %v\n", err)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: stdout error: %v\n", err)
 		sendExitStatus(channel, 1)
 		return
 	}
 	cmd.Stderr = channel.Stderr()
 
 	if err := cmd.Start(); err != nil {
-		fmt.Fprintf(channel.Stderr(), "exist.io: failed to start %s: %v\n", subCmd, err)
+		fmt.Fprintf(channel.Stderr(), "refweir.dev: failed to start %s: %v\n", subCmd, err)
 		sendExitStatus(channel, 1)
 		return
 	}

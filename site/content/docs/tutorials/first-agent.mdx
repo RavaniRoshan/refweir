@@ -1,19 +1,19 @@
 ---
 title: "Tutorial: Your first automated PR with an AI agent"
-description: "Guided hands-on lesson showing how an AI agent inspects code, creates branches, and opens pull requests on exist.io."
+description: "Guided hands-on lesson showing how an AI agent inspects code, creates branches, and opens pull requests on refweir.dev."
 ---
 
-In this tutorial, you will follow an autonomous AI coding agent as it inspects a repository on exist.io, analyzes code, and opens a pull request using the Model Context Protocol (MCP).
+In this tutorial, you will follow an autonomous AI coding agent as it inspects a repository on refweir.dev, analyzes code, and opens a pull request using the Model Context Protocol (MCP).
 
 ## What you will learn
 
-- How AI agents discover files and navigate commit trees on exist.io.
+- How AI agents discover files and navigate commit trees on refweir.dev.
 - How agents construct and submit pull requests programmatically.
 - How the merge engine validates changes before allowing merges.
 
 ## Prerequisites
 
-- `existd` running locally on port 8080 (`existd` or `./bin/existd`).
+- `refweird` running locally on port 8080 (`refweird` or `./bin/refweird`).
 - A repository initialized in your namespace (e.g., `acme/service`).
 - An active administrative token (`token_...`).
 
@@ -24,7 +24,7 @@ In this tutorial, you will follow an autonomous AI coding agent as it inspects a
 You have instructed an AI coding agent:
 > *"Inspect repository acme/service, find main.go, and open a pull request adding a /healthz endpoint."*
 
-Here is how the agent accomplishes this through exist.io's MCP server.
+Here is how the agent accomplishes this through refweir.dev's MCP server.
 
 ---
 
@@ -94,7 +94,7 @@ The agent reads the existing HTTP handlers and decides to add `http.HandleFunc("
 
 ## Step 3: Pushing the feature branch
 
-The agent makes the code edit in its local workspace and pushes a new branch `feature/health-check` to exist.io using standard Git Smart-HTTP:
+The agent makes the code edit in its local workspace and pushes a new branch `feature/health-check` to refweir.dev using standard Git Smart-HTTP:
 
 ```bash
 git checkout -b feature/health-check
@@ -107,7 +107,7 @@ git push origin feature/health-check
 
 ## Step 4: Opening the pull request
 
-Now the agent opens a formal pull request on exist.io using `pull_request_create`:
+Now the agent opens a formal pull request on refweir.dev using `pull_request_create`:
 
 ```json
 {
@@ -170,7 +170,7 @@ If rulesets require code review approvals or passing status checks, the agent re
 
 ## Conclusion
 
-You have seen how an autonomous AI coding agent interacts with exist.io:
+You have seen how an autonomous AI coding agent interacts with refweir.dev:
 1. Discovers files via `repo_tree` and reads source code via `file_read`.
 2. Pushes commits through authenticated Git Smart-HTTP.
 3. Opens a pull request via `pull_request_create`.

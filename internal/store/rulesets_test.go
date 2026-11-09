@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestRulesets_CRUD(t *testing.T) {

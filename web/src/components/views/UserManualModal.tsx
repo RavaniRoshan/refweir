@@ -82,7 +82,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-foreground">exist.io User Manual & Architecture Guide</h2>
+                <h2 className="text-sm font-semibold text-foreground">refweir.dev User Manual & Architecture Guide</h2>
                 <Badge variant="outline" className="text-[10px] font-mono">
                   {clusterInfo?.version || 'v0.4.0-enterprise'}
                 </Badge>
@@ -116,7 +116,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
           {activeTab === 'quickstart' && (
             <div className="space-y-5">
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Getting Started with exist.io</h3>
+                <h3 className="text-sm font-semibold text-foreground">Getting Started with refweir.dev</h3>
                 <p className="text-muted-foreground mt-0.5">
                   Follow these steps to connect your Git client, configure authentication, and push your first repository.
                 </p>
@@ -134,9 +134,9 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                   Generate an Ed25519 key on your local machine if you haven't already:
                 </p>
                 <div className="relative rounded bg-input border border-border p-2 font-mono text-[11px] text-foreground flex items-center justify-between">
-                  <code>ssh-keygen -t ed25519 -C "developer@exist.io"</code>
+                  <code>ssh-keygen -t ed25519 -C "developer@refweir.dev"</code>
                   <button
-                    onClick={() => handleCopy('ssh-keygen -t ed25519 -C "developer@exist.io"', 'ssh-keygen')}
+                    onClick={() => handleCopy('ssh-keygen -t ed25519 -C "developer@refweir.dev"', 'ssh-keygen')}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
                     {copiedSection === 'ssh-keygen' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -183,9 +183,9 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                   Point any MCP-compatible agent to your local gateway:
                 </p>
                 <div className="relative rounded bg-input border border-border p-2 font-mono text-[11px] text-foreground flex items-center justify-between">
-                  <code>claude mcp add exist http://localhost:8080/mcp</code>
+                  <code>claude mcp add refweir http://localhost:8080/mcp</code>
                   <button
-                    onClick={() => handleCopy('claude mcp add exist http://localhost:8080/mcp', 'mcp-cmd')}
+                    onClick={() => handleCopy('claude mcp add refweir http://localhost:8080/mcp', 'mcp-cmd')}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
                     {copiedSection === 'mcp-cmd' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -201,16 +201,16 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Cluster Architecture & Port Map</h3>
                 <p className="text-muted-foreground mt-0.5">
-                  How the unified <code className="font-mono">existd</code> server daemon coordinates network protocols, storage, and agents.
+                  How the unified <code className="font-mono">refweird</code> server daemon coordinates network protocols, storage, and agents.
                 </p>
               </div>
 
               {/* Visual ASCII / Box Diagram */}
               <div className="p-4 rounded-lg bg-secondary/30 border border-border font-mono text-[11px] space-y-2 overflow-x-auto text-foreground">
-                <div className="text-muted-foreground">// exist.io Unified System Topology</div>
+                <div className="text-muted-foreground">// refweir.dev Unified System Topology</div>
                 <div className="whitespace-pre text-xs leading-relaxed">
 {`+-------------------------------------------------------------------------+
-|                              exist.io Daemon (:8080)                    |
+|                              refweir.dev Daemon (:8080)                    |
 |                                                                         |
 |  +--------------------+   +--------------------+   +------------------+ |
 |  | Smart-HTTP Server  |   |   Pure-Go SSH      |   | MCP Agent Bridge | |
@@ -309,12 +309,12 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                 <div className="p-3.5 rounded-md border border-border bg-secondary/20 space-y-2">
                   <span className="font-semibold text-foreground">Claude Code Configuration</span>
                   <p className="text-[11px] text-muted-foreground">
-                    Add exist.io as an MCP server in your Claude project settings:
+                    Add refweir.dev as an MCP server in your Claude project settings:
                   </p>
                   <pre className="p-2 rounded bg-input border border-border font-mono text-[10px] overflow-x-auto text-foreground">
 {`{
   "mcpServers": {
-    "exist": {
+    "refweir": {
       "url": "http://localhost:8080/mcp"
     }
   }
@@ -330,7 +330,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                   <pre className="p-2 rounded bg-input border border-border font-mono text-[10px] overflow-x-auto text-foreground">
 {`{
   "mcpServers": {
-    "exist": {
+    "refweir": {
       "command": "curl",
       "args": ["http://localhost:8080/mcp"]
     }
@@ -384,7 +384,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                   <div>git config --global commit.gpgsign true</div>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  When enabled, all commits pushed to exist.io will display the green <strong>"Verified"</strong> badge in the Commits view and satisfy strict branch protection rulesets.
+                  When enabled, all commits pushed to refweir.dev will display the green <strong>"Verified"</strong> badge in the Commits view and satisfy strict branch protection rulesets.
                 </p>
               </div>
             </div>
@@ -423,20 +423,20 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Command Line Reference</h3>
                 <p className="text-muted-foreground mt-0.5">
-                  Administrative commands and runtime flags for <code className="font-mono">existd</code> and <code className="font-mono">exist</code> CLI.
+                  Administrative commands and runtime flags for <code className="font-mono">refweird</code> and <code className="font-mono">refweir</code> CLI.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <div className="p-3 rounded-md border border-border bg-secondary/20 space-y-1.5">
-                  <div className="font-mono font-semibold text-primary text-xs">existd bootstrap --email &lt;email&gt; --namespace &lt;slug&gt;</div>
+                  <div className="font-mono font-semibold text-primary text-xs">refweird bootstrap --email &lt;email&gt; --namespace &lt;slug&gt;</div>
                   <p className="text-muted-foreground">
                     Initializes the sovereign cluster's first root administrator account and creates an initial high-entropy API key.
                   </p>
                 </div>
 
                 <div className="p-3 rounded-md border border-border bg-secondary/20 space-y-1.5">
-                  <div className="font-mono font-semibold text-primary text-xs">existd hook pre-receive</div>
+                  <div className="font-mono font-semibold text-primary text-xs">refweird hook pre-receive</div>
                   <p className="text-muted-foreground">
                     Native pre-receive hook executed during git push to scan for secrets, verify cryptographic commit signatures, and enforce branch rulesets.
                   </p>

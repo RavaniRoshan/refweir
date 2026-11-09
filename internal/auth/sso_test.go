@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestSSOEndpoints(t *testing.T) {
@@ -27,7 +27,7 @@ func TestSSOEndpoints(t *testing.T) {
 	_ = adminPass
 	adminUser := store.User{
 		ID:           "user_admin",
-		Email:        "admin@exist.io",
+		Email:        "admin@refweir.dev",
 		Login:        "admin",
 		Name:         "Admin",
 		PasswordHash: adminHash,
@@ -112,7 +112,7 @@ func TestSSOEndpoints(t *testing.T) {
 	}
 
 	// 6. An admin cannot be linked or taken over through the callback.
-	adminBody := `{"code":"auth_code_1000","email":"admin@exist.io"}`
+	adminBody := `{"code":"auth_code_1000","email":"admin@refweir.dev"}`
 	adminReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/sso/callback", strings.NewReader(adminBody))
 	adminReq.Header.Set("Content-Type", "application/json")
 	adminRec := httptest.NewRecorder()

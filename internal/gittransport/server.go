@@ -1,5 +1,5 @@
 // Package gittransport implements authenticated Git Smart-HTTP transfer protocols
-// (upload-pack, receive-pack) for exist.io repositories.
+// (upload-pack, receive-pack) for refweir.dev repositories.
 package gittransport
 
 import (
@@ -17,16 +17,16 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/auth"
-	"exist.io/internal/gitlfs"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/metrics"
-	"exist.io/internal/store"
-	"exist.io/pkg/agentlease"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitlfs"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/agentlease"
 )
 
-// Server implements authenticated Git Smart HTTP transport for exist.io repositories.
+// Server implements authenticated Git Smart HTTP transport for refweir.dev repositories.
 // It maps /{owner}/{repo}.git and /{owner}/{repo} to bare git repositories in gitstore,
 // authenticates callers against SQLite credentials (API keys and access tokens),
 // verifies repository permissions (read vs write), and delegates packfile streaming
@@ -123,7 +123,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	userID, activeLease, activeLeaseToken, err := s.authenticate(ctx, r, &repo)
 	if err != nil {
-		w.Header().Set("WWW-Authenticate", `Basic realm="exist.io"`)
+		w.Header().Set("WWW-Authenticate", `Basic realm="refweir.dev"`)
 		http.Error(w, "Authentication required", http.StatusUnauthorized)
 		return
 	}
@@ -241,7 +241,7 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 	}
 
 	// 3. Web session cookie
-	if cookie, err := r.Cookie("exist_session"); err == nil && cookie.Value != "" {
+	if cookie, err := r.Cookie("refweir_session"); err == nil && cookie.Value != "" {
 		if sess, _, err := s.store.GetSessionByHash(ctx, auth.HashCredential(cookie.Value)); err == nil {
 			exp, err := time.Parse(time.RFC3339, sess.ExpiresAt)
 			if err == nil && time.Now().Before(exp) {
@@ -329,15 +329,15 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 	)
 	if activeLease != nil {
 		cmd.Env = append(cmd.Env,
-			"EXIST_LEASE_TOKEN="+activeLeaseToken,
-			"EXIST_LEASE_ID="+activeLease.ID,
-			"EXIST_LEASE_ALLOWED_REFS="+strings.Join(activeLease.AllowedRefPrefixes, ","),
-			"EXIST_LEASE_DISALLOWED_REFS="+strings.Join(activeLease.DisallowedRefPrefixes, ","),
-			"EXIST_LEASE_EXPIRES_AT="+activeLease.ExpiresAt.Format(time.RFC3339),
+			"REFWEIR_LEASE_TOKEN="+activeLeaseToken,
+			"REFWEIR_LEASE_ID="+activeLease.ID,
+			"REFWEIR_LEASE_ALLOWED_REFS="+strings.Join(activeLease.AllowedRefPrefixes, ","),
+			"REFWEIR_LEASE_DISALLOWED_REFS="+strings.Join(activeLease.DisallowedRefPrefixes, ","),
+			"REFWEIR_LEASE_EXPIRES_AT="+activeLease.ExpiresAt.Format(time.RFC3339),
 		)
 	}
-	if existdPath := os.Getenv("EXISTD_PATH"); existdPath != "" {
-		cmd.Env = append(cmd.Env, "EXISTD_PATH="+existdPath)
+	if refweirdPath := os.Getenv("REFWEIRD_PATH"); refweirdPath != "" {
+		cmd.Env = append(cmd.Env, "REFWEIRD_PATH="+refweirdPath)
 	}
 	cmd.Stdin = r.Body
 

@@ -1,10 +1,10 @@
-# Default values for exist-enterprise Helm chart.
+# Default values for refweir-enterprise Helm chart.
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
 
 image:
-  repository: existio/existd
+  repository: refweir/refweird
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 
@@ -13,11 +13,11 @@ nameOverride: ""
 fullnameOverride: ""
 
 env:
-  EXIST_LISTEN_ADDR: "0.0.0.0:8080"
-  EXIST_SSH_ADDR: "0.0.0.0:2222"
-  EXIST_PUBLIC_URL: "https://git.enterprise.internal"
-  EXIST_GIT_URL: "git.enterprise.internal"
-  EXIST_DATA_DIR: "/var/lib/exist"
+  REFWEIR_LISTEN_ADDR: "0.0.0.0:8080"
+  REFWEIR_SSH_ADDR: "0.0.0.0:2222"
+  REFWEIR_PUBLIC_URL: "https://git.enterprise.internal"
+  REFWEIR_GIT_URL: "git.enterprise.internal"
+  REFWEIR_DATA_DIR: "/var/lib/refweir"
 
 serviceAccount:
   create: true
@@ -61,7 +61,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: exist-enterprise-tls
+    - secretName: refweir-enterprise-tls
       hosts:
         - git.enterprise.internal
 
@@ -70,7 +70,7 @@ persistence:
   accessMode: ReadWriteOnce
   size: 100Gi
   storageClass: ""
-  mountPath: "/var/lib/exist"
+  mountPath: "/var/lib/refweir"
 
 resources:
   limits:

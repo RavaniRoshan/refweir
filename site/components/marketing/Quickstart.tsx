@@ -35,7 +35,7 @@ export function Quickstart() {
               Read the docs
               <IconArrowUpRight width={16} height={16} strokeWidth={2} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
-            <a href="https://github.com/RavaniRoshan/exist.io/releases/tag/v0.6.0-beta" className="group flex items-center gap-2 text-[15px] font-medium text-text-2 hover:text-text-1" rel="noreferrer">
+            <a href="https://github.com/RavaniRoshan/refweir/releases/tag/v0.6.0-beta" className="group flex items-center gap-2 text-[15px] font-medium text-text-2 hover:text-text-1" rel="noreferrer">
               v0.6.0-beta release notes
               <IconArrowUpRight width={16} height={16} strokeWidth={2} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>

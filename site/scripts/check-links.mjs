@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { extname, join, posix, relative, resolve } from 'node:path';
 
 const outDir = resolve(import.meta.dirname, '..', 'out');
-const basePath = '/exist.io';
+const basePath = '/refweir';
 
 if (!existsSync(outDir)) {
   console.error('check-links: out/ not found. Run `npm run build` first.');

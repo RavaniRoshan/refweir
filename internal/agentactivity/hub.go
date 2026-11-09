@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 // Activity represents an event executed by an autonomous AI coding agent.
@@ -14,7 +14,7 @@ type Activity struct {
 	ID         string    `json:"id"`
 	Timestamp  time.Time `json:"timestamp"`
 	AgentName  string    `json:"agentName"`
-	AgentType  string    `json:"agentType"` // "claude-code", "cursor", "codex", "exist-mcp", "reviewer"
+	AgentType  string    `json:"agentType"` // "claude-code", "cursor", "codex", "refweir-mcp", "reviewer"
 	Action     string    `json:"action"`
 	ToolName   string    `json:"toolName,omitempty"`
 	Resource   string    `json:"resource"`
@@ -41,7 +41,7 @@ func NewHub(maxEntries int) *Hub {
 	}
 }
 
-// DefaultHub is the singleton activity hub used by existd.
+// DefaultHub is the singleton activity hub used by refweird.
 var DefaultHub = NewHub(200)
 
 // Record adds an activity entry to the buffer.

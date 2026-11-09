@@ -22,8 +22,8 @@ func TestRenderEmail_PROpened(t *testing.T) {
 			"title":       "Add exciting new feature",
 			"branch":      "feature/exciting",
 			"base_branch": "main",
-			"url":         "https://exist.io/octocat/hello-world/pull/42",
-			"body":        "This PR introduces a brand new feature for exist.io users.",
+			"url":         "https://refweir.dev/octocat/hello-world/pull/42",
+			"body":        "This PR introduces a brand new feature for refweir.dev users.",
 			"number":      "42",
 		},
 	}
@@ -46,13 +46,13 @@ func TestRenderEmail_PROpened(t *testing.T) {
 
 	// Verify HTML Body
 	expectedHTMLSubstrings := []string{
-		"exist",
-		".io",
+		"refweir",
+		".dev",
 		"max-width: 600px",
 		"alice",
 		"Add exciting new feature",
 		"feature/exciting",
-		"https://exist.io/octocat/hello-world/pull/42",
+		"https://refweir.dev/octocat/hello-world/pull/42",
 		"This PR introduces a brand new feature",
 		"View Pull Request",
 		"Unsubscribe",
@@ -65,12 +65,12 @@ func TestRenderEmail_PROpened(t *testing.T) {
 
 	// Verify Plain Text Body
 	expectedTextSubstrings := []string{
-		"exist.io - octocat/hello-world",
+		"refweir.dev - octocat/hello-world",
 		"Pull Request Opened: Add exciting new feature",
 		"Author: alice",
 		"Branch: feature/exciting -> main",
 		"This PR introduces a brand new feature",
-		"View Pull Request: https://exist.io/octocat/hello-world/pull/42",
+		"View Pull Request: https://refweir.dev/octocat/hello-world/pull/42",
 		"Unsubscribe",
 	}
 	for _, substr := range expectedTextSubstrings {
@@ -93,7 +93,7 @@ func TestRenderEmail_PRMerged(t *testing.T) {
 			"title":        "Fix critical edge-case crash",
 			"merger":       "carol",
 			"merge_method": "squash",
-			"url":          "https://exist.io/octocat/hello-world/pull/55",
+			"url":          "https://refweir.dev/octocat/hello-world/pull/55",
 			"number":       "55",
 		},
 	}
@@ -120,7 +120,7 @@ func TestRenderEmail_PRMerged(t *testing.T) {
 	if !strings.Contains(htmlBody, "View Merged Pull Request") {
 		t.Errorf("htmlBody missing View Merged Pull Request button")
 	}
-	if !strings.Contains(htmlBody, "https://exist.io/octocat/hello-world/pull/55") {
+	if !strings.Contains(htmlBody, "https://refweir.dev/octocat/hello-world/pull/55") {
 		t.Errorf("htmlBody missing URL")
 	}
 
@@ -147,7 +147,7 @@ func TestRenderEmail_PRReviewed(t *testing.T) {
 			"reviewer": "reviewer1",
 			"verdict":  "approved",
 			"body":     "Looks solid and passes all benchmarks!",
-			"url":      "https://exist.io/octocat/hello-world/pull/60#review-12",
+			"url":      "https://refweir.dev/octocat/hello-world/pull/60#review-12",
 			"number":   "60",
 		},
 	}
@@ -196,7 +196,7 @@ func TestRenderEmail_PRClosed(t *testing.T) {
 		Payload: map[string]string{
 			"title":  "Superseded cleanup branch",
 			"closer": "maintainer",
-			"url":    "https://exist.io/octocat/hello-world/pull/70",
+			"url":    "https://refweir.dev/octocat/hello-world/pull/70",
 			"number": "70",
 		},
 	}
@@ -227,7 +227,7 @@ func TestRenderEmail_IssueAssigned(t *testing.T) {
 			"title":    "Fix memory leak in websocket loop",
 			"assignee": "shiva",
 			"labels":   "bug, performance",
-			"url":      "https://exist.io/octocat/hello-world/issues/101",
+			"url":      "https://refweir.dev/octocat/hello-world/issues/101",
 			"number":   "101",
 		},
 	}
@@ -313,7 +313,7 @@ func TestWorker_Enqueue(t *testing.T) {
 			Payload: map[string]string{
 				"title":  "Deploy explosive package",
 				"branch": "feature/bomb",
-				"url":    "https://exist.io/acme/rocket/pull/1",
+				"url":    "https://refweir.dev/acme/rocket/pull/1",
 			},
 		},
 		{
@@ -327,7 +327,7 @@ func TestWorker_Enqueue(t *testing.T) {
 				"reviewer": "roadrunner",
 				"verdict":  "changes_requested",
 				"body":     "Beep beep!",
-				"url":      "https://exist.io/acme/rocket/pull/1#review-1",
+				"url":      "https://refweir.dev/acme/rocket/pull/1#review-1",
 			},
 		},
 		{
@@ -340,7 +340,7 @@ func TestWorker_Enqueue(t *testing.T) {
 				"title":        "Deploy explosive package",
 				"merger":       "admin",
 				"merge_method": "rebase",
-				"url":          "https://exist.io/acme/rocket/pull/1",
+				"url":          "https://refweir.dev/acme/rocket/pull/1",
 			},
 		},
 	}
@@ -357,7 +357,7 @@ func TestWorker_Enqueue(t *testing.T) {
 }
 
 func TestMailer_BuildMessage(t *testing.T) {
-	from := "Exist Notifications <notifications@exist.io>"
+	from := "Refweir Notifications <notifications@refweir.dev>"
 	to := []string{"Alice <alice@example.com>", "bob@example.com"}
 	subject := "Test Subject Line"
 	htmlBody := "<h1>Hello</h1><p>This is a test HTML email.</p>"
@@ -368,7 +368,7 @@ func TestMailer_BuildMessage(t *testing.T) {
 	msg := string(msgBytes)
 
 	// Check headers
-	if !strings.Contains(msg, "From: Exist Notifications <notifications@exist.io>\r\n") {
+	if !strings.Contains(msg, "From: Refweir Notifications <notifications@refweir.dev>\r\n") {
 		t.Errorf("missing or invalid From header:\n%s", msg)
 	}
 	if !strings.Contains(msg, "To: Alice <alice@example.com>, bob@example.com\r\n") {
@@ -386,7 +386,7 @@ func TestMailer_BuildMessage(t *testing.T) {
 	if !strings.Contains(msg, "MIME-Version: 1.0\r\n") {
 		t.Errorf("missing MIME-Version header:\n%s", msg)
 	}
-	if !strings.Contains(msg, "Content-Type: multipart/alternative; boundary=\"----=_ExistBoundary_") {
+	if !strings.Contains(msg, "Content-Type: multipart/alternative; boundary=\"----=_RefweirBoundary_") {
 		t.Errorf("missing multipart/alternative Content-Type:\n%s", msg)
 	}
 
@@ -487,7 +487,7 @@ func TestMailer_MockSMTPServer(t *testing.T) {
 	mailer := NewMailer(SMTPConfig{
 		Host: serverHost,
 		Port: port,
-		From: "forge@exist.io",
+		From: "forge@refweir.dev",
 		TLS:  false,
 	})
 
@@ -507,7 +507,7 @@ func TestMailer_MockSMTPServer(t *testing.T) {
 	if !strings.Contains(dataStr, "Subject: PR #123 merged successfully") {
 		t.Errorf("mock server did not receive subject:\n%s", dataStr)
 	}
-	if !strings.Contains(dataStr, "From: forge@exist.io") {
+	if !strings.Contains(dataStr, "From: forge@refweir.dev") {
 		t.Errorf("mock server did not receive From header:\n%s", dataStr)
 	}
 	if !strings.Contains(dataStr, "To: reviewer@example.com") {
@@ -649,21 +649,21 @@ func TestWorker_FullDeliveryWithMockSMTP(t *testing.T) {
 	mailer := NewMailer(SMTPConfig{
 		Host: serverHost,
 		Port: port,
-		From: "forge@exist.io",
+		From: "forge@refweir.dev",
 	})
 	worker := NewWorker(mailer, 10)
 	worker.Start()
 
 	worker.Enqueue(NotificationEvent{
 		Type:       EventPROpened,
-		RepoOwner:  "exist",
-		RepoName:   "exist.io",
+		RepoOwner:  "refweir",
+		RepoName:   "refweir.dev",
 		ActorName:  "dev",
 		Recipients: []string{"team@example.com"},
 		Payload: map[string]string{
 			"title":  "Worker live delivery test",
 			"branch": "feat/notifications",
-			"url":    "https://exist.io/exist/exist.io/pull/99",
+			"url":    "https://refweir.dev/refweir/refweir.dev/pull/99",
 		},
 	})
 
@@ -757,7 +757,7 @@ func TestMailer_PlainAuthWithMockSMTP(t *testing.T) {
 		Port:     port,
 		Username: "forgeuser",
 		Password: "supersecretpassword",
-		From:     "forge@exist.io",
+		From:     "forge@refweir.dev",
 	})
 
 	err = mailer.Send(

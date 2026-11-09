@@ -20,12 +20,12 @@ func TestVerifyCommitSignature_Unsigned(t *testing.T) {
 		TreeHash: plumbing.NewHash("4b825dc642cb6eb9a060e54bf8d69288fbee4904"),
 		Author: object.Signature{
 			Name:  "Alice",
-			Email: "alice@exist.io",
+			Email: "alice@refweir.dev",
 			When:  time.Now(),
 		},
 		Committer: object.Signature{
 			Name:  "Alice",
-			Email: "alice@exist.io",
+			Email: "alice@refweir.dev",
 			When:  time.Now(),
 		},
 		Message: "initial commit",
@@ -52,12 +52,12 @@ func TestVerifyCommitSignature_SSH(t *testing.T) {
 		TreeHash: plumbing.NewHash("4b825dc642cb6eb9a060e54bf8d69288fbee4904"),
 		Author: object.Signature{
 			Name:  "Bob",
-			Email: "bob@exist.io",
+			Email: "bob@refweir.dev",
 			When:  time.Unix(1700000000, 0).UTC(),
 		},
 		Committer: object.Signature{
 			Name:  "Bob",
-			Email: "bob@exist.io",
+			Email: "bob@refweir.dev",
 			When:  time.Unix(1700000000, 0).UTC(),
 		},
 		Message: "feat: enterprise ssh signatures\n",
@@ -103,7 +103,7 @@ func TestVerifyCommitSignature_SSH(t *testing.T) {
 
 	// 2. With enrollment: status should be "verified"
 	enrolled := map[string]string{
-		fingerprint: "bob@exist.io",
+		fingerprint: "bob@refweir.dev",
 	}
 	resVerified := VerifyCommitSignature(c, enrolled)
 	if resVerified.Status != "verified" {

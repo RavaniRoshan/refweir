@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/metrics"
-	"exist.io/internal/security"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/security"
+	"refweir.dev/pkg/scopes"
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 )

@@ -2,7 +2,7 @@
 
 Date: October 16, 2026  
 Tool: `govulncheck` v1.9.0 (Go 1.27.2)  
-Scope: Entire exist.io repository (`./...`, 28 root packages, 22 direct and transitive modules)
+Scope: Entire Refweir repository (`./...`, 28 root packages, 22 direct and transitive modules)
 
 ---
 
@@ -35,9 +35,9 @@ vulnerabilities.
 - **Description:** The legacy `openpgp` package in `x/crypto` is deprecated upstream and unmaintained.
 - **Transitive Source:** Required by `github.com/go-git/go-git/v6` as part of legacy PGP support.
 - **Usage Analysis & Exception Rationale:**
-  - `exist.io` **does not import or invoke** `golang.org/x/crypto/openpgp`.
-  - OpenPGP commit signature parsing and verification in exist.io uses `github.com/ProtonMail/go-crypto/openpgp` (`v1.5.2`), which is actively maintained and secure.
-  - No symbol from `golang.org/x/crypto/openpgp` is referenced or reachable from exist.io production binaries (`existd`, `exist`).
+  - `Refweir` **does not import or invoke** `golang.org/x/crypto/openpgp`.
+  - OpenPGP commit signature parsing and verification in Refweir uses `github.com/ProtonMail/go-crypto/openpgp` (`v1.5.2`), which is actively maintained and secure.
+  - No symbol from `golang.org/x/crypto/openpgp` is referenced or reachable from Refweir production binaries (`refweird`, `exist`).
   - **Verdict:** Accepted transitive risk with zero reachable attack surface.
 
 ---
@@ -64,7 +64,7 @@ During this security baseline hardening pass, the following transitive dependenc
    - Modern cipher suites only (`chacha20-poly1305@openssh.com`, `aes256-gcm@openssh.com`, `aes128-gcm@openssh.com`, `aes256-ctr`).
    - 30-second TCP handshake deadline to prevent Slowloris / connection exhaustion attacks.
    - Persisted host key across daemon restarts.
-3. **HTTP Server Hardening (`cmd/existd/main.go`):**
+3. **HTTP Server Hardening (`cmd/refweird/main.go`):**
    - Localhost default binding (`127.0.0.1:8080`).
    - ReadHeaderTimeout (10s), ReadTimeout (60s), WriteTimeout (120s), IdleTimeout (120s), MaxHeaderBytes (1MB).
 4. **Fuzz Testing:**

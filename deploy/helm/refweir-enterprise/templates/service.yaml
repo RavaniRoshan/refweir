@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "exist-enterprise.fullname" . }}
+  name: {{ include "refweir-enterprise.fullname" . }}
   labels:
-    {{- include "exist-enterprise.labels" . | nindent 4 }}
+    {{- include "refweir-enterprise.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -16,4 +16,4 @@ spec:
       protocol: TCP
       name: ssh
   selector:
-    {{- include "exist-enterprise.selectorLabels" . | nindent 4 }}
+    {{- include "refweir-enterprise.selectorLabels" . | nindent 4 }}

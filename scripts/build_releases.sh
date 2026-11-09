@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build_releases.sh — Cross-compiles pure-Go existd and exist binaries with embedded web UI.
+# build_releases.sh — Cross-compiles pure-Go refweird and refweir binaries with embedded web UI.
 # Targets: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64.
 
 set -euo pipefail
@@ -14,7 +14,7 @@ if ! command -v go >/dev/null 2>&1; then
     fi
 fi
 
-echo "=== Building exist.io release $VERSION ==="
+echo "=== Building Refweir release $VERSION ==="
 echo "Target architectures: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64"
 
 # 1. Build frontend assets for embedding
@@ -32,7 +32,7 @@ PLATFORMS=(
     "windows/amd64"
 )
 
-LDFLAGS="-s -w -X 'exist.io/internal/cli.Version=$VERSION'"
+LDFLAGS="-s -w -X 'refweir.dev/internal/cli.Version=$VERSION'"
 
 for PLATFORM in "${PLATFORMS[@]}"; do
     GOOS="${PLATFORM%/*}"
@@ -42,13 +42,13 @@ for PLATFORM in "${PLATFORMS[@]}"; do
         EXT=".exe"
     fi
 
-    ARCHIVE_NAME="exist_${VERSION}_${GOOS}_${GOARCH}"
+    ARCHIVE_NAME="refweir_${VERSION}_${GOOS}_${GOARCH}"
     STAGE_DIR="$RELEASE_DIR/$ARCHIVE_NAME"
     mkdir -p "$STAGE_DIR"
 
     echo "--> Compiling for $GOOS/$GOARCH..."
-    CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags="$LDFLAGS" -o "$STAGE_DIR/existd$EXT" "$ROOT_DIR/cmd/existd"
-    CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags="$LDFLAGS" -o "$STAGE_DIR/exist$EXT" "$ROOT_DIR/cmd/exist"
+    CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags="$LDFLAGS" -o "$STAGE_DIR/refweird$EXT" "$ROOT_DIR/cmd/refweird"
+    CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -ldflags="$LDFLAGS" -o "$STAGE_DIR/refweir$EXT" "$ROOT_DIR/cmd/refweir"
     cp "$ROOT_DIR/README.md" "$ROOT_DIR/LICENSE" "$STAGE_DIR/"
 
     if [ "$GOOS" = "windows" ]; then

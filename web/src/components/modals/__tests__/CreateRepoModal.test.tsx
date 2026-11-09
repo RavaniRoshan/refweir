@@ -42,7 +42,7 @@ describe('CreateRepoModal Component', () => {
 
     expect(screen.getByText('Create a new repository')).toBeInTheDocument()
     expect(screen.getByDisplayValue('shiva')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText(/e\.g\. backend-api or exist-docs/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/e\.g\. backend-api or refweir-docs/i)).toBeInTheDocument()
     expect(screen.getByText('Public')).toBeInTheDocument()
     expect(screen.getByText('Private')).toBeInTheDocument()
   })
@@ -60,7 +60,7 @@ describe('CreateRepoModal Component', () => {
       />
     )
 
-    const nameInput = screen.getByPlaceholderText(/e\.g\. backend-api or exist-docs/i)
+    const nameInput = screen.getByPlaceholderText(/e\.g\. backend-api or refweir-docs/i)
     fireEvent.change(nameInput, { target: { value: 'microservice-orchestrator' } })
 
     const submitBtn = screen.getByRole('button', { name: /create repository/i })
@@ -89,7 +89,7 @@ describe('CreateRepoModal Component', () => {
       />
     )
 
-    const nameInput = screen.getByPlaceholderText(/e\.g\. backend-api or exist-docs/i)
+    const nameInput = screen.getByPlaceholderText(/e\.g\. backend-api or refweir-docs/i)
     fireEvent.change(nameInput, { target: { value: 'error-repo' } })
 
     const submitBtn = screen.getByRole('button', { name: /create repository/i })

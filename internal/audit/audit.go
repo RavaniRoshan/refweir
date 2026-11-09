@@ -1,4 +1,4 @@
-// Package audit implements RFC 5424 compliant structured security audit logging for exist.io.
+// Package audit implements RFC 5424 compliant structured security audit logging for refweir.dev.
 package audit
 
 import (

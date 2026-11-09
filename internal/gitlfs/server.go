@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 const (

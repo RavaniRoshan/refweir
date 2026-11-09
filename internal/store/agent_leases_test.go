@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestAgentLeases_Revocation(t *testing.T) {

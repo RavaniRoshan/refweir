@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOOTSTRAP='existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data'
+BOOTSTRAP='refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data'
 
 FILES=(
     "scripts/install.sh"
@@ -20,8 +20,8 @@ for file in "${FILES[@]}"; do
     fi
 done
 
-if grep -rqF 'exist init' "$ROOT_DIR/scripts/install.sh" "$ROOT_DIR/README.md" "$ROOT_DIR/site/content/docs"; then
-    echo "found the non-existent 'exist init' command in a first-run surface" >&2
+if grep -rqF 'refweir init' "$ROOT_DIR/scripts/install.sh" "$ROOT_DIR/README.md" "$ROOT_DIR/site/content/docs"; then
+    echo "found the non-existent 'refweir init' command in a first-run surface" >&2
     status=1
 fi
 

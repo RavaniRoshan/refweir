@@ -3,15 +3,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WORK="${1:-/tmp/exist-capture}"
+WORK="${1:-/tmp/refweir-capture}"
 PORT="${2:-18080}"
 
 rm -rf "$WORK"
 mkdir -p "$WORK/data" "$WORK/bin"
 
 VERSION="$(tr -d '[:space:]' < "$ROOT_DIR/VERSION")"
-CGO_ENABLED=0 go build -ldflags="-X main.version=$VERSION" -o "$WORK/bin/existd" "$ROOT_DIR/cmd/existd"
-"$WORK/bin/existd" bootstrap --email admin@corp.exist.io --namespace acme --data-dir "$WORK/data" > "$WORK/bootstrap.out" 2>&1
+CGO_ENABLED=0 go build -ldflags="-X main.version=$VERSION" -o "$WORK/bin/refweird" "$ROOT_DIR/cmd/refweird"
+"$WORK/bin/refweird" bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir "$WORK/data" > "$WORK/bootstrap.out" 2>&1
 API_KEY="$(grep 'API Key:' "$WORK/bootstrap.out" | awk '{print $3}')"
 if [ -z "$API_KEY" ]; then
     echo "failed to parse the bootstrap API key" >&2
@@ -21,12 +21,12 @@ fi
 printf '%s' "$API_KEY" > "$WORK/key"
 printf '%s' "$PORT" > "$WORK/port"
 
-EXIST_DATA_DIR="$WORK/data" \
-EXIST_LISTEN_ADDR="127.0.0.1:$PORT" \
-EXIST_PUBLIC_URL="http://127.0.0.1:$PORT" \
-EXIST_GIT_URL="http://127.0.0.1:$PORT" \
-EXIST_SSH_ADDR="none" \
-"$WORK/bin/existd" > "$WORK/daemon.log" 2>&1 &
+REFWEIR_DATA_DIR="$WORK/data" \
+REFWEIR_LISTEN_ADDR="127.0.0.1:$PORT" \
+REFWEIR_PUBLIC_URL="http://127.0.0.1:$PORT" \
+REFWEIR_GIT_URL="http://127.0.0.1:$PORT" \
+REFWEIR_SSH_ADDR="none" \
+"$WORK/bin/refweird" > "$WORK/daemon.log" 2>&1 &
 echo $! > "$WORK/daemon.pid"
 
 for _ in $(seq 1 60); do
@@ -43,7 +43,7 @@ LEASE_TOKEN="$(printf '%s' "$LEASE_RESPONSE" | python3 -c 'import json,sys; d=js
 git clone "http://lease:${LEASE_TOKEN}@127.0.0.1:${PORT}/acme/demo.git" "$WORK/worktree" >/dev/null 2>&1
 cd "$WORK/worktree"
 git config user.name "Forge Capture"
-git config user.email "capture@exist.io"
+git config user.email "capture@refweir.dev"
 git checkout -b agent/forge-demo >/dev/null 2>&1
 printf '\n## Captured with the Forge UI\n\nThis change was pushed by an agent under a capability lease.\n' >> README.md
 git commit -am "feat: add Forge capture note" >/dev/null 2>&1

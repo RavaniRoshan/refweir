@@ -53,7 +53,7 @@ describe('ProductTour Component', () => {
     const finishBtn = screen.getByRole('button', { name: /get started/i })
     fireEvent.click(finishBtn)
 
-    expect(localStorage.getItem('exist_onboarding_tour_completed')).toBe('true')
+    expect(localStorage.getItem('refweir_onboarding_tour_completed')).toBe('true')
     expect(onClose).toHaveBeenCalled()
   })
 

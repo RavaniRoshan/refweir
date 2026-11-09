@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -41,7 +41,7 @@ func TestSSHServerAuthentication(t *testing.T) {
 	ctx := context.Background()
 	user := store.User{
 		ID:        "user_ssh_tester",
-		Email:     "ssh@exist.io",
+		Email:     "ssh@refweir.dev",
 		Login:     "sshtester",
 		Role:      "member",
 		Status:    "active",

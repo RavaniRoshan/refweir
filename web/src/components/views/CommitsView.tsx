@@ -326,7 +326,7 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                             <span>
                               {commit.verification?.reason ||
                                 (commit.verified
-                                  ? 'Signed with verified developer SSH key enrolled in exist.io'
+                                  ? 'Signed with verified developer SSH key enrolled in refweir.dev'
                                   : 'This commit was authored without a cryptographic signature (-S).')}
                             </span>
                             <span className="font-mono">{commit.sha.slice(0, 16)}...</span>

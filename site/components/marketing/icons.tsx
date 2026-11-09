@@ -156,7 +156,7 @@ export function IconGitHub(props: IconProps) {
   );
 }
 
-/** Exist logomark: patina chip, ink border, single ink pixel. */
+/** Refweir logomark: patina chip, ink border, single ink pixel. */
 export function Logomark({ size = 22, ...props }: IconProps & { size?: number }) {
   return (
     <svg
@@ -164,7 +164,7 @@ export function Logomark({ size = 22, ...props }: IconProps & { size?: number })
       width={size}
       height={size}
       role="img"
-      aria-label="exist.io"
+      aria-label="refweir.dev"
       {...props}
     >
       <rect x="0.75" y="0.75" width="18.5" height="18.5" rx="3.5" fill="var(--patina)" stroke="var(--text-1)" strokeWidth="1.5" />

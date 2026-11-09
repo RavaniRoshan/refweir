@@ -56,10 +56,10 @@ func TestPreReceiveHook_ProtectedBranchProtection(t *testing.T) {
 }
 
 func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
-	t.Setenv("EXIST_LEASE_TOKEN", "dummy.jwt.token")
-	t.Setenv("EXIST_LEASE_ALLOWED_REFS", "refs/heads/agent/")
-	t.Setenv("EXIST_LEASE_DISALLOWED_REFS", "refs/heads/main,refs/heads/master")
-	t.Setenv("EXIST_LEASE_EXPIRES_AT", "2099-01-01T00:00:00Z")
+	t.Setenv("REFWEIR_LEASE_TOKEN", "dummy.jwt.token")
+	t.Setenv("REFWEIR_LEASE_ALLOWED_REFS", "refs/heads/agent/")
+	t.Setenv("REFWEIR_LEASE_DISALLOWED_REFS", "refs/heads/main,refs/heads/master")
+	t.Setenv("REFWEIR_LEASE_EXPIRES_AT", "2099-01-01T00:00:00Z")
 
 	// 1. Push to refs/heads/agent/branch passes
 	inputValid := bytes.NewBufferString("1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 refs/heads/agent/feature-fix\n")
@@ -96,7 +96,7 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 	}
 
 	// 5. Expired lease fails
-	t.Setenv("EXIST_LEASE_EXPIRES_AT", "2020-01-01T00:00:00Z")
+	t.Setenv("REFWEIR_LEASE_EXPIRES_AT", "2020-01-01T00:00:00Z")
 	inputExpired := bytes.NewBufferString("1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 refs/heads/agent/feature-fix\n")
 	var stderrExpired bytes.Buffer
 	if err := PreReceiveHook(inputExpired, &stderrExpired); err == nil {

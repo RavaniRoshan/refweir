@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/agentlease"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/agentlease"
+	"refweir.dev/pkg/idgen"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
@@ -101,15 +101,15 @@ func TestAgentLoop_EndToEnd_RealServer(t *testing.T) {
 	ctx := context.Background()
 	dataDir := t.TempDir()
 
-	// 1. Build real existd binary for git pre-receive hook execution
-	existdBin := filepath.Join(t.TempDir(), "existd")
-	buildCmd := exec.Command("go", "build", "-o", existdBin, "exist.io/cmd/existd")
+	// 1. Build real refweird binary for git pre-receive hook execution
+	refweirdBin := filepath.Join(t.TempDir(), "refweird")
+	buildCmd := exec.Command("go", "build", "-o", refweirdBin, "refweir.dev/cmd/refweird")
 	if out, err := buildCmd.CombinedOutput(); err != nil {
-		t.Fatalf("build existd: %v\nOutput: %s", err, string(out))
+		t.Fatalf("build refweird: %v\nOutput: %s", err, string(out))
 	}
-	t.Setenv("EXISTD_PATH", existdBin)
+	t.Setenv("REFWEIRD_PATH", refweirdBin)
 
-	// 2. Start full exist.io forge daemon with in-memory / temp state
+	// 2. Start full refweir.dev forge daemon with in-memory / temp state
 	jwtSecret := "super-secret-agent-forge-jwt-key-32chars!"
 	cfg := config.Config{
 		ListenAddr: "127.0.0.1:0",
@@ -226,9 +226,9 @@ func TestAgentLoop_EndToEnd_RealServer(t *testing.T) {
 		c.Dir = cloneDir
 		c.Env = append(os.Environ(),
 			"GIT_AUTHOR_NAME=Claude Agent",
-			"GIT_AUTHOR_EMAIL=claude@agent.exist.io",
+			"GIT_AUTHOR_EMAIL=claude@agent.refweir.dev",
 			"GIT_COMMITTER_NAME=Claude Agent",
-			"GIT_COMMITTER_EMAIL=claude@agent.exist.io",
+			"GIT_COMMITTER_EMAIL=claude@agent.refweir.dev",
 		)
 		out, err := c.CombinedOutput()
 		return string(out), err

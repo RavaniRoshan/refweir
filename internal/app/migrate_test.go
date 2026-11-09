@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/config"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
@@ -302,8 +302,8 @@ func TestGitHubClient_PaginationParsing(t *testing.T) {
 	if len(authHeaders) == 0 || authHeaders[0] != "Bearer test_token_xyz" {
 		t.Errorf("expected Bearer token in Authorization header, got %q", authHeaders[0])
 	}
-	if len(userAgentHeaders) == 0 || userAgentHeaders[0] != "exist.io-migration" {
-		t.Errorf("expected exist.io-migration User-Agent, got %q", userAgentHeaders[0])
+	if len(userAgentHeaders) == 0 || userAgentHeaders[0] != "refweir.dev-migration" {
+		t.Errorf("expected refweir.dev-migration User-Agent, got %q", userAgentHeaders[0])
 	}
 
 	// Verify Labels
@@ -387,7 +387,7 @@ func TestMigrateStatus_Lifecycle(t *testing.T) {
 	}
 	sig := &object.Signature{
 		Name:  "Migration Author",
-		Email: "author@exist.io",
+		Email: "author@refweir.dev",
 		When:  time.Now(),
 	}
 	commitHash, err := wt.Commit("Initial import commit", &git.CommitOptions{Author: sig, Committer: sig})

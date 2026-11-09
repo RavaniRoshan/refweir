@@ -34,7 +34,7 @@ INLINE_CODE = re.compile(r"`[^`]*`")
 
 SKIP_PREFIXES = ("mailto:", "tel:", "data:", "javascript:", "#", "file:///")
 SKIP_HOSTS = ("http://localhost", "http://127.0.0.1", "https://localhost", "https://127.0.0.1")
-USER_AGENT = "exist.io-link-check/1.0 (+https://github.com/RavaniRoshan/exist.io)"
+USER_AGENT = "refweir.dev-link-check/1.0 (+https://github.com/RavaniRoshan/refweir)"
 
 
 def load_exceptions() -> list[str]:

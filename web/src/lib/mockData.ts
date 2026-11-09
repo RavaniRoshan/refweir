@@ -1,6 +1,6 @@
-// exist.io Isolated Mock Fixtures for Sandbox Demo Mode
+// refweir.dev Isolated Mock Fixtures for Sandbox Demo Mode
 // NOTE: These fixtures are strictly quarantined for evaluation & demo mode.
-// In Production Mode, all data is fetched live from existd REST & MCP endpoints.
+// In Production Mode, all data is fetched live from refweird REST & MCP endpoints.
 
 import type {
   RepoInfo,
@@ -15,20 +15,20 @@ import type {
 } from './types'
 
 export const mockDefaultRepo: RepoInfo = {
-  ownerSlug: 'exist',
-  name: 'exist.io',
+  ownerSlug: 'refweir',
+  name: 'refweir.dev',
   description: 'Self-hosted, autonomous-agent-ready Git forge with 100% smart-HTTP transport and native MCP server.',
   defaultBranch: 'main',
   isPrivate: false,
   starsCount: 842,
   forksCount: 67,
   updatedAt: 'Just now',
-  cloneUrlHttp: 'http://localhost:8080/exist/exist.io.git',
-  cloneUrlSsh: 'git@localhost:exist/exist.io.git',
+  cloneUrlHttp: 'http://localhost:8080/refweir/refweir.dev.git',
+  cloneUrlSsh: 'git@localhost:refweir/refweir.dev.git',
 }
 
 export const mockSampleFiles: FileItem[] = [
-  { name: 'cmd', path: 'cmd', type: 'tree', lastCommitMessage: 'feat: add existd daemon and CLI entrypoints', lastCommitDate: '2 hours ago' },
+  { name: 'cmd', path: 'cmd', type: 'tree', lastCommitMessage: 'feat: add refweird daemon and CLI entrypoints', lastCommitDate: '2 hours ago' },
   { name: 'internal', path: 'internal', type: 'tree', lastCommitMessage: 'feat(mcp): implement all 34 MCP forge tools and wire handlers', lastCommitDate: '1 hour ago' },
   { name: 'pkg', path: 'pkg', type: 'tree', lastCommitMessage: 'refactor: expose public git types and auth models', lastCommitDate: '3 hours ago' },
   { name: 'web', path: 'web', type: 'tree', lastCommitMessage: 'feat(ui): initialize Space UI living dashboard with motion', lastCommitDate: 'Just now' },
@@ -39,13 +39,13 @@ export const mockSampleFiles: FileItem[] = [
   { name: 'ROADMAP.md', path: 'ROADMAP.md', type: 'blob', size: 7377, lastCommitMessage: 'docs: document roadmap phases 1 through 5', lastCommitDate: '2 hours ago' },
 ]
 
-export const mockSampleReadme = `# exist.io
+export const mockSampleReadme = `# refweir.dev
 
 <p align="center">
   <strong>The Autonomous-Agent-Ready Git Forge</strong>
 </p>
 
-exist.io is a modern, pure-Go Git forge designed from the ground up for **human developers** and **autonomous AI coding agents**.
+refweir.dev is a modern, pure-Go Git forge designed from the ground up for **human developers** and **autonomous AI coding agents**.
 
 - ⚡ **100% Smart-HTTP Git Engine:** Pure-Go authenticated transport (clone, push, fetch).
 - 🤖 **Model Context Protocol (MCP) First-Class:** 34 JSON-RPC tools mounted at \`/mcp\`.
@@ -58,7 +58,7 @@ export const mockSampleCommits: CommitItem[] = [
     sha: '7aa844697bf92d4f58c707d8ceca47e1d882b524',
     shortSha: '7aa8446',
     message: 'docs: expand Diátaxis site to 15 pages and install global agent skills',
-    author: { name: 'Roshan Ravani', email: 'roshan@exist.io', isAgent: false },
+    author: { name: 'Roshan Ravani', email: 'roshan@refweir.dev', isAgent: false },
     timestamp: '2 hours ago',
     verified: true,
   },
@@ -74,7 +74,7 @@ export const mockSampleCommits: CommitItem[] = [
     sha: 'e571c84b029283f1208933ba1107ec3200ff12aa',
     shortSha: 'e571c84',
     message: 'feat(ruleset): enforce CIDR IP allowlist filtering and bypass actors',
-    author: { name: 'Roshan Ravani', email: 'roshan@exist.io', isAgent: false },
+    author: { name: 'Roshan Ravani', email: 'roshan@refweir.dev', isAgent: false },
     timestamp: '6 hours ago',
     verified: true,
   },
@@ -82,7 +82,7 @@ export const mockSampleCommits: CommitItem[] = [
     sha: '839201af0029b9f77291a1348102bbcd91024312',
     shortSha: '839201a',
     message: 'feat(transport): wire go-git v6 bare repo storage engine with WAL',
-    author: { name: 'Roshan Ravani', email: 'roshan@exist.io', isAgent: false },
+    author: { name: 'Roshan Ravani', email: 'roshan@refweir.dev', isAgent: false },
     timestamp: '1 day ago',
     verified: true,
   },
@@ -185,7 +185,7 @@ export const mockSampleAgentActivities: AgentActivityItem[] = [
     status: 'success',
     latencyMs: 14,
     timestamp: '2 mins ago',
-    requestPayload: { ownerSlug: 'exist', repoName: 'exist.io', state: 'open' },
+    requestPayload: { ownerSlug: 'refweir', repoName: 'refweir.dev', state: 'open' },
     responseSummary: 'Returned 1 open pull request (#42)',
   },
   {
@@ -196,7 +196,7 @@ export const mockSampleAgentActivities: AgentActivityItem[] = [
     status: 'success',
     latencyMs: 8,
     timestamp: '6 mins ago',
-    requestPayload: { ownerSlug: 'exist', repoName: 'exist.io', headSha: '7aa8446' },
+    requestPayload: { ownerSlug: 'refweir', repoName: 'refweir.dev', headSha: '7aa8446' },
     responseSummary: '3 suites evaluated: all green',
   },
   {
@@ -216,10 +216,10 @@ export const mockAuditEvents: AuditEvent[] = [
   {
     id: 'aud-101',
     timestamp: '2026-10-15 03:42:18 UTC',
-    actor: 'roshan@exist.io',
+    actor: 'roshan@refweir.dev',
     actorType: 'user',
     action: 'repo.create_ruleset',
-    resource: 'exist/exist.io:rs-main-prod',
+    resource: 'refweir/refweir.dev:rs-main-prod',
     clientIp: '192.168.1.104',
     severity: 'info',
     details: 'Enforced required approvals count = 1 and passing checks check_run.matrix',
@@ -230,7 +230,7 @@ export const mockAuditEvents: AuditEvent[] = [
     actor: 'claude-agent',
     actorType: 'agent',
     action: 'mcp.tool_call:create_pull_request_inline_comment',
-    resource: 'exist/exist.io:pr-42',
+    resource: 'refweir/refweir.dev:pr-42',
     clientIp: '127.0.0.1',
     severity: 'info',
     details: 'Line review comment created on internal/mcp/server.go:128',
@@ -241,7 +241,7 @@ export const mockAuditEvents: AuditEvent[] = [
     actor: 'unknown-client',
     actorType: 'system',
     action: 'git.push_blocked_by_cidr',
-    resource: 'exist/exist.io',
+    resource: 'refweir/refweir.dev',
     clientIp: '203.0.113.88',
     severity: 'warning',
     details: 'Connection rejected: Client IP 203.0.113.88 not permitted by CIDR allowlist 192.168.1.0/24',
@@ -249,10 +249,10 @@ export const mockAuditEvents: AuditEvent[] = [
   {
     id: 'aud-104',
     timestamp: '2026-10-15 01:50:22 UTC',
-    actor: 'admin@exist.io',
+    actor: 'admin@refweir.dev',
     actorType: 'user',
     action: 'security.ssh_ca_added',
-    resource: 'namespace:exist',
+    resource: 'namespace:refweir',
     clientIp: '10.0.4.12',
     severity: 'info',
     details: 'Added trusted HashiCorp Vault SSH Root CA fingerprint SHA256:d8a0c23...',
@@ -263,7 +263,7 @@ export const mockAuditEvents: AuditEvent[] = [
     actor: 'git-transport',
     actorType: 'system',
     action: 'security.secret_push_blocked',
-    resource: 'exist/exist.io:refs/heads/feature/test-keys',
+    resource: 'refweir/refweir.dev:refs/heads/feature/test-keys',
     clientIp: '192.168.1.55',
     severity: 'critical',
     details: 'Pre-receive hook rejected commit: High-entropy AWS Access Key (AKIA...) detected in src/config.go',
@@ -273,15 +273,15 @@ export const mockAuditEvents: AuditEvent[] = [
 export const mockClusterMetrics: ClusterMetrics = {
   serverStatus: 'healthy',
   uptime: '4 days, 16 hours, 22 minutes',
-  version: 'existd v0.2.0-enterprise (linux/amd64)',
+  version: 'refweird v0.2.0-enterprise (linux/amd64)',
   activeGitSessions: 2,
   sqliteWalSizeBytes: 14680064, // ~14MB
-  databasePath: '/var/lib/exist/meta.db (WAL mode, SQLite 3.44+)',
+  databasePath: '/var/lib/refweir/meta.db (WAL mode, SQLite 3.44+)',
   goroutines: 38,
   allocatedMemoryMb: 64.2,
   cpuUsagePercent: 1.8,
   litestreamSyncStatus: 'active',
-  lastBackupTimestamp: '3 minutes ago (s3://exist-backups-prod/wal/)',
+  lastBackupTimestamp: '3 minutes ago (s3://refweir-backups-prod/wal/)',
   mcpMountedToolsCount: 34,
 }
 
@@ -291,11 +291,11 @@ export const mockSsoProviders: SsoProvider[] = [
     name: 'Okta Enterprise SSO',
     type: 'saml',
     enabled: true,
-    issuerUrl: 'https://identity.company.com/app/exist/sso/saml',
-    ssoUrl: 'https://identity.company.com/app/exist/sso/saml/login',
+    issuerUrl: 'https://identity.company.com/app/refweir/sso/saml',
+    ssoUrl: 'https://identity.company.com/app/refweir/sso/saml/login',
     certificateFingerprint: 'SHA256:4A:8B:12:F4:99:... (Valid until 2028)',
     scimEnabled: true,
-    enforceForDomain: 'exist.io',
+    enforceForDomain: 'refweir.dev',
   },
   {
     id: 'sso-2',
@@ -312,7 +312,7 @@ export const mockEnterpriseUsers: EnterpriseUser[] = [
   {
     id: 'u-1',
     username: 'roshan',
-    email: 'roshan@exist.io',
+    email: 'roshan@refweir.dev',
     name: 'Roshan Ravani',
     role: 'owner',
     isAgent: false,
@@ -338,7 +338,7 @@ export const mockEnterpriseUsers: EnterpriseUser[] = [
   {
     id: 'u-3',
     username: 'sec-auditor',
-    email: 'compliance@corp.exist.io',
+    email: 'compliance@corp.refweir.dev',
     name: 'Security Compliance Bot',
     role: 'auditor',
     isAgent: true,
@@ -400,16 +400,16 @@ export const mockWebhookDeliveries = [
   {
     id: 'wh-1',
     event: 'pull_request.opened',
-    targetUrl: 'https://ci.internal.exist.io/hooks/forge',
+    targetUrl: 'https://ci.internal.refweir.dev/hooks/forge',
     statusCode: 200,
     timestamp: '3 hours ago',
     latency: '34ms',
-    payload: { action: 'opened', number: 42, repository: 'exist/exist.io', sender: 'claude-agent' },
+    payload: { action: 'opened', number: 42, repository: 'refweir/refweir.dev', sender: 'claude-agent' },
   },
   {
     id: 'wh-2',
     event: 'check_run.completed',
-    targetUrl: 'https://ci.internal.exist.io/hooks/forge',
+    targetUrl: 'https://ci.internal.refweir.dev/hooks/forge',
     statusCode: 200,
     timestamp: '2 hours ago',
     latency: '22ms',
@@ -418,7 +418,7 @@ export const mockWebhookDeliveries = [
   {
     id: 'wh-3',
     event: 'push',
-    targetUrl: 'https://audit.corp.exist.io/log',
+    targetUrl: 'https://audit.corp.refweir.dev/log',
     statusCode: 204,
     timestamp: '1 hour ago',
     latency: '18ms',
@@ -434,7 +434,7 @@ export const mockSampleIssues: import('./types').Issue[] = [
     body: 'For strict air-gapped sovereign clusters, we need hardware-bound WebAuthn credentials alongside SAML/OIDC and SSH CAs.',
     state: 'open',
     author: 'Roshan Ravani',
-    assignees: ['shiva', 'Exist Agent Reviewer'],
+    assignees: ['shiva', 'Refweir Agent Reviewer'],
     labels: [
       { name: 'security', color: '#b60205', description: 'Security hardening and cryptographic policy' },
       { name: 'enhancement', color: '#a2eeef', description: 'New feature or improvement' },
@@ -443,7 +443,7 @@ export const mockSampleIssues: import('./types').Issue[] = [
     comments: [
       {
         id: 'ic-1',
-        author: 'Exist Agent Reviewer',
+        author: 'Refweir Agent Reviewer',
         isAgent: true,
         body: 'I inspected the auth handlers in `internal/auth/`. Adding WebAuthn requires implementing the FIDO2 credential creation and challenge-response ceremonies. I can prepare a draft implementation.',
         createdAt: '1 day ago',
@@ -479,7 +479,7 @@ export const mockSampleIssues: import('./types').Issue[] = [
     body: 'Load test SQLite WAL mode with 50 concurrent SSH and Smart-HTTP push workers to verify zero database locks.',
     state: 'closed',
     author: 'qa-engineer',
-    assignees: ['Exist Agent Reviewer'],
+    assignees: ['Refweir Agent Reviewer'],
     labels: [
       { name: 'verified', color: '#0e8a16', description: 'Tested and verified in benchmark suite' },
     ],
@@ -488,7 +488,7 @@ export const mockSampleIssues: import('./types').Issue[] = [
     comments: [
       {
         id: 'ic-3',
-        author: 'Exist Agent Reviewer',
+        author: 'Refweir Agent Reviewer',
         isAgent: true,
         body: 'Completed 50-worker concurrent push benchmark. 0 lock timeouts recorded, WAL checkpoint completed in 1.4ms.',
         createdAt: '2 days ago',
@@ -510,10 +510,10 @@ export const mockSampleReleases: import('./types').ReleaseItem[] = [
     publishedAt: '2026-10-15T06:30:00Z',
     commitSha: '5c92f55',
     assets: [
-      { name: 'existd-linux-amd64.tar.gz', size: 34500000, downloadCount: 412, sha256: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b' },
-      { name: 'existd-linux-arm64.tar.gz', size: 32800000, downloadCount: 289, sha256: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b' },
-      { name: 'existd-darwin-arm64.tar.gz', size: 33100000, downloadCount: 351, sha256: '4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e' },
-      { name: 'exist-iac-terraform.zip', size: 1420000, downloadCount: 198, sha256: '3e2f1a0b9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d' },
+      { name: 'refweird-linux-amd64.tar.gz', size: 34500000, downloadCount: 412, sha256: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b' },
+      { name: 'refweird-linux-arm64.tar.gz', size: 32800000, downloadCount: 289, sha256: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b' },
+      { name: 'refweird-darwin-arm64.tar.gz', size: 33100000, downloadCount: 351, sha256: '4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e' },
+      { name: 'refweir-iac-terraform.zip', size: 1420000, downloadCount: 198, sha256: '3e2f1a0b9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d' },
       { name: 'v0.4.0-enterprise.sig', size: 512, downloadCount: 140, sha256: '0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e4f3a2b1c' },
     ],
   },
@@ -529,8 +529,8 @@ export const mockSampleReleases: import('./types').ReleaseItem[] = [
     publishedAt: '2026-10-01T14:00:00Z',
     commitSha: '1a2b3c4',
     assets: [
-      { name: 'existd-linux-amd64.tar.gz', size: 28400000, downloadCount: 820 },
-      { name: 'existd-darwin-arm64.tar.gz', size: 27900000, downloadCount: 654 },
+      { name: 'refweird-linux-amd64.tar.gz', size: 28400000, downloadCount: 820 },
+      { name: 'refweird-darwin-arm64.tar.gz', size: 27900000, downloadCount: 654 },
     ],
   },
 ]

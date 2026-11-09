@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"exist.io/internal/gitstore"
+	"refweir.dev/internal/gitstore"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 

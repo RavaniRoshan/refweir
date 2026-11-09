@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/metrics"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/metrics"
 )
 
 var revRegex = regexp.MustCompile(`^[0-9a-fA-F]{40,64}$`)
@@ -40,8 +40,8 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		}
 
 		// Agent capability lease enforcement
-		if os.Getenv("EXIST_LEASE_TOKEN") != "" || os.Getenv("EXIST_LEASE_ID") != "" {
-			if expStr := os.Getenv("EXIST_LEASE_EXPIRES_AT"); expStr != "" {
+		if os.Getenv("REFWEIR_LEASE_TOKEN") != "" || os.Getenv("REFWEIR_LEASE_ID") != "" {
+			if expStr := os.Getenv("REFWEIR_LEASE_EXPIRES_AT"); expStr != "" {
 				if exp, err := time.Parse(time.RFC3339, expStr); err == nil && time.Now().UTC().After(exp) {
 					fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease has expired\n")
 					return fmt.Errorf("agent capability lease expired")
@@ -49,7 +49,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			}
 
 			// Disallowed ref prefixes (e.g. main, master)
-			if disallowedStr := os.Getenv("EXIST_LEASE_DISALLOWED_REFS"); disallowedStr != "" {
+			if disallowedStr := os.Getenv("REFWEIR_LEASE_DISALLOWED_REFS"); disallowedStr != "" {
 				disallowed := strings.Split(disallowedStr, ",")
 				for _, dis := range disallowed {
 					if dis != "" && strings.HasPrefix(refName, dis) {
@@ -60,7 +60,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			}
 
 			// Allowed ref prefixes (default: refs/heads/agent/)
-			allowedStr := os.Getenv("EXIST_LEASE_ALLOWED_REFS")
+			allowedStr := os.Getenv("REFWEIR_LEASE_ALLOWED_REFS")
 			if allowedStr == "" {
 				allowedStr = "refs/heads/agent/"
 			}

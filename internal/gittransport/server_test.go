@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/agentlease"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/agentlease"
+	"refweir.dev/pkg/idgen"
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
@@ -36,7 +36,7 @@ func TestGitSmartHTTPProtocolAndClonePush(t *testing.T) {
 
 	// 1. Seed user & namespace
 	userID := idgen.NewUser()
-	if _, err := db.UpsertUserByEmail(ctx, "dev@exist.io", func() string { return userID }); err != nil {
+	if _, err := db.UpsertUserByEmail(ctx, "dev@refweir.dev", func() string { return userID }); err != nil {
 		t.Fatal(err)
 	}
 	nsID := idgen.NewNS()
@@ -68,7 +68,7 @@ func TestGitSmartHTTPProtocolAndClonePush(t *testing.T) {
 		t.Fatalf("git.Init: %v", err)
 	}
 	// Create an initial commit in the bare repo so HEAD is valid
-	sig := object.Signature{Name: "Dev", Email: "dev@exist.io", When: time.Now()}
+	sig := object.Signature{Name: "Dev", Email: "dev@refweir.dev", When: time.Now()}
 	_, err = git.WriteFiles("myteam", "demo-repo", "main", []gitstore.FileChange{
 		{Path: "README.md", Content: "# Demo Repo\n"},
 	}, sig, "Initial commit")
@@ -159,7 +159,7 @@ func TestGitSmartHTTPProtocolAndClonePush(t *testing.T) {
 
 	// 9. Test real `git commit` and `git push`
 	newFilePath := filepath.Join(cloneDir, "feature.txt")
-	if err := os.WriteFile(newFilePath, []byte("built with exist.io\n"), 0o644); err != nil {
+	if err := os.WriteFile(newFilePath, []byte("built with refweir.dev\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -169,9 +169,9 @@ func TestGitSmartHTTPProtocolAndClonePush(t *testing.T) {
 		c.Dir = cloneDir
 		c.Env = append(os.Environ(),
 			"GIT_AUTHOR_NAME=Dev",
-			"GIT_AUTHOR_EMAIL=dev@exist.io",
+			"GIT_AUTHOR_EMAIL=dev@refweir.dev",
 			"GIT_COMMITTER_NAME=Dev",
-			"GIT_COMMITTER_EMAIL=dev@exist.io",
+			"GIT_COMMITTER_EMAIL=dev@refweir.dev",
 		)
 		if out, err := c.CombinedOutput(); err != nil {
 			t.Fatalf("git %s failed: %v\nOutput: %s", args[0], err, string(out))
@@ -183,12 +183,12 @@ func TestGitSmartHTTPProtocolAndClonePush(t *testing.T) {
 	gitExec("commit", "-m", "add feature.txt")
 	gitExec("push", "origin", "main")
 
-	// 10. Verify commit was written into exist.io bare repo on disk
+	// 10. Verify commit was written into refweir.dev bare repo on disk
 	fileBytes, _, _, _, err := git.ReadFileAtPath("myteam", "demo-repo", "main", "feature.txt")
 	if err != nil {
 		t.Fatalf("ReadFileAtPath in bare repo: %v", err)
 	}
-	if string(fileBytes) != "built with exist.io\n" {
+	if string(fileBytes) != "built with refweir.dev\n" {
 		t.Fatalf("unexpected file in bare repo: %s", string(fileBytes))
 	}
 
@@ -253,17 +253,17 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 		t.Fatalf("gitstore.New: %v", err)
 	}
 
-	// Build existd for pre-receive hook execution
-	existdBin := filepath.Join(t.TempDir(), "existd")
-	buildCmd := exec.Command("go", "build", "-o", existdBin, "exist.io/cmd/existd")
+	// Build refweird for pre-receive hook execution
+	refweirdBin := filepath.Join(t.TempDir(), "refweird")
+	buildCmd := exec.Command("go", "build", "-o", refweirdBin, "refweir.dev/cmd/refweird")
 	if out, err := buildCmd.CombinedOutput(); err != nil {
-		t.Fatalf("build existd: %v\nOutput: %s", err, string(out))
+		t.Fatalf("build refweird: %v\nOutput: %s", err, string(out))
 	}
-	t.Setenv("EXISTD_PATH", existdBin)
+	t.Setenv("REFWEIRD_PATH", refweirdBin)
 
 	// 1. Seed user & namespace
 	userID := idgen.NewUser()
-	if _, err := db.UpsertUserByEmail(ctx, "admin@exist.io", func() string { return userID }); err != nil {
+	if _, err := db.UpsertUserByEmail(ctx, "admin@refweir.dev", func() string { return userID }); err != nil {
 		t.Fatal(err)
 	}
 	nsID := idgen.NewNS()
@@ -292,7 +292,7 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 	if _, err := git.Init("agentteam", "agent-repo", "main"); err != nil {
 		t.Fatal(err)
 	}
-	sig := object.Signature{Name: "Admin", Email: "admin@exist.io", When: time.Now().UTC()}
+	sig := object.Signature{Name: "Admin", Email: "admin@refweir.dev", When: time.Now().UTC()}
 	if _, err := git.WriteFiles("agentteam", "agent-repo", "main", []gitstore.FileChange{
 		{Path: "README.md", Content: "# Agent Repo\n"},
 	}, sig, "Initial commit"); err != nil {
@@ -325,9 +325,9 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 		c.Dir = dir
 		c.Env = append(os.Environ(),
 			"GIT_AUTHOR_NAME=Agent007",
-			"GIT_AUTHOR_EMAIL=agent007@exist.io",
+			"GIT_AUTHOR_EMAIL=agent007@refweir.dev",
 			"GIT_COMMITTER_NAME=Agent007",
-			"GIT_COMMITTER_EMAIL=agent007@exist.io",
+			"GIT_COMMITTER_EMAIL=agent007@refweir.dev",
 		)
 		out, err := c.CombinedOutput()
 		return string(out), err

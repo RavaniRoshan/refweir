@@ -1,4 +1,4 @@
-// Package openapi embeds and serves the OpenAPI 3.1 specification for the exist.io forge API.
+// Package openapi embeds and serves the OpenAPI 3.1 specification for the refweir.dev forge API.
 package openapi
 
 import (

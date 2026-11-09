@@ -1,5 +1,5 @@
 // Package gitstore wraps go-git/v6 (pure Go, no cgo) to provide the git object
-// store exist.io uses for repository data. The metadata DB (internal/store)
+// store refweir.dev uses for repository data. The metadata DB (internal/store)
 // holds Origin entities; this package holds the actual commits, trees, blobs,
 // and refs on disk.
 //
@@ -15,7 +15,7 @@ import (
 	"strings"
 	"sync"
 
-	"exist.io/pkg/slug"
+	"refweir.dev/pkg/slug"
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing"
@@ -100,12 +100,12 @@ func EnsureHooks(repoPath string) error {
 	}
 	preReceive := filepath.Join(hooksDir, "pre-receive")
 
-	exe := os.Getenv("EXISTD_PATH")
+	exe := os.Getenv("REFWEIRD_PATH")
 	if exe == "" {
 		var err error
 		exe, err = os.Executable()
 		if err != nil || exe == "" || strings.HasSuffix(exe, ".test") {
-			exe = "existd"
+			exe = "refweird"
 		}
 	}
 

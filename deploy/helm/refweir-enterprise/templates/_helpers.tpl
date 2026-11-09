@@ -1,14 +1,14 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "exist-enterprise.name" -}}
+{{- define "refweir-enterprise.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Create a default fully qualified app name.
 */}}
-{{- define "exist-enterprise.fullname" -}}
+{{- define "refweir-enterprise.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -24,9 +24,9 @@ Create a default fully qualified app name.
 {{/*
 Common labels
 */}}
-{{- define "exist-enterprise.labels" -}}
-helm.sh/chart: {{ include "exist-enterprise.name" . }}-{{ .Chart.Version | replace "+" "_" }}
-{{ include "exist-enterprise.selectorLabels" . }}
+{{- define "refweir-enterprise.labels" -}}
+helm.sh/chart: {{ include "refweir-enterprise.name" . }}-{{ .Chart.Version | replace "+" "_" }}
+{{ include "refweir-enterprise.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -36,7 +36,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "exist-enterprise.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "exist-enterprise.name" . }}
+{{- define "refweir-enterprise.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "refweir-enterprise.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

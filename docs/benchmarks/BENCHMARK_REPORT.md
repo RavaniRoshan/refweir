@@ -1,6 +1,6 @@
 # Autonomous Agent Concurrency Benchmark Report (`BENCHMARK_REPORT.md`)
 
-This report provides empirical benchmarks of **exist.io** under concurrent autonomous coding agent workloads.
+This report provides empirical benchmarks of **Refweir** under concurrent autonomous coding agent workloads.
 The benchmark simulates autonomous AI coding agents (Claude Code, Cursor, Codex, Cline) performing end-to-end Git cycles concurrently:
 1. **Capability Lease Request** via MCP JSON-RPC (`lease_request` token issuance).
 2. **Authenticated Git Clone** over Smart-HTTP with HMAC lease credentials.
@@ -11,7 +11,7 @@ The benchmark simulates autonomous AI coding agents (Claude Code, Cursor, Codex,
 
 ## Benchmark Environment
 
-- **Server Engine**: Pure-Go `existd` (zero CGO, `modernc.org/sqlite` in WAL mode, `go-git/v6`).
+- **Server Engine**: Pure-Go `refweird` (zero CGO, `modernc.org/sqlite` in WAL mode, `go-git/v6`).
 - **Operating System**: Linux 6.6.x (x86_64).
 - **Transport**: Pure-Go Smart-HTTP (`:8080`), MCP JSON-RPC 2.0 (`/mcp`).
 - **Security Hooks**: Pre-receive cryptographic ref validation and lease authorization.
@@ -37,5 +37,5 @@ The benchmark simulates autonomous AI coding agents (Claude Code, Cursor, Codex,
 
 2. **Git Smart-HTTP Subprocess Isolation**:
    - The primary latency component during high concurrency is Git push/receive-pack packfile processing.
-   - exist.io's semaphore channels (`internal/gittransport` 64-limit semaphore) effectively prevent process thrashing and file-descriptor exhaustion.
+   - Refweir's semaphore channels (`internal/gittransport` 64-limit semaphore) effectively prevent process thrashing and file-descriptor exhaustion.
    - All 50 concurrent agent git operations completed successfully with zero database deadlocks, zero corrupt packfiles, and zero dropped HTTP connections.

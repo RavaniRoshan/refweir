@@ -1,5 +1,5 @@
 // Package app provides the composition root and application lifecycle management
-// for the exist.io Git forge, unifying configuration, database storage, Git object storage,
+// for the refweir.dev Git forge, unifying configuration, database storage, Git object storage,
 // REST routing, and Smart-HTTP transport.
 package app
 
@@ -17,36 +17,36 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/agentactivity"
-	"exist.io/internal/agentreviewer"
-	"exist.io/internal/audit"
-	"exist.io/internal/auth"
-	"exist.io/internal/config"
-	"exist.io/internal/engine"
-	"exist.io/internal/gitlfs"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/gittransport"
-	"exist.io/internal/mcp"
-	"exist.io/internal/metrics"
-	"exist.io/internal/notifications"
-	"exist.io/internal/objectshard"
-	"exist.io/internal/openapi"
-	"exist.io/internal/origin"
-	"exist.io/internal/raftcluster"
-	"exist.io/internal/replication"
-	"exist.io/internal/sshserver"
-	"exist.io/internal/store"
-	"exist.io/internal/telemetry"
-	"exist.io/internal/webui"
-	"exist.io/pkg/agentlease"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
-	"exist.io/pkg/slug"
+	"refweir.dev/internal/agentactivity"
+	"refweir.dev/internal/agentreviewer"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/gitlfs"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/gittransport"
+	"refweir.dev/internal/mcp"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/notifications"
+	"refweir.dev/internal/objectshard"
+	"refweir.dev/internal/openapi"
+	"refweir.dev/internal/origin"
+	"refweir.dev/internal/raftcluster"
+	"refweir.dev/internal/replication"
+	"refweir.dev/internal/sshserver"
+	"refweir.dev/internal/store"
+	"refweir.dev/internal/telemetry"
+	"refweir.dev/internal/webui"
+	"refweir.dev/pkg/agentlease"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
+	"refweir.dev/pkg/slug"
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
-// App is the composition root for exist.io. It owns configuration, metadata
+// App is the composition root for refweir.dev. It owns configuration, metadata
 // storage, Git object storage, Origin compatibility routes, and server lifecycle.
 type App struct {
 	Config        config.Config
@@ -95,7 +95,7 @@ func Open(cfg config.Config) (*App, error) {
 
 	var gitDir string
 	if cfg.DataDir == ":memory:" {
-		tmpDir, err := os.MkdirTemp("", "exist-git-*")
+		tmpDir, err := os.MkdirTemp("", "refweir-git-*")
 		if err != nil {
 			_ = db.Close()
 			return nil, fmt.Errorf("app: temp git dir: %w", err)
@@ -268,7 +268,7 @@ func Open(cfg config.Config) (*App, error) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"serverStatus":         "healthy",
 			"uptime":               fmt.Sprintf("%.0fs", metrics.DefaultRegistry.UptimeSeconds()),
-			"version":              "existd " + cfg.Version,
+			"version":              "refweird " + cfg.Version,
 			"activeGitSessions":    metrics.DefaultRegistry.GitTransfersTotal(),
 			"sqliteWalSizeBytes":   walSize,
 			"databasePath":         filepath.Join(cfg.DataDir, "meta.db"),
@@ -412,7 +412,7 @@ func Open(cfg config.Config) (*App, error) {
 		}
 		req.Owner = strings.TrimSpace(req.Owner)
 		if req.Owner == "" {
-			req.Owner = "exist"
+			req.Owner = "refweir"
 		}
 		if err := slug.Validate(req.Owner); err != nil {
 			http.Error(w, "Invalid repository owner slug: "+err.Error(), http.StatusBadRequest)
@@ -499,8 +499,8 @@ func Open(cfg config.Config) (*App, error) {
 
 		if len(initialChanges) > 0 {
 			sig := object.Signature{
-				Name:  "exist.io",
-				Email: "admin@exist.io",
+				Name:  "refweir.dev",
+				Email: "admin@refweir.dev",
 				When:  time.Now().UTC(),
 			}
 			_, _ = git.WriteFiles(req.Owner, req.Name, req.DefaultBranch, initialChanges, sig, "Initial commit")
@@ -1559,7 +1559,7 @@ func Open(cfg config.Config) (*App, error) {
 			WebhookID:          hook.ID,
 			Event:              "ping",
 			GUID:               guid,
-			RequestHeaders:     `{"X-GitHub-Event": "ping", "User-Agent": "exist.io-Hookshot"}`,
+			RequestHeaders:     `{"X-GitHub-Event": "ping", "User-Agent": "refweir.dev-Hookshot"}`,
 			RequestPayload:     pingPayload,
 			ResponseStatusCode: 200,
 			ResponseHeaders:    `{"Content-Type": "application/json"}`,
@@ -1667,10 +1667,10 @@ func Open(cfg config.Config) (*App, error) {
 			req.Message = fmt.Sprintf("Add %s", req.Path)
 		}
 		if req.Author == "" {
-			req.Author = "exist.io User"
+			req.Author = "refweir.dev User"
 		}
 		if req.Email == "" {
-			req.Email = "user@exist.io"
+			req.Email = "user@refweir.dev"
 		}
 
 		sig := object.Signature{
@@ -2135,7 +2135,7 @@ func Open(cfg config.Config) (*App, error) {
 			checks := []any{
 				map[string]any{
 					"id":         "chk-origin-verify",
-					"name":       "Exist Policy & Ruleset Guard",
+					"name":       "Refweir Policy & Ruleset Guard",
 					"status":     "completed",
 					"conclusion": "success",
 					"duration":   "0.1s",
@@ -2294,7 +2294,7 @@ func Open(cfg config.Config) (*App, error) {
 				"checks": []any{
 					map[string]any{
 						"id":         "chk-origin-verify",
-						"name":       "Exist Policy & Ruleset Guard",
+						"name":       "Refweir Policy & Ruleset Guard",
 						"status":     "completed",
 						"conclusion": "success",
 						"duration":   "0.1s",
@@ -2368,8 +2368,8 @@ func Open(cfg config.Config) (*App, error) {
 		}
 
 		authorSig := object.Signature{
-			Name:  "Exist Engine",
-			Email: "merge@exist.io",
+			Name:  "Refweir Engine",
+			Email: "merge@refweir.dev",
 			When:  time.Now().UTC(),
 		}
 		msg := fmt.Sprintf("Merge pull request #%d from %s\n\n%s", pr.Number, pr.HeadRef, pr.Title)
@@ -3480,16 +3480,16 @@ func Open(cfg config.Config) (*App, error) {
 			nsID = idgen.NewNS()
 			_ = db.CreateNamespace(ctx, store.Namespace{
 				ID:   nsID,
-				Slug: "exist",
+				Slug: "refweir",
 				Type: "org",
-				Name: "exist.io Enterprise",
+				Name: "Refweir Enterprise",
 			})
 		}
 		app, err := db.CreateApp(ctx, store.App{
 			NamespaceID: nsID,
 			DisplayName: "Default Forge Integration App",
 			Description: "System app for external CI and webhook events",
-			WebhookURL:  "https://ci.internal.exist.io/hooks/forge",
+			WebhookURL:  "https://ci.internal.refweir.dev/hooks/forge",
 			Events:      []string{"push", "pull_request", "ping"},
 		})
 		if err != nil {
@@ -3528,12 +3528,12 @@ func Open(cfg config.Config) (*App, error) {
 					"event":       d.Event,
 					"createdAt":   d.CreatedAt,
 					"deliveredAt": d.DeliveredAt,
-					"targetUrl":   "https://ci.internal.exist.io/hooks/forge",
+					"targetUrl":   "https://ci.internal.refweir.dev/hooks/forge",
 					"statusCode":  200,
 					"status":      200,
 					"durationMs":  32,
 					"timestamp":   "Just now",
-					"payload":     map[string]any{"event": d.Event, "deliveryId": d.ID, "zen": "Exist smoothly."},
+					"payload":     map[string]any{"event": d.Event, "deliveryId": d.ID, "zen": "Refweir smoothly."},
 				}
 				var parsedPayload any
 				if err := json.Unmarshal([]byte(d.Payload), &parsedPayload); err == nil {
@@ -3564,7 +3564,7 @@ func Open(cfg config.Config) (*App, error) {
 			ID:            deliveryID,
 			AppID:         appID,
 			Event:         "ping",
-			Payload:       `{"zen":"Exist smoothly with SQLite WAL.","event":"ping","pong":true}`,
+			Payload:       `{"zen":"Refweir smoothly with SQLite WAL.","event":"ping","pong":true}`,
 			Signature:     "sha256=a1b2c3d4e5f6...",
 			Delivered:     true,
 			DeliveredAt:   now,
@@ -3610,7 +3610,7 @@ func Open(cfg config.Config) (*App, error) {
 
 	var lfsDir string
 	if cfg.DataDir == ":memory:" {
-		lfsDir = filepath.Join(os.TempDir(), "exist-lfs")
+		lfsDir = filepath.Join(os.TempDir(), "refweir-lfs")
 	} else {
 		lfsDir = filepath.Join(cfg.DataDir, "lfs")
 	}

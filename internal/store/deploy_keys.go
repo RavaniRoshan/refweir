@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 	"golang.org/x/crypto/ssh"
 )
 

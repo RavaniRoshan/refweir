@@ -1,14 +1,14 @@
 ---
 title: Roadmap
-description: Completed milestones and future horizons for exist.io.
+description: Completed milestones and future horizons for refweir.dev.
 ---
 
-exist.io has progressed from an early design concept to a launch-ready, enterprise-grade Git forge and autonomous agent platform. This roadmap highlights what has been delivered in `v0.2.0` and what lies ahead.
+refweir.dev has progressed from an early design concept to a launch-ready, enterprise-grade Git forge and autonomous agent platform. This roadmap highlights what has been delivered in `v0.2.0` and what lies ahead.
 
 ## Completed milestones
 
 ### 1. Server daemon & storage foundation (Complete)
-- Standalone `existd` daemon with pure-Go SQLite WAL metadata storage and `go-git/v6` packfiles.
+- Standalone `refweird` daemon with pure-Go SQLite WAL metadata storage and `go-git/v6` packfiles.
 - Offline `bootstrap` command to initialize the database and root administrator credentials.
 - Graceful shutdown, Prometheus `/metrics` endpoint, and Kubernetes liveness probes (`/healthz`).
 
@@ -33,8 +33,8 @@ exist.io has progressed from an early design concept to a launch-ready, enterpri
 - Automated provisioning, role assignment, and immediate credential revocation upon employee departure.
 
 ### 6. Official Infrastructure as Code (IaC) (Experimental — frozen for launch)
-- Dedicated Terraform / OpenTofu provider in `deploy/terraform-provider-exist` managing namespaces, repos, rulesets, CIDRs, and SSH CAs.
-- Kubernetes Helm chart in `deploy/helm/exist-enterprise` with dual-port service, PVC persistence, cert-manager TLS, and Prometheus ServiceMonitor.
+- Dedicated Terraform / OpenTofu provider in `deploy/terraform-provider-refweir` managing namespaces, repos, rulesets, CIDRs, and SSH CAs.
+- Kubernetes Helm chart in `deploy/helm/refweir-enterprise` with dual-port service, PVC persistence, cert-manager TLS, and Prometheus ServiceMonitor.
 
 ### 7. Pull Requests, Reviews & 3-Way Merge Engine (Complete)
 - Native 3-way merge and squash merge logic with conflict detection.

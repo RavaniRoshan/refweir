@@ -12,10 +12,10 @@ func TestAuditLoggerRecordsEvents(t *testing.T) {
 	logger := NewLogger(&buf)
 
 	ev := Event{
-		Actor:     "roshan@exist.io",
+		Actor:     "roshan@refweir.dev",
 		ActorType: "user",
 		Action:    "repo.create_ruleset",
-		Resource:  "exist/exist.io:rs-main",
+		Resource:  "refweir/refweir.dev:rs-main",
 		ClientIP:  "192.168.1.100",
 		Severity:  SeverityInfo,
 		Details:   "Branch ruleset created",
@@ -35,8 +35,8 @@ func TestAuditLoggerRecordsEvents(t *testing.T) {
 		t.Fatalf("failed to unmarshal output: %v", err)
 	}
 
-	if parsed.Actor != "roshan@exist.io" {
-		t.Errorf("expected actor roshan@exist.io, got %s", parsed.Actor)
+	if parsed.Actor != "roshan@refweir.dev" {
+		t.Errorf("expected actor roshan@refweir.dev, got %s", parsed.Actor)
 	}
 	if parsed.ID == "" {
 		t.Errorf("expected auto-generated ID, got empty")

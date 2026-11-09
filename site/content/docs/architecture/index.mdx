@@ -1,9 +1,9 @@
 ---
 title: Architecture
-description: The system architecture, storage layers, protocol engines, and trust boundaries of exist.io.
+description: The system architecture, storage layers, protocol engines, and trust boundaries of refweir.dev.
 ---
 
-exist.io is designed as a single, self-contained Go binary with clear separation of responsibilities between forge metadata, Git object storage, and protocol transport.
+refweir.dev is designed as a single, self-contained Go binary with clear separation of responsibilities between forge metadata, Git object storage, and protocol transport.
 
 ## System overview
 
@@ -19,7 +19,7 @@ flowchart TD
         IaC["Terraform & Helm<br/>(experimental: Infrastructure as Code)"]
     end
 
-    subgraph Service["existd Service Daemon"]
+    subgraph Service["refweird Service Daemon"]
         Gateway["HTTP Server & Auth Guard<br/>(Bearer Token, Session Cookies, Basic Auth)"]
         SSHServer["Pure-Go SSH Daemon<br/>(Port 2222, Zero CGO, Host Keys)"]
         SmartHTTP["Git Smart-HTTP Engine<br/>(Upload-Pack / Receive-Pack)"]
@@ -70,7 +70,7 @@ flowchart TD
 
 ## Storage model
 
-exist.io separates data storage into three specialized layers:
+refweir.dev separates data storage into three specialized layers:
 
 ### 1. Forge metadata (SQLite WAL)
 
@@ -101,7 +101,7 @@ Large binary assets are stored in a Content-Addressable Storage directory (`./da
 
 ### Embedded Pure-Go SSH Server
 
-Runs on port `2222` (configurable via `EXIST_SSH_ADDR`):
+Runs on port `2222` (configurable via `REFWEIR_SSH_ADDR`):
 - Pure Go SSH implementation with zero host OpenSSH daemon requirements.
 - Authenticates Git clients against user public keys in the SQLite database and organization-wide SSH Certificate Authorities.
 - Supports streaming `git-upload-pack` and `git-receive-pack` with pre-receive security push protection hooks.

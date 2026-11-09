@@ -10,7 +10,7 @@ import (
 const testSecret = "test-only-jwt-secret-that-is-32-bytes!"
 
 func TestConfigDefaults(t *testing.T) {
-	t.Setenv("EXIST_JWT_SECRET", testSecret)
+	t.Setenv("REFWEIR_JWT_SECRET", testSecret)
 
 	cfg, err := Load()
 	if err != nil {
@@ -43,11 +43,11 @@ func TestConfigDefaults(t *testing.T) {
 }
 
 func TestConfigEnvOverrides(t *testing.T) {
-	t.Setenv("EXIST_PUBLIC_URL", "https://forge.example.com")
-	t.Setenv("EXIST_GIT_URL", "git.example.com")
-	t.Setenv("EXIST_LISTEN_ADDR", "0.0.0.0:9090")
-	t.Setenv("EXIST_DATA_DIR", t.TempDir())
-	t.Setenv("EXIST_JWT_SECRET", testSecret)
+	t.Setenv("REFWEIR_PUBLIC_URL", "https://forge.example.com")
+	t.Setenv("REFWEIR_GIT_URL", "git.example.com")
+	t.Setenv("REFWEIR_LISTEN_ADDR", "0.0.0.0:9090")
+	t.Setenv("REFWEIR_DATA_DIR", t.TempDir())
+	t.Setenv("REFWEIR_JWT_SECRET", testSecret)
 
 	cfg, err := Load()
 	if err != nil {
@@ -65,26 +65,26 @@ func TestConfigEnvOverrides(t *testing.T) {
 }
 
 func TestConfigLegacyEnvOverrides(t *testing.T) {
-	t.Setenv("EXIST_ENDPOINT", "https://legacy.example.com")
-	t.Setenv("EXIST_GIT_HOST", "legacy-git.example.com")
-	t.Setenv("EXIST_JWT_SECRET", testSecret)
+	t.Setenv("REFWEIR_ENDPOINT", "https://legacy.example.com")
+	t.Setenv("REFWEIR_GIT_HOST", "legacy-git.example.com")
+	t.Setenv("REFWEIR_JWT_SECRET", testSecret)
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	if cfg.PublicURL != "https://legacy.example.com" {
-		t.Errorf("publicURL from legacy EXIST_ENDPOINT = %s", cfg.PublicURL)
+		t.Errorf("publicURL from legacy REFWEIR_ENDPOINT = %s", cfg.PublicURL)
 	}
 	if cfg.GitURL != "legacy-git.example.com" {
-		t.Errorf("gitURL from legacy EXIST_GIT_HOST = %s", cfg.GitURL)
+		t.Errorf("gitURL from legacy REFWEIR_GIT_HOST = %s", cfg.GitURL)
 	}
 }
 
 func TestJWTSecret_NoLiteralDefault(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("EXIST_DATA_DIR", dir)
-	if err := os.Unsetenv("EXIST_JWT_SECRET"); err != nil {
+	t.Setenv("REFWEIR_DATA_DIR", dir)
+	if err := os.Unsetenv("REFWEIR_JWT_SECRET"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -95,7 +95,7 @@ func TestJWTSecret_NoLiteralDefault(t *testing.T) {
 	if cfg.JWTSecret == "" {
 		t.Fatal("JWT secret is empty")
 	}
-	removedDefault := strings.Join([]string{"exist-ephemeral", "agent-lease", "signing-key"}, "-")
+	removedDefault := strings.Join([]string{"refweir-ephemeral", "agent-lease", "signing-key"}, "-")
 	if cfg.JWTSecret == removedDefault {
 		t.Fatal("JWT secret equals the removed literal default")
 	}
@@ -114,8 +114,8 @@ func TestJWTSecret_NoLiteralDefault(t *testing.T) {
 
 func TestJWTSecret_Persists(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("EXIST_DATA_DIR", dir)
-	if err := os.Unsetenv("EXIST_JWT_SECRET"); err != nil {
+	t.Setenv("REFWEIR_DATA_DIR", dir)
+	if err := os.Unsetenv("REFWEIR_JWT_SECRET"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -141,7 +141,7 @@ func TestJWTSecret_Persists(t *testing.T) {
 }
 
 func TestJWTSecret_RejectsShortSecret(t *testing.T) {
-	t.Setenv("EXIST_JWT_SECRET", "too-short")
+	t.Setenv("REFWEIR_JWT_SECRET", "too-short")
 	if _, err := Load(); err == nil {
 		t.Fatal("Load accepted a secret shorter than 32 bytes")
 	}

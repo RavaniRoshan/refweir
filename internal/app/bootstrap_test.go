@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
-	"exist.io/internal/gitstore"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/gitstore"
 )
 
 func TestBootstrap(t *testing.T) {
@@ -25,13 +25,13 @@ func TestBootstrap(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Successful bootstrap
-	res, err := app.Bootstrap(ctx, cfg, "admin@exist.io", "acme")
+	res, err := app.Bootstrap(ctx, cfg, "admin@refweir.dev", "acme")
 	if err != nil {
 		t.Fatalf("Bootstrap failed: %v", err)
 	}
 
-	if res.User.Email != "admin@exist.io" {
-		t.Errorf("User email = %q, want %q", res.User.Email, "admin@exist.io")
+	if res.User.Email != "admin@refweir.dev" {
+		t.Errorf("User email = %q, want %q", res.User.Email, "admin@refweir.dev")
 	}
 	if res.Namespace.Slug != "acme" {
 		t.Errorf("Namespace slug = %q, want %q", res.Namespace.Slug, "acme")
@@ -53,7 +53,7 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	// 2. Second bootstrap on the same data dir must fail
-	_, err = app.Bootstrap(ctx, cfg, "other@exist.io", "other")
+	_, err = app.Bootstrap(ctx, cfg, "other@refweir.dev", "other")
 	if err == nil {
 		t.Fatal("Second bootstrap succeeded, expected error")
 	}
@@ -71,7 +71,7 @@ func TestBootstrapValidation(t *testing.T) {
 	if _, err := app.Bootstrap(ctx, cfg, "", "acme"); err == nil {
 		t.Error("Bootstrap with empty email succeeded, want error")
 	}
-	if _, err := app.Bootstrap(ctx, cfg, "admin@exist.io", ""); err == nil {
+	if _, err := app.Bootstrap(ctx, cfg, "admin@refweir.dev", ""); err == nil {
 		t.Error("Bootstrap with empty namespace succeeded, want error")
 	}
 }

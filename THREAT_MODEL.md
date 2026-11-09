@@ -1,4 +1,4 @@
-# exist.io — Threat Model & Agent Security Architecture (`THREAT_MODEL.md`)
+# Refweir — Threat Model & Agent Security Architecture (`THREAT_MODEL.md`)
 
 <p align="center">
   <strong>Comprehensive Security Analysis, Trust Boundaries, and Attack Surface Mitigations for Autonomous Coding Agents.</strong>
@@ -8,9 +8,9 @@
 
 ## 1. System Overview & Core Philosophy
 
-**exist.io** is designed to treat autonomous AI coding agents (Claude Code, Codex, Cline, Cursor) as first-class, untrusted or semi-trusted collaborators operating on shared codebases.
+**Refweir** is designed to treat autonomous AI coding agents (Claude Code, Codex, Cline, Cursor) as first-class, untrusted or semi-trusted collaborators operating on shared codebases.
 
-Unlike traditional human-oriented Git platforms where access is binary (all-or-nothing SSH keys or long-lived personal access tokens), exist.io enforces **defense-in-depth at the protocol and transport layers**:
+Unlike traditional human-oriented Git platforms where access is binary (all-or-nothing SSH keys or long-lived personal access tokens), Refweir enforces **defense-in-depth at the protocol and transport layers**:
 1. **Model Context Protocol (MCP)** boundary with strict read-only sandboxing (`/mcp/readonly` vs `/mcp`).
 2. **Cryptographic Capability Leases** (`pkg/agentlease`) with short TTLs and ref-prefix isolation (`refs/heads/agent/*`).
 3. **Pure-Go Git Pre-Receive Gate** (`internal/security/hook.go`) with secret pattern scanning and branch protection.
@@ -20,7 +20,7 @@ Unlike traditional human-oriented Git platforms where access is binary (all-or-n
 
 ## 2. Threat Analysis: The Agent Boundary
 
-This section analyzes the primary attack vectors available to a malicious, misconfigured, or compromised AI agent operating against an exist.io forge instance.
+This section analyzes the primary attack vectors available to a malicious, misconfigured, or compromised AI agent operating against an Refweir forge instance.
 
 ---
 
@@ -43,8 +43,8 @@ This section analyzes the primary attack vectors available to a malicious, misco
 - **Impact:** Poisoning production branch histories, bypassing code reviews, accidental or malicious data loss.
 - **Mitigation:**
   - Multi-tier transport and hook enforcement:
-    1. **Transport Layer (`internal/gittransport/server.go`):** On `git-receive-pack`, the lease token is validated and decoded. Allowed ref prefixes, disallowed ref prefixes, and expiration timestamps are passed as sealed environment variables (`EXIST_LEASE_*`) to the execution environment.
-    2. **Pre-Receive Hook (`internal/security/hook.go`):** Every ref update tuple (`<old-rev> <new-rev> <ref-name>`) is evaluated against `EXIST_LEASE_ALLOWED_REFS` and `EXIST_LEASE_DISALLOWED_REFS`.
+    1. **Transport Layer (`internal/gittransport/server.go`):** On `git-receive-pack`, the lease token is validated and decoded. Allowed ref prefixes, disallowed ref prefixes, and expiration timestamps are passed as sealed environment variables (`REFWEIR_LEASE_*`) to the execution environment.
+    2. **Pre-Receive Hook (`internal/security/hook.go`):** Every ref update tuple (`<old-rev> <new-rev> <ref-name>`) is evaluated against `REFWEIR_LEASE_ALLOWED_REFS` and `REFWEIR_LEASE_DISALLOWED_REFS`.
     3. **Branch Deletion Prohibition:** An agent push attempting ref deletion (new-rev `0000000000000000000000000000000000000000`) is rejected with `GH007: Agent capability lease does not permit deleting refs`.
     4. **Protected Branch Guards:** Default branches (`main`, `master`) enforce `GH006` protection against non-fast-forward force-pushes and deletions.
 - **Verification & Test:**
@@ -60,7 +60,7 @@ This section analyzes the primary attack vectors available to a malicious, misco
 - **Impact:** Arbitrary branch push capability across any repository on the instance.
 - **Mitigation:**
   - Capability leases are cryptographically signed using HMAC-SHA256 (`pkg/agentlease/lease.go`).
-  - The signing key is derived from the server's private secret (`EXIST_JWT_SECRET` / `cfg.JWTSecret`).
+  - The signing key is derived from the server's private secret (`REFWEIR_JWT_SECRET` / `cfg.JWTSecret`).
   - Token verification uses constant-time comparison (`crypto/subtle` / `hmac.Equal`) to prevent timing side-channel attacks.
   - Any altered payload or invalid signature returns `ErrInvalidSignature` and terminates authentication immediately.
 - **Verification & Test:**

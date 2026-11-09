@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 // Release represents a Git release/tag with notes, assets, and publish metadata.

@@ -20,7 +20,7 @@ describe('GlobalHomeView', () => {
     render(<GlobalHomeView onSelectRepo={onSelectRepo} onSelectTab={onSelectTab} />)
 
     expect(screen.getByText(/top repositories/i)).toBeInTheDocument()
-    expect(screen.getByText('shiva/exist.io')).toBeInTheDocument()
+    expect(screen.getByText('shiva/refweir.dev')).toBeInTheDocument()
     expect(screen.getByText('shiva/agentic-mcp-bridge')).toBeInTheDocument()
 
     // Filter by text
@@ -37,8 +37,8 @@ describe('GlobalHomeView', () => {
 
     render(<GlobalHomeView onSelectRepo={onSelectRepo} onSelectTab={onSelectTab} />)
 
-    fireEvent.click(screen.getByText('shiva/exist.io'))
-    expect(onSelectRepo).toHaveBeenCalledWith('exist.io')
+    fireEvent.click(screen.getByText('shiva/refweir.dev'))
+    expect(onSelectRepo).toHaveBeenCalledWith('refweir.dev')
   })
 
   it('filters activity feed by event type (Agents, Pull Requests, Commits)', () => {
@@ -48,13 +48,13 @@ describe('GlobalHomeView', () => {
     render(<GlobalHomeView onSelectRepo={onSelectRepo} onSelectTab={onSelectTab} />)
 
     expect(screen.getByText('Enterprise Activity Feed')).toBeInTheDocument()
-    expect(screen.getByText('Exist Agent (Autonomous)')).toBeInTheDocument()
+    expect(screen.getByText('Refweir Agent (Autonomous)')).toBeInTheDocument()
 
     // Filter by PRs only
     const prFilterBtn = screen.getByRole('button', { name: /pull requests/i })
     fireEvent.click(prFilterBtn)
 
-    expect(screen.queryByText('Exist Agent (Autonomous)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Refweir Agent (Autonomous)')).not.toBeInTheDocument()
     expect(screen.getByText(/#5 feat: add UserProfileView/i)).toBeInTheDocument()
 
     // Filter by Commits

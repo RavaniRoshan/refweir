@@ -1,5 +1,5 @@
 // Package auth provides authentication, token exchange, credential hashing,
-// principal resolution, and scope-based authorization middleware for exist.io.
+// principal resolution, and scope-based authorization middleware for refweir.dev.
 package auth
 
 import (
@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"exist.io/pkg/scopes"
+	"refweir.dev/pkg/scopes"
 )
 
 // errMissingToken is returned by a Resolver when the request carries no usable

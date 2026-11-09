@@ -15,7 +15,7 @@ describe('ClusterHealth Admin View', () => {
   const mockMetrics: api.ClusterMetrics = {
     serverStatus: 'healthy',
     uptime: '420s',
-    version: 'existd v0.4.5-enterprise',
+    version: 'refweird v0.4.5-enterprise',
     activeGitSessions: 2,
     sqliteWalSizeBytes: 1048576,
     databasePath: 'data/meta.db',
@@ -41,7 +41,7 @@ describe('ClusterHealth Admin View', () => {
       expect(screen.getByText('Primary Forge Leader')).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/existd v0.4.5-enterprise/i)).toBeInTheDocument()
+    expect(screen.getByText(/refweird v0.4.5-enterprise/i)).toBeInTheDocument()
     expect(screen.getByText(/System Operational/i)).toBeInTheDocument()
     expect(screen.getByText('1.0 MB')).toBeInTheDocument() // formatBytes(1048576)
     expect(screen.getByText('Continuous')).toBeInTheDocument()

@@ -6,10 +6,10 @@ const COLUMNS: Array<[title: string, links: Array<[label: string, href: string]>
   [
     'project',
     [
-      ['GitHub', 'https://github.com/RavaniRoshan/exist.io'],
-      ['Releases', 'https://github.com/RavaniRoshan/exist.io/releases'],
-      ['Roadmap', 'https://github.com/RavaniRoshan/exist.io/blob/main/ROADMAP.md'],
-      ['License', 'https://github.com/RavaniRoshan/exist.io/blob/main/LICENSE'],
+      ['GitHub', 'https://github.com/RavaniRoshan/refweir'],
+      ['Releases', 'https://github.com/RavaniRoshan/refweir/releases'],
+      ['Roadmap', 'https://github.com/RavaniRoshan/refweir/blob/main/ROADMAP.md'],
+      ['License', 'https://github.com/RavaniRoshan/refweir/blob/main/LICENSE'],
     ],
   ],
   [
@@ -18,24 +18,24 @@ const COLUMNS: Array<[title: string, links: Array<[label: string, href: string]>
       ['Documentation', asset('/docs/')],
       ['Getting started', asset('/docs/getting-started/')],
       ['MCP tools', asset('/docs/reference/mcp-tools/')],
-      ['Claims ledger', 'https://github.com/RavaniRoshan/exist.io/blob/main/CLAIMS.md'],
+      ['Claims ledger', 'https://github.com/RavaniRoshan/refweir/blob/main/CLAIMS.md'],
     ],
   ],
   [
     'platform',
     [
-      ['Capability leases', 'https://github.com/RavaniRoshan/exist.io/blob/main/pkg/agentlease/lease.go'],
-      ['MCP server', 'https://github.com/RavaniRoshan/exist.io/tree/main/internal/mcp'],
-      ['Threat model', 'https://github.com/RavaniRoshan/exist.io/blob/main/THREAT_MODEL.md'],
-      ['Security policy', 'https://github.com/RavaniRoshan/exist.io/blob/main/SECURITY.md'],
+      ['Capability leases', 'https://github.com/RavaniRoshan/refweir/blob/main/pkg/agentlease/lease.go'],
+      ['MCP server', 'https://github.com/RavaniRoshan/refweir/tree/main/internal/mcp'],
+      ['Threat model', 'https://github.com/RavaniRoshan/refweir/blob/main/THREAT_MODEL.md'],
+      ['Security policy', 'https://github.com/RavaniRoshan/refweir/blob/main/SECURITY.md'],
     ],
   ],
   [
     'community',
     [
-      ['Issues', 'https://github.com/RavaniRoshan/exist.io/issues'],
-      ['Pull requests', 'https://github.com/RavaniRoshan/exist.io/pulls'],
-      ['Contributing', 'https://github.com/RavaniRoshan/exist.io/blob/main/CONTRIBUTING.md'],
+      ['Issues', 'https://github.com/RavaniRoshan/refweir/issues'],
+      ['Pull requests', 'https://github.com/RavaniRoshan/refweir/pulls'],
+      ['Contributing', 'https://github.com/RavaniRoshan/refweir/blob/main/CONTRIBUTING.md'],
     ],
   ],
 ];
@@ -45,9 +45,9 @@ export function StatusFooter() {
     <footer className="bg-canvas">
       <div className="container-site grid gap-10 py-12 md:grid-cols-12">
         <div className="md:col-span-3">
-          <a href={asset('/')} className="flex items-center gap-2.5" aria-label="exist.io — home">
+          <a href={asset('/')} className="flex items-center gap-2.5" aria-label="refweir.dev — home">
             <Logomark size={20} />
-            <span className="text-[19px] font-semibold tracking-[-0.03em] text-text-1">exist.io</span>
+            <span className="text-[19px] font-semibold tracking-[-0.03em] text-text-1">refweir.dev</span>
           </a>
           <p className="mt-4 max-w-[28ch] text-sm leading-relaxed text-text-2">
             The self-hosted Git forge for people and coding agents.
@@ -84,7 +84,7 @@ export function StatusFooter() {
           <span className="hidden items-center gap-2 md:flex" aria-hidden="true">:8080 ui · rest · smart-http · mcp — :2222 ssh</span>
           <span className="flex items-center gap-4">
             <LiveClock />
-            <span>© 2026 exist.io contributors</span>
+            <span>© 2026 refweir.dev contributors</span>
           </span>
         </div>
       </div>

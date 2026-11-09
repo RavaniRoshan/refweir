@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"exist.io/internal/app"
-	"exist.io/internal/auth"
-	"exist.io/internal/config"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/config"
+	"refweir.dev/pkg/scopes"
 )
 
 type omnipotentToken struct{}

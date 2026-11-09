@@ -14,7 +14,7 @@ vi.mock('@/lib/api', async () => {
         id: 'u-admin-1',
         name: 'Roshan Ravani',
         login: 'shiva',
-        email: 'roshan@exist.io',
+        email: 'roshan@refweir.dev',
         role: 'admin',
         status: 'active',
         createdAt: '2026-01-01T00:00:00Z',
@@ -22,27 +22,27 @@ vi.mock('@/lib/api', async () => {
     }),
     getRepoInfo: vi.fn().mockResolvedValue({
       ownerSlug: 'shiva',
-      name: 'exist.io',
+      name: 'refweir.dev',
       description: 'Sovereign GitHub Enterprise alternative with MCP',
       defaultBranch: 'main',
       isPrivate: false,
       starsCount: 284,
       forksCount: 36,
       updatedAt: 'Just now',
-      cloneUrlHttp: 'http://localhost:8080/shiva/exist.io.git',
-      cloneUrlSsh: 'git@localhost:shiva/exist.io.git',
+      cloneUrlHttp: 'http://localhost:8080/shiva/refweir.dev.git',
+      cloneUrlSsh: 'git@localhost:shiva/refweir.dev.git',
     }),
     getFiles: vi.fn().mockResolvedValue([
       { name: 'cmd', path: 'cmd', type: 'tree', size: 0, lastCommitMessage: 'refactor cmd', lastCommitDate: '2 hours ago' },
       { name: 'README.md', path: 'README.md', type: 'blob', size: 1024, lastCommitMessage: 'update docs', lastCommitDate: '1 hour ago' },
     ]),
-    getFileContent: vi.fn().mockResolvedValue('# exist.io\nSovereign GitHub alternative.'),
+    getFileContent: vi.fn().mockResolvedValue('# refweir.dev\nSovereign GitHub alternative.'),
     getCommits: vi.fn().mockResolvedValue([
       {
         sha: '5c92f551234567890abcdef',
         shortSha: '5c92f55',
         message: 'feat: add enterprise auth',
-        author: { name: 'Roshan Ravani', email: 'roshan@exist.io', isAgent: false },
+        author: { name: 'Roshan Ravani', email: 'roshan@refweir.dev', isAgent: false },
         timestamp: '2026-10-15T08:00:00Z',
         verified: true,
       },
@@ -76,7 +76,7 @@ describe('App End-to-End Navigation', () => {
     render(<App />)
 
     await waitFor(() => {
-      expect(screen.getAllByText('exist.io').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('refweir.dev').length).toBeGreaterThan(0)
     })
     expect(screen.getByRole('tab', { name: /code/i })).toHaveAttribute('aria-selected', 'true')
   })
@@ -180,7 +180,7 @@ describe('App End-to-End Navigation', () => {
     })
   })
 
-  it('navigates to Global Enterprise Feed when clicking the exist.io brand logo', async () => {
+  it('navigates to Global Enterprise Feed when clicking the refweir.dev brand logo', async () => {
     render(<App />)
 
     const brandBtn = screen.getByTitle('Go to Enterprise Home Feed')

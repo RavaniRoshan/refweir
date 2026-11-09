@@ -1,8 +1,8 @@
 const LINKS = [
-  { label: 'Claims ledger', note: 'every claim → a test or a file', href: 'https://github.com/RavaniRoshan/exist.io/blob/main/CLAIMS.md' },
-  { label: 'Threat model', note: 'trust boundaries & attack surface', href: 'https://github.com/RavaniRoshan/exist.io/blob/main/THREAT_MODEL.md' },
-  { label: 'Security policy', note: 'reporting & disclosure', href: 'https://github.com/RavaniRoshan/exist.io/blob/main/SECURITY.md' },
-  { label: 'Release notes', note: 'v0.6.0-beta', href: 'https://github.com/RavaniRoshan/exist.io/releases/tag/v0.6.0-beta' },
+  { label: 'Claims ledger', note: 'every claim → a test or a file', href: 'https://github.com/RavaniRoshan/refweir/blob/main/CLAIMS.md' },
+  { label: 'Threat model', note: 'trust boundaries & attack surface', href: 'https://github.com/RavaniRoshan/refweir/blob/main/THREAT_MODEL.md' },
+  { label: 'Security policy', note: 'reporting & disclosure', href: 'https://github.com/RavaniRoshan/refweir/blob/main/SECURITY.md' },
+  { label: 'Release notes', note: 'v0.6.0-beta', href: 'https://github.com/RavaniRoshan/refweir/releases/tag/v0.6.0-beta' },
 ] as const;
 
 export function Evidence() {

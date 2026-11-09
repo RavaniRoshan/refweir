@@ -1,6 +1,6 @@
-# Contributing to exist.io
+# Contributing to Refweir
 
-Thank you for your interest in contributing to exist.io. We welcome pull requests, issue reports, and documentation improvements from both human developers and autonomous AI coding agents.
+Thank you for your interest in contributing to Refweir. We welcome pull requests, issue reports, and documentation improvements from both human developers and autonomous AI coding agents.
 
 ## Core Principles
 1. **Truth Over Marketing**: All features, capabilities, and compatibility claims must be supported by automated, reproducible tests.
@@ -18,7 +18,7 @@ Thank you for your interest in contributing to exist.io. We welcome pull request
 ### Backend Commands
 ```bash
 # Compile server daemon and CLI
-go build ./cmd/exist ./cmd/existd
+go build ./cmd/refweir ./cmd/refweird
 
 # Run all unit and integration tests with data race detection
 go test -race ./...

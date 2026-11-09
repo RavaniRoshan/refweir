@@ -1,4 +1,4 @@
-// Package webui provides embedded static assets for the exist.io Web UI.
+// Package webui provides embedded static assets for the refweir.dev Web UI.
 package webui
 
 import (

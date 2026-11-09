@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/scopes"
 )
 
 func setupTestStore(t *testing.T) (*store.DB, string) {
@@ -22,7 +22,7 @@ func setupTestStore(t *testing.T) (*store.DB, string) {
 	t.Cleanup(func() { _ = db.Close() })
 
 	userID := "user_admin1"
-	if _, err := db.UpsertUserByEmail(t.Context(), "admin@exist.io", func() string { return userID }); err != nil {
+	if _, err := db.UpsertUserByEmail(t.Context(), "admin@refweir.dev", func() string { return userID }); err != nil {
 		t.Fatalf("UpsertUserByEmail: %v", err)
 	}
 	return db, userID

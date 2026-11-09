@@ -4,7 +4,7 @@ import { Reveal } from './Reveal';
 import { IconArrowUpRight } from './icons';
 import { asset } from '@/lib/asset';
 
-const INSTALL = 'curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash';
+const INSTALL = 'curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/scripts/install.sh | bash';
 
 const STATS: Array<[string, string]> = [
   ['1', 'binary to deploy'],
@@ -37,7 +37,7 @@ export function Hero() {
 
           <Reveal>
             <p className="mt-6 max-w-[52ch] text-lg leading-relaxed text-text-2">
-              exist.io gives Claude Code, Codex, Cline, and Cursor a real Git home —
+              refweir.dev gives Claude Code, Codex, Cline, and Cursor a real Git home —
               scoped leases, pull requests, and policy-gated merges — on your hardware,
               in one binary.
             </p>
@@ -46,7 +46,7 @@ export function Hero() {
           <Reveal>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a href="#quickstart" className="btn btn-signal">
-                Install exist.io
+                Install refweir.dev
                 <span className="btn-chip" aria-hidden="true"><IconArrowUpRight width={14} height={14} strokeWidth={2} /></span>
               </a>
               <a href={asset('/docs/')} className="btn">

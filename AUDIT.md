@@ -1,4 +1,4 @@
-# exist.io Phase 0 Comprehensive Audit (`AUDIT.md`)
+# Refweir Phase 0 Comprehensive Audit (`AUDIT.md`)
 
 Conducted on October 16, 2026. Target Launch: November 17, 2026.
 
@@ -10,8 +10,8 @@ Every toolchain and test suite was executed against the clean repository:
 
 | Component / Step | Command | Status | Details / Failure Mode |
 | :--- | :--- | :--- | :--- |
-| **Go Compilation** | `go build ./cmd/exist ./cmd/existd` | **PASS** | Binaries compile cleanly with Go 1.27.2. |
-| **Zero-CGO Pure-Go Build** | `CGO_ENABLED=0 go build ./cmd/exist ./cmd/existd` | **PASS** | Successful hermetic compilation with zero CGO dependencies across both binaries. |
+| **Go Compilation** | `go build ./cmd/refweir ./cmd/refweird` | **PASS** | Binaries compile cleanly with Go 1.27.2. |
+| **Zero-CGO Pure-Go Build** | `CGO_ENABLED=0 go build ./cmd/refweir ./cmd/refweird` | **PASS** | Successful hermetic compilation with zero CGO dependencies across both binaries. |
 | **Go Vet Analysis** | `go vet ./...` | **PASS** | Zero syntax errors, zero unreachable code warnings. |
 | **Go Race Detector Tests** | `go test -race ./...` | **PASS** | All 25 Go packages passed with zero data races detected across the entire test suite. |
 | **Frontend Web Compilation** | `npm run build` (in `/web`) | **PASS** | Vite v8.3.4 + TypeScript compiles clean client bundle (`dist/index.html` + assets). |
@@ -29,11 +29,11 @@ Every toolchain and test suite was executed against the clean repository:
 - **Details**: `pkg/agentlease` defines capability leases with `AllowedRefPrefixes` and HMAC-SHA256 signatures, and `internal/app/app.go` provides a lease creation endpoint at `POST /api/v1/agent/leases`. However, `agentlease.Verify` is **never called anywhere** in the Git Smart-HTTP handler (`internal/gittransport`), the SSH server (`internal/sshserver`), or the pre-receive security hook (`internal/security`). Furthermore, no agent lease token can be passed or authenticated via Git CLI. The core promise—that agents operate under ephemeral capability leases strictly restricted to `refs/heads/agent/*`—is completely non-functional in the push path.
 - **Remediation**: In Phase 2, integrate `agentlease.Verify` into Smart-HTTP Basic Auth / Bearer auth, the SSH server environment, and the pre-receive hook to reject non-`refs/heads/agent/*` ref pushes under lease authentication.
 
-### Finding 2: Web UI Never Served by the existd Daemon (HIGH)
+### Finding 2: Web UI Never Served by the refweird Daemon (HIGH)
 - **Risk Level**: High / User Experience Blocker
 - **Evidence**: `internal/app/app.go:2980`, `README.md:36`, `README.md:230`
-- **Details**: The README quickstart instructs first-time users to run `existd` and open `http://localhost:8080`. However, `internal/app/app.go` mounts the Git transport handler on root (`mux.Handle("/", gitTransport)`). Visiting `http://localhost:8080/` in a browser returns a 404 or Git protocol error, not the web application. Furthermore, the endpoint table in `README.md` claims the Web UI is on `:3000`, which is neither started by `existd` nor mentioned in the build steps.
-- **Remediation**: In Phase 1, embed the built `/web/dist` assets directly into `existd` using Go 1.16+ `go:embed` and serve index/assets on `/` whenever an incoming request is not a Git transport request (`/info/refs`, `git-upload-pack`, `git-receive-pack`).
+- **Details**: The README quickstart instructs first-time users to run `refweird` and open `http://localhost:8080`. However, `internal/app/app.go` mounts the Git transport handler on root (`mux.Handle("/", gitTransport)`). Visiting `http://localhost:8080/` in a browser returns a 404 or Git protocol error, not the web application. Furthermore, the endpoint table in `README.md` claims the Web UI is on `:3000`, which is neither started by `refweird` nor mentioned in the build steps.
+- **Remediation**: In Phase 1, embed the built `/web/dist` assets directly into `refweird` using Go 1.16+ `go:embed` and serve index/assets on `/` whenever an incoming request is not a Git transport request (`/info/refs`, `git-upload-pack`, `git-receive-pack`).
 
 ### Finding 3: Insecure Client-Forged SSO Callback (CRITICAL)
 - **Risk Level**: High / Security Vulnerability
@@ -51,9 +51,9 @@ Every toolchain and test suite was executed against the clean repository:
 ### Finding 4: Hardcoded Static JWT Secret for Agent Leases (HIGH)
 - **Risk Level**: High / Security Vulnerability
 - **Evidence**: `internal/config/config.go:40`
-- **Details**: If `EXIST_JWT_SECRET` is omitted from the environment, `config.Load()` falls back to a public static string:
+- **Details**: If `REFWEIR_JWT_SECRET` is omitted from the environment, `config.Load()` falls back to a public static string:
   ```go
-  jwtSecret := getEnv("EXIST_JWT_SECRET", "<literal-default>")
+  jwtSecret := getEnv("REFWEIR_JWT_SECRET", "<literal-default>")
   ```
   Any attacker or agent with knowledge of this hardcoded default can forge arbitrary capability leases.
 - **Remediation**: In Phase 4, generate an ephemeral, cryptographically secure random secret on startup if none is configured, or require explicit secret configuration.
@@ -98,17 +98,17 @@ Every toolchain and test suite was executed against the clean repository:
 
 ## 3. Discrepancies, Contradictions & Dead Links Audit
 
-1. **Brand & URL Split (legacy docs domain vs exist.io)**:
+1. **Brand & URL Split (legacy docs domain vs canonical name)** — *resolved by the Refweir rename; URLs below are historical*:
    - `README.md:10`, `README.md:25`, and `README.md:39` linked to the legacy documentation domain.
-   - `README.md:11` links to `https://ravaniroshan.github.io/exist.io/`.
-   - `site/blume.config.ts` defines base as `/exist.io`.
-   - Action: Unify all references to `https://ravaniroshan.github.io/exist.io/`.
+   - `README.md:11` linked to the old Pages path (now `https://ravaniroshan.github.io/refweir/`).
+   - `site/blume.config.ts` defined base as `/exist.io` (now `site/next.config.mjs` uses `/refweir`).
+   - Resolved: unified on `https://refweir.dev/` with GitHub Pages at `https://ravaniroshan.github.io/refweir/`.
 
 2. **Web UI Port Mismatch (`:8080` vs `:3000`)**:
    - `README.md:36` states: *"then open http://localhost:8080 (HTTP :8080 · SSH :2222)"*.
    - `README.md:230` table states: *"`http://localhost:3000` \| Web UI"*.
-   - `cmd/existd` never opens port 3000.
-   - Action: Embed Web UI into `existd` and document `:8080` as the sole HTTP endpoint.
+   - `cmd/refweird` never opens port 3000.
+   - Action: Embed Web UI into `refweird` and document `:8080` as the sole HTTP endpoint.
 
 3. **Hardcoded Litestream Status**:
    - `internal/app/app.go:137` returns `"litestreamSyncStatus": "active"` hardcoded in the health JSON response, even if Litestream is not present.
@@ -116,7 +116,7 @@ Every toolchain and test suite was executed against the clean repository:
 
 4. **Version Badge Discrepancy**:
    - `README.md:12` displays `v0.4.7--enterprise`.
-   - `internal/app/app.go:130` returns `existd v0.4.6-enterprise`.
+   - `internal/app/app.go:130` returns `refweird v0.4.6-enterprise`.
    - Action: Update both to `v0.5.0-beta`.
 
 ---
@@ -130,7 +130,7 @@ Every toolchain and test suite was executed against the clean repository:
    - Exposes Git clone and push over SSH. Handled via in-process `go-git` transport. Binds to `127.0.0.1:2222` by default.
 
 ### 4.2 Authentication & Token Lifecycles
-- **Web UI Sessions**: `exist_session_token` cookie. Stored in SQLite `sessions` table.
+- **Web UI Sessions**: `refweir_session_token` cookie. Stored in SQLite `sessions` table.
 - **Personal Access Tokens (PAT)**: Prefixed `token_...`, hashed with SHA-256 in `user_tokens`. Verified on REST requests.
 - **Agent Capability Leases**: Prefixed `lease_...`, signed with HMAC-SHA256. Verified in unit tests, but not wired to transport.
 - **SCIM Bearer Tokens**: Stored in `scim_tokens`, verified on `/scim/v2/*`.
@@ -141,7 +141,7 @@ Every toolchain and test suite was executed against the clean repository:
 ## 5. Repository Hygiene & Files to Exclude from Shipping
 
 1. **`research/github-origin-reverse-engineering-and-enterprise-roadmap.md`**:
-   - Internal competitor analysis and notes comparing exist.io to GitHub Enterprise.
+   - Internal competitor analysis and notes comparing Refweir to GitHub Enterprise.
    - Action: Keep in internal dev branches or exclude from public release artifacts.
 2. **`agent.md`**:
    - 4-line redundant pointer file to `AGENTS.md`.

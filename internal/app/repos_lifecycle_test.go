@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/config"
-	"exist.io/internal/store"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/store"
 )
 
 func TestRepoLifecycle_DangerZoneAndTemplates(t *testing.T) {

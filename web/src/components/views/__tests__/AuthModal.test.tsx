@@ -27,7 +27,7 @@ describe('AuthModal Component', () => {
         id: 'u-1',
         login: 'shiva',
         name: 'Roshan Ravani',
-        email: 'roshan@exist.io',
+        email: 'roshan@refweir.dev',
         role: 'admin',
         status: 'active',
       },
@@ -35,19 +35,19 @@ describe('AuthModal Component', () => {
 
     render(<AuthModal isOpen={true} onClose={onClose} onSuccess={onSuccess} />)
 
-    expect(screen.getByText('Sign In to exist.io')).toBeInTheDocument()
+    expect(screen.getByText('Sign In to refweir.dev')).toBeInTheDocument()
 
     const emailInput = screen.getByPlaceholderText(/developer@company.com/i)
     const passwordInput = screen.getByPlaceholderText(/••••••••••••/i)
 
-    fireEvent.change(emailInput, { target: { value: 'roshan@exist.io' } })
+    fireEvent.change(emailInput, { target: { value: 'roshan@refweir.dev' } })
     fireEvent.change(passwordInput, { target: { value: 'SecretPassword123' } })
 
     const submitBtn = screen.getByTestId('auth-submit-btn')
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(api.loginUser).toHaveBeenCalledWith('roshan@exist.io', 'SecretPassword123')
+      expect(api.loginUser).toHaveBeenCalledWith('roshan@refweir.dev', 'SecretPassword123')
       expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining({ login: 'shiva' }))
       expect(onClose).toHaveBeenCalled()
     })
@@ -62,7 +62,7 @@ describe('AuthModal Component', () => {
         id: 'u-2',
         login: 'alex',
         name: 'Alex Morgan',
-        email: 'alex@exist.io',
+        email: 'alex@refweir.dev',
         role: 'member',
         status: 'active',
       },
@@ -76,7 +76,7 @@ describe('AuthModal Component', () => {
     expect(screen.getByText('Create Enterprise Account')).toBeInTheDocument()
 
     fireEvent.change(screen.getByPlaceholderText(/developer@company.com/i), {
-      target: { value: 'alex@exist.io' },
+      target: { value: 'alex@refweir.dev' },
     })
     fireEvent.change(screen.getByPlaceholderText(/e.g. alex/i), {
       target: { value: 'alex' },
@@ -92,7 +92,7 @@ describe('AuthModal Component', () => {
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(api.registerUser).toHaveBeenCalledWith('alex@exist.io', 'alex', 'Alex Morgan', 'StrongPassword456')
+      expect(api.registerUser).toHaveBeenCalledWith('alex@refweir.dev', 'alex', 'Alex Morgan', 'StrongPassword456')
       expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining({ login: 'alex' }))
       expect(onClose).toHaveBeenCalled()
     })
@@ -107,7 +107,7 @@ describe('AuthModal Component', () => {
     render(<AuthModal isOpen={true} onClose={vi.fn()} onSuccess={vi.fn()} />)
 
     fireEvent.change(screen.getByPlaceholderText(/developer@company.com/i), {
-      target: { value: 'wrong@exist.io' },
+      target: { value: 'wrong@refweir.dev' },
     })
     fireEvent.change(screen.getByPlaceholderText(/••••••••••••/i), {
       target: { value: 'WrongPass' },

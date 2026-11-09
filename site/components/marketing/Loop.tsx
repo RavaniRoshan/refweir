@@ -238,7 +238,7 @@ export function Loop() {
                     <span />
                   </span>
                   <span className="window-title">forge — {step.label}</span>
-                  <span className="mono ml-auto text-[9.5px] uppercase tracking-[0.16em] text-text-3">agent@existd</span>
+                  <span className="mono ml-auto text-[9.5px] uppercase tracking-[0.16em] text-text-3">agent@refweird</span>
                 </div>
                 <div className="overflow-x-auto p-5 sm:p-6">
                   <pre className="mono text-[12px] leading-[1.9]">

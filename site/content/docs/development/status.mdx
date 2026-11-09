@@ -3,15 +3,15 @@ title: Development status
 description: Implemented capabilities, test coverage, and upcoming roadmap milestones.
 ---
 
-exist.io has completed its foundational core milestones and provides a fully functional, self-hosted Git forge and agent platform.
+refweir.dev has completed its foundational core milestones and provides a fully functional, self-hosted Git forge and agent platform.
 
 ## Implemented & verified capabilities
 
 All components below are backed by automated unit, contract, and integration tests across 14 Go packages with 100% test pass rates:
 
 ### 1. Server daemon & storage foundation
-- **Binary Daemon:** Standalone `existd` binary with graceful shutdown and configurable logging.
-- **Offline Bootstrap:** Safe, one-time bootstrap command (`existd bootstrap`) provisioning SQLite WAL database, default namespace, and root administrator credentials.
+- **Binary Daemon:** Standalone `refweird` binary with graceful shutdown and configurable logging.
+- **Offline Bootstrap:** Safe, one-time bootstrap command (`refweird bootstrap`) provisioning SQLite WAL database, default namespace, and root administrator credentials.
 - **Storage Engines:** Pure-Go SQLite metadata store (`modernc.org/sqlite`, zero cgo) and `go-git/v6` bare repository packfile storage.
 
 ### 2. Git Smart-HTTP transport
@@ -21,7 +21,7 @@ All components below are backed by automated unit, contract, and integration tes
 
 ### 3. REST API surface
 - Origin-compatible REST routes mounted under `/v1/origin`.
-- Conformance is checked with `exist conformance` against a running daemon.
+- Conformance is checked with `refweir conformance` against a running daemon.
 - Full CRUD for namespaces, repositories, branches, commits, trees, blobs, diffs, and tags.
 - Pull request lifecycle: creation, updates, state transitions (`open`, `closed`, `merged`), auto-merge queues.
 - Collaboration features: line-level review threads, general comments, emoji reactions, and label management.
@@ -41,13 +41,13 @@ All components below are backed by automated unit, contract, and integration tes
 - Ed25519 signed webhooks and delivery logs.
 - GitHub mirror configuration and status tracking.
 
-### 6. Exist CLI
-- Companion command-line binary (`exist`) in `cmd/exist`.
+### 6. Refweir CLI
+- Companion command-line binary (`refweir`) in `cmd/refweir`.
 - Subcommands: `auth`, `repo`, `pr`, `app`, and `api`.
 - Supports positional argument reordering and agent-friendly output modes.
 
 ### 7. Official Infrastructure as Code (IaC) — experimental, frozen for launch
-- Terraform/OpenTofu provider (`deploy/terraform-provider-exist`) and Helm chart (`deploy/helm/exist-enterprise`), provided as source without support.
+- Terraform/OpenTofu provider (`deploy/terraform-provider-refweir`) and Helm chart (`deploy/helm/refweir-enterprise`), provided as source without support.
 
 ### 8. Embedded Pure-Go SSH Server (:2222) & Git LFS CAS Engine
 - Standalone zero-cgo SSH server listening on port 2222 with deploy key isolation and repository UUID verification.

@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 // Config configures the replication and disaster recovery failover controller.

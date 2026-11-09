@@ -1,4 +1,4 @@
-// Package config manages runtime configuration for exist.io services,
+// Package config manages runtime configuration for refweir.dev services,
 // reading environment variables and providing self-hosted defaults.
 package config
 
@@ -22,7 +22,7 @@ const (
 	minJWTSecretBytes = 32
 )
 
-// Config holds runtime configuration for the exist.io server and CLI.
+// Config holds runtime configuration for the refweir.dev server and CLI.
 // Defaults are strictly self-hosted and never reference Cursor infrastructure.
 type Config struct {
 	Version    string
@@ -55,46 +55,46 @@ type Config struct {
 }
 
 // Load reads configuration from environment variables, falling back to safe self-hosted defaults.
-// The lease signing key is resolved from EXIST_JWT_SECRET or generated once under the data directory.
+// The lease signing key is resolved from REFWEIR_JWT_SECRET or generated once under the data directory.
 func Load() (Config, error) {
-	listenAddr := getEnv("EXIST_LISTEN_ADDR", defaultListen)
-	dataDir := getEnv("EXIST_DATA_DIR", defaultDataDir)
+	listenAddr := getEnv("REFWEIR_LISTEN_ADDR", defaultListen)
+	dataDir := getEnv("REFWEIR_DATA_DIR", defaultDataDir)
 
-	publicURL := getEnvFirst([]string{"EXIST_PUBLIC_URL", "EXIST_ENDPOINT"}, defaultPublicURL)
-	gitURL := getEnvFirst([]string{"EXIST_GIT_URL", "EXIST_GIT_HOST"}, defaultGitURL)
-	sshAddr := getEnv("EXIST_SSH_ADDR", "127.0.0.1:2222")
-	sshHostKeyPath := getEnv("EXIST_SSH_HOST_KEY", dataDir+"/ssh_host_key")
+	publicURL := getEnvFirst([]string{"REFWEIR_PUBLIC_URL", "REFWEIR_ENDPOINT"}, defaultPublicURL)
+	gitURL := getEnvFirst([]string{"REFWEIR_GIT_URL", "REFWEIR_GIT_HOST"}, defaultGitURL)
+	sshAddr := getEnv("REFWEIR_SSH_ADDR", "127.0.0.1:2222")
+	sshHostKeyPath := getEnv("REFWEIR_SSH_HOST_KEY", dataDir+"/ssh_host_key")
 
 	jwtSecret, err := resolveJWTSecret(dataDir)
 	if err != nil {
 		return Config{}, err
 	}
 
-	clusterRole := getEnv("EXIST_CLUSTER_ROLE", "primary")
-	replicaDir := getEnv("EXIST_REPLICA_DIR", "")
-	nodeID := getEnv("EXIST_NODE_ID", "")
+	clusterRole := getEnv("REFWEIR_CLUSTER_ROLE", "primary")
+	replicaDir := getEnv("REFWEIR_REPLICA_DIR", "")
+	nodeID := getEnv("REFWEIR_NODE_ID", "")
 
-	smtpHost := getEnv("EXIST_SMTP_HOST", "")
+	smtpHost := getEnv("REFWEIR_SMTP_HOST", "")
 	smtpPort := 587
-	if pStr := getEnv("EXIST_SMTP_PORT", ""); pStr != "" {
+	if pStr := getEnv("REFWEIR_SMTP_PORT", ""); pStr != "" {
 		if p, err := strconv.Atoi(pStr); err == nil && p > 0 {
 			smtpPort = p
 		}
 	}
-	smtpUsername := getEnv("EXIST_SMTP_USERNAME", "")
-	smtpPassword := getEnv("EXIST_SMTP_PASSWORD", "")
-	smtpFrom := getEnv("EXIST_SMTP_FROM", "noreply@exist.io")
-	smtpTLS := getEnv("EXIST_SMTP_TLS", "true") != "false"
+	smtpUsername := getEnv("REFWEIR_SMTP_USERNAME", "")
+	smtpPassword := getEnv("REFWEIR_SMTP_PASSWORD", "")
+	smtpFrom := getEnv("REFWEIR_SMTP_FROM", "noreply@refweir.dev")
+	smtpTLS := getEnv("REFWEIR_SMTP_TLS", "true") != "false"
 
-	version := getEnv("EXIST_VERSION", "dev")
+	version := getEnv("REFWEIR_VERSION", "dev")
 
-	telemetryEnabled := getEnv("EXIST_TELEMETRY_OPT_IN", "") == "1"
+	telemetryEnabled := getEnv("REFWEIR_TELEMETRY_OPT_IN", "") == "1"
 	if !telemetryEnabled {
 		if body, err := os.ReadFile(filepath.Join(dataDir, "telemetry_opt_in")); err == nil { // #nosec G304 -- operator-configured data directory
 			telemetryEnabled = strings.TrimSpace(string(body)) == "1"
 		}
 	}
-	telemetryEndpoint := getEnv("EXIST_TELEMETRY_ENDPOINT", "")
+	telemetryEndpoint := getEnv("REFWEIR_TELEMETRY_ENDPOINT", "")
 
 	return Config{
 		Version:        version,
@@ -125,9 +125,9 @@ func Load() (Config, error) {
 // resolveJWTSecret returns the lease signing key, generating and persisting one
 // under dataDir on first use. It never falls back to a literal in the source.
 func resolveJWTSecret(dataDir string) (string, error) {
-	if v := os.Getenv("EXIST_JWT_SECRET"); v != "" {
+	if v := os.Getenv("REFWEIR_JWT_SECRET"); v != "" {
 		if len(v) < minJWTSecretBytes {
-			return "", fmt.Errorf("EXIST_JWT_SECRET must be at least %d bytes (got %d)", minJWTSecretBytes, len(v))
+			return "", fmt.Errorf("REFWEIR_JWT_SECRET must be at least %d bytes (got %d)", minJWTSecretBytes, len(v))
 		}
 		return v, nil
 	}

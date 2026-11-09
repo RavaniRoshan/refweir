@@ -52,7 +52,7 @@ describe('InlineDiffViewer Component', () => {
     render(
       <InlineDiffViewer
         owner="shiva"
-        repoName="exist.io"
+        repoName="refweir.dev"
         prNumber={101}
         diffHunks={mockHunks}
         comments={mockComments}
@@ -70,7 +70,7 @@ describe('InlineDiffViewer Component', () => {
     render(
       <InlineDiffViewer
         owner="shiva"
-        repoName="exist.io"
+        repoName="refweir.dev"
         prNumber={101}
         diffHunks={mockHunks}
         comments={mockComments}
@@ -82,7 +82,7 @@ describe('InlineDiffViewer Component', () => {
     fireEvent.click(applyBtn)
 
     await waitFor(() => {
-      expect(api.applyCodeSuggestion).toHaveBeenCalledWith('shiva', 'exist.io', 101, 'c-sugg-1')
+      expect(api.applyCodeSuggestion).toHaveBeenCalledWith('shiva', 'refweir.dev', 101, 'c-sugg-1')
       expect(screen.getByText(/suggestion successfully committed/i)).toBeInTheDocument()
       expect(handleRefresh).toHaveBeenCalled()
     })
@@ -93,7 +93,7 @@ describe('InlineDiffViewer Component', () => {
     render(
       <InlineDiffViewer
         owner="shiva"
-        repoName="exist.io"
+        repoName="refweir.dev"
         prNumber={101}
         diffHunks={mockHunks}
         comments={mockComments}
@@ -105,7 +105,7 @@ describe('InlineDiffViewer Component', () => {
     fireEvent.click(resolveBtn)
 
     await waitFor(() => {
-      expect(api.toggleThreadResolved).toHaveBeenCalledWith('shiva', 'exist.io', 101, 'th-1', true)
+      expect(api.toggleThreadResolved).toHaveBeenCalledWith('shiva', 'refweir.dev', 101, 'th-1', true)
       expect(handleRefresh).toHaveBeenCalled()
     })
   })
@@ -115,7 +115,7 @@ describe('InlineDiffViewer Component', () => {
     render(
       <InlineDiffViewer
         owner="shiva"
-        repoName="exist.io"
+        repoName="refweir.dev"
         prNumber={101}
         diffHunks={mockHunks}
         comments={mockComments}
@@ -141,7 +141,7 @@ describe('InlineDiffViewer Component', () => {
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(api.submitPullRequestReview).toHaveBeenCalledWith('shiva', 'exist.io', 101, {
+      expect(api.submitPullRequestReview).toHaveBeenCalledWith('shiva', 'refweir.dev', 101, {
         verdict: 'approve',
         body: 'LGTM! Great work.',
       })
@@ -154,7 +154,7 @@ describe('InlineDiffViewer Component', () => {
     render(
       <InlineDiffViewer
         owner="shiva"
-        repoName="exist.io"
+        repoName="refweir.dev"
         prNumber={101}
         diffHunks={mockHunks}
         comments={[]}

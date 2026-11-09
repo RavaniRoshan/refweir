@@ -76,7 +76,7 @@ def build_browser_window():
 
     header_draw.text((ADDR_X + 16, ADDR_Y + 7), "🔒", fill=(160, 165, 180, 255), font=font)
     header_draw.text((ADDR_X + 38, ADDR_Y + 7), "http://127.0.0.1:8080/acme/demo/pulls", fill=(210, 215, 230, 255), font=font)
-    header_draw.text((ADDR_X + ADDR_W - 130, ADDR_Y + 7), "exist.io v0.5.0", fill=(100, 110, 130, 255), font=font)
+    header_draw.text((ADDR_X + ADDR_W - 130, ADDR_Y + 7), "refweir.dev v0.5.0", fill=(100, 110, 130, 255), font=font)
 
     border_overlay = Image.new("RGBA", (WIN_W, WIN_H), (0, 0, 0, 0))
     border_draw = ImageDraw.Draw(border_overlay)

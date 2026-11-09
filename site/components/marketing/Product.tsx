@@ -18,7 +18,7 @@ const REF_ROWS: Array<[ref: string, verdict: 'allowed' | 'denied']> = [
 
 const LAYERS: Array<[name: string, detail: string, sub: string]> = [
   ['Clients & agents', 'HTTP · SSH · MCP', 'git, curl, mcp clients, ci'],
-  ['existd', 'policy · transports · embedded ui', 'web ui on :8080 · ssh on :2222'],
+  ['refweird', 'policy · transports · embedded ui', 'web ui on :8080 · ssh on :2222'],
   ['Local disk', 'sqlite wal · bare repositories', 'no external database · no host sshd'],
 ];
 
@@ -57,7 +57,7 @@ export function Product() {
               <pre className="overflow-x-auto px-5 py-4 text-[12px] leading-relaxed text-text-1">{LEASE_JSON}</pre>
               <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
                 <span className="mono text-[11px] text-text-3">ttl 15m · prefix-isolated · revocable</span>
-                <a className="mono text-[11px] text-patina underline decoration-line underline-offset-4 hover:text-patina-hover" href="https://github.com/RavaniRoshan/exist.io/blob/main/pkg/agentlease/lease.go" rel="noreferrer">pkg/agentlease ↗</a>
+                <a className="mono text-[11px] text-patina underline decoration-line underline-offset-4 hover:text-patina-hover" href="https://github.com/RavaniRoshan/refweir/blob/main/pkg/agentlease/lease.go" rel="noreferrer">pkg/agentlease ↗</a>
               </div>
             </div>
           </div>

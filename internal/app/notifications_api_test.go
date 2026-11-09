@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
-	"exist.io/internal/store"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/store"
 )
 
 func TestNotificationsAPI(t *testing.T) {
@@ -28,7 +28,7 @@ func TestNotificationsAPI(t *testing.T) {
 	u := store.User{
 		ID:           "usr-test-notif",
 		Login:        "shiva",
-		Email:        "shiva@exist.io",
+		Email:        "shiva@refweir.dev",
 		PasswordHash: "dummyhash",
 	}
 	_ = application.Store.CreateUserWithPassword(ctx, u)

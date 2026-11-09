@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 // SMTPConfig holds SMTP server connection settings.
@@ -145,7 +145,7 @@ func (m *Mailer) Send(to []string, subject, htmlBody, textBody string) error {
 // BuildMessage constructs an RFC 5322 MIME multipart/alternative email message with headers.
 func BuildMessage(from string, to []string, subject, htmlBody, textBody, host string) []byte {
 	if host == "" {
-		host = "exist.io"
+		host = "refweir.dev"
 	}
 	if from == "" {
 		from = fmt.Sprintf("noreply@%s", host)
@@ -154,7 +154,7 @@ func BuildMessage(from string, to []string, subject, htmlBody, textBody, host st
 	cleanSubject := strings.ReplaceAll(subject, "\r", "")
 	cleanSubject = strings.ReplaceAll(cleanSubject, "\n", " ")
 
-	boundary := fmt.Sprintf("----=_ExistBoundary_%s", idgen.New("mime"))
+	boundary := fmt.Sprintf("----=_RefweirBoundary_%s", idgen.New("mime"))
 	msgID := fmt.Sprintf("<%s@%s>", idgen.New("msg"), host)
 	date := time.Now().UTC().Format(time.RFC1123Z)
 

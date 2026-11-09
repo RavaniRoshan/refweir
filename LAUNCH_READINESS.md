@@ -28,7 +28,7 @@ This revision supersedes the 2026-10-17 scorecard, which asserted readiness in i
 ### Gate 1 — Clean install and first run
 
 - **Command:** `./scripts/test_first_run.sh`
-- **Observed:** exit 0; "PASS: exist.io first-run installation and agent loop verified in 2s".
+- **Observed:** exit 0; "PASS: Refweir first-run installation and agent loop verified in 2s".
 - **What it exercises:** CGO-free build, offline bootstrap, daemon start, health probe, MCP lease request, git clone, agent branch push under the lease, MCP PR create, MCP PR merge, and a post-merge content check on `origin/main`.
 - **Mutation check:** `./scripts/test_first_run.sh --mutation` — exit 0; "MUTATION CHECK PASSED: Clone rejected with invalid lease token as expected."
 - **Target:** < 180 s. Observed runs: 2 s and 7 s on the evaluation host.
@@ -65,7 +65,7 @@ This revision supersedes the 2026-10-17 scorecard, which asserted readiness in i
 
 ### Gate 6 — External beta user
 
-**BLOCKED.** The condition is that a named external person, not the maintainer, installs exist.io, connects an agent, and merges a pull request. The executing agent cannot perform this action or fabricate its result. This gate remains blocked until a human tester completes the loop and their result is recorded.
+**BLOCKED.** The condition is that a named external person, not the maintainer, installs Refweir, connects an agent, and merges a pull request. The executing agent cannot perform this action or fabricate its result. This gate remains blocked until a human tester completes the loop and their result is recorded.
 
 ### Gate 7 — Positioning validation
 
@@ -78,14 +78,14 @@ This revision supersedes the 2026-10-17 scorecard, which asserted readiness in i
 - **Tag:** `v0.6.0-beta` at `9baeec3`, published by the release workflow.
 - **Assets:** 5 platform archives (`linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`, `windows/amd64`) plus `SHA256SUMS`.
 - **Installer:** `INSTALL_DIR=/tmp/install-final bash scripts/install.sh` resolved `v0.6.0-beta`, verified the checksum, and installed it.
-- **Version surfaces:** `existd v0.6.0-beta`, `exist version v0.6.0-beta`, `GET /healthz` → `v0.6.0-beta`, latest tag `v0.6.0-beta`, and the installer resolution agree. The README badge is dynamic (`shields.io/github/v/release`).
+- **Version surfaces:** `refweird v0.6.0-beta`, `exist version v0.6.0-beta`, `GET /healthz` → `v0.6.0-beta`, latest tag `v0.6.0-beta`, and the installer resolution agree. The README badge is dynamic (`shields.io/github/v/release`).
 - **Install matrix:** `linux-amd64`, `linux-arm64`, `darwin-arm64`, and `windows-amd64` jobs succeeded in run `41332477902`.
 
 ## Reproduce this scorecard
 
 ```bash
-git clone https://github.com/RavaniRoshan/exist.io
-cd exist.io
+git clone https://github.com/RavaniRoshan/refweir
+cd refweir
 git checkout 68e01e4
 
 # Gate 1

@@ -1,4 +1,4 @@
-// exist.io Enterprise Domain & Data Types
+// refweir.dev Enterprise Domain & Data Types
 
 export interface RepoInfo {
   ownerSlug: string
@@ -110,7 +110,7 @@ export interface NotificationItem {
 export interface AgentActivityItem {
   id: string
   agentName: string
-  agentType: 'claude-code' | 'cursor' | 'codex' | 'exist-mcp'
+  agentType: 'claude-code' | 'cursor' | 'codex' | 'refweir-mcp'
   toolName: string
   status: 'success' | 'executing' | 'error'
   latencyMs: number

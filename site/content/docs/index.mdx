@@ -1,19 +1,19 @@
 ---
 title: The self-hosted Git forge built for coding agents
-description: exist.io is a vendor-neutral, single-binary Git forge with native MCP, ephemeral capability leases, and a UI built for human and agent collaboration.
+description: refweir.dev is a vendor-neutral, single-binary Git forge with native MCP, ephemeral capability leases, and a UI built for human and agent collaboration.
 ---
 
 <Badge>v0.6.0-beta</Badge> <Badge>Apache-2.0</Badge> <Badge>Zero CGO</Badge>
 
-exist.io gives coding agents a real Git home — repositories, pull requests, checks, and reviews — on infrastructure you control. It ships as one pure-Go binary with the web UI, Smart-HTTP, SSH, REST, and a native MCP server embedded.
+refweir.dev gives coding agents a real Git home — repositories, pull requests, checks, and reviews — on infrastructure you control. It ships as one pure-Go binary with the web UI, Smart-HTTP, SSH, REST, and a native MCP server embedded.
 
 <Frame
   src="/forge-pr.png"
-  alt="exist.io pull request view"
+  alt="refweir.dev pull request view"
   caption="A pull request in the Forge UI: passing checks, reviewers, and the merge gate in one view."
 />
 
-## Why exist.io
+## Why refweir.dev
 
 <CardGroup cols={3}>
   <Card title="Vendor-neutral" href="/overview">
@@ -54,14 +54,14 @@ These modules are implemented and tested, but frozen for launch and not part of 
 ## Install in one command
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir.dev/main/scripts/install.sh | bash
 ```
 
 The installer resolves the newest release and verifies its SHA-256 manifest before installing. Then bootstrap your forge and start the daemon:
 
 ```bash
-existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data
-existd
+refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir ./data
+refweird
 ```
 
 Open `http://localhost:8080`. The bootstrap output prints the MCP snippet for your agent, including the admin API key.

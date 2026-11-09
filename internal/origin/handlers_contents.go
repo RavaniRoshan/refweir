@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/symbolsearch"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/symbolsearch"
+	"refweir.dev/pkg/scopes"
 )
 
 // registerContents wires the git-contents read routes (Task 9) and the ref

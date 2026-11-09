@@ -1,4 +1,4 @@
-# exist.io 90-Second Demo Walkthrough
+# Refweir 90-Second Demo Walkthrough
 # macOS Desktop Screen Recording Style
 Output "assets/demo.gif"
 Output "assets/demo.mp4"

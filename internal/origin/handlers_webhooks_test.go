@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestWebhooks_Handlers(t *testing.T) {

@@ -1,13 +1,13 @@
 ---
 title: Policy evaluation and merge engine
-description: How exist.io evaluates branch rulesets, computes 3-way merges, and determines pull request mergeability.
+description: How refweir.dev evaluates branch rulesets, computes 3-way merges, and determines pull request mergeability.
 ---
 
-In an agent-native forge, pull requests are frequently created and merged by autonomous software agents. To protect codebase integrity, exist.io pairs a native Git 3-way merge engine with a deterministic ruleset evaluator.
+In an agent-native forge, pull requests are frequently created and merged by autonomous software agents. To protect codebase integrity, refweir.dev pairs a native Git 3-way merge engine with a deterministic ruleset evaluator.
 
 ## The Merge Lifecycle
 
-When a pull request is created or updated, exist.io evaluates whether the pull request is clean, has merge conflicts, or is blocked by policy rulesets:
+When a pull request is created or updated, refweir.dev evaluates whether the pull request is clean, has merge conflicts, or is blocked by policy rulesets:
 
 ```mermaid
 flowchart TD

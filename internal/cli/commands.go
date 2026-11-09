@@ -24,7 +24,7 @@ type CLI struct {
 
 // New creates a new CLI instance configured from the environment.
 func New() *CLI {
-	endpoint := os.Getenv("EXIST_ENDPOINT")
+	endpoint := os.Getenv("REFWEIR_ENDPOINT")
 	if endpoint == "" {
 		endpoint = os.Getenv("CURSOR_ORIGIN_ENDPOINT")
 	}
@@ -33,7 +33,7 @@ func New() *CLI {
 	}
 	endpoint = strings.TrimRight(endpoint, "/")
 
-	token := os.Getenv("EXIST_TOKEN")
+	token := os.Getenv("REFWEIR_TOKEN")
 	if token == "" {
 		token = os.Getenv("CURSOR_AUTH_TOKEN")
 	}
@@ -41,7 +41,7 @@ func New() *CLI {
 		token = os.Getenv("CURSOR_API_KEY")
 	}
 
-	defaultRepo := os.Getenv("EXIST_REPO")
+	defaultRepo := os.Getenv("REFWEIR_REPO")
 	if defaultRepo == "" {
 		defaultRepo = os.Getenv("ORIGIN_REPO")
 	}
@@ -69,7 +69,7 @@ func (c *CLI) Run(args []string) error {
 		return c.printHelp()
 	}
 	if args[0] == "--version" || args[0] == "-v" {
-		fmt.Fprintf(c.Stdout, "exist version %s\n", Version)
+		fmt.Fprintf(c.Stdout, "refweir version %s\n", Version)
 		return nil
 	}
 
@@ -87,20 +87,20 @@ func (c *CLI) Run(args []string) error {
 	case "conformance":
 		return c.runConformance(args[1:])
 	default:
-		return fmt.Errorf("unknown command %q. Run 'exist --help' for usage", args[0])
+		return fmt.Errorf("unknown command %q. Run 'refweir --help' for usage", args[0])
 	}
 }
 
 func (c *CLI) printHelp() error {
-	help := `exist <command>
+	help := `refweir <command>
 
 Commands:
-  exist auth               Manage authentication
-  exist repo               Manage repositories
-  exist pr                 Manage pull requests
-  exist app                Manage apps
-  exist api <endpoint>     Make an authenticated request to REST API
-  exist conformance        Run API conformance test suite against existd
+  refweir auth               Manage authentication
+  refweir repo               Manage repositories
+  refweir pr                 Manage pull requests
+  refweir app                Manage apps
+  refweir api <endpoint>     Make an authenticated request to REST API
+  refweir conformance        Run API conformance test suite against refweird
 
 Options:
   --version                 Show version number

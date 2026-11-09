@@ -1,5 +1,5 @@
 // Package engine provides policy evaluation, branch/tag protection ruleset checking,
-// and mergeability gate validation for exist.io.
+// and mergeability gate validation for refweir.dev.
 package engine
 
 import (
@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 // MergeBlocker describes a condition preventing a pull request from being merged.

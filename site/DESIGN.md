@@ -1,4 +1,4 @@
-# Exist — one design system for the forge, the site, and the docs
+# Refweir — one design system for the forge, the site, and the docs
 
 The product (`web/`), the landing (`site/`), and the documentation (`site/docs`)
 share one palette, one typeface, and one set of surfaces. There is no separate
@@ -144,11 +144,11 @@ cards, no glassmorphism, no gradients on text.
 
 ## Screenshots
 
-All product imagery is captured from a real seeded `existd`, not mocked in the
+All product imagery is captured from a real seeded `refweird`, not mocked in the
 site:
 
 ```bash
-bash scripts/capture/seed.sh /tmp/exist-capture 18081
+bash scripts/capture/seed.sh /tmp/refweir-capture 18081
 # Playwright: 1440×900 CSS viewport, deviceScaleFactor 2, dark scheme,
 # token injected into localStorage, onboarding tour suppressed
 ```
@@ -159,7 +159,7 @@ bash scripts/capture/seed.sh /tmp/exist-capture 18081
 | `site/public/product/forge-agents.png` | agent console / MCP + leases |
 | `site/public/product/forge-pr.png` | pull request + checks + merge gate |
 | `site/public/forge-pr.png` | docs hero (same capture) |
-| `site/public/og-exist-os.png` | 1200×630 social card, dark Patina |
+| `site/public/og-refweir-os.png` | 1200×630 social card, dark Patina |
 
 The captures are 2880×1800 (2× DPR) but are rendered in a 1440×900 box, so
 `next/image` dimensions stay `1440×900`. Figures are numbered 1–4 because the
@@ -171,7 +171,7 @@ hero demo is fig. 1. Captions state the view and "real ui".
   `--color-fd-background: var(--canvas)`, `--color-fd-primary: var(--patina)`,
   etc. The docs sidebar, TOC, search, and code blocks inherit the identity.
 - `lib/layout.shared.tsx` and every marketing link use `asset()` /
-  `basePath` so production URLs stay under `/exist.io/`.
+  `basePath` so production URLs stay under `/refweir.dev/`.
 - Docs MDX exposes the shared `Kbd` primitive. Frames use `Frame` with
   `/forge-pr.png`.
 - The theme toggle in the docs sidebar and the marketing `ThemeToggle` write the

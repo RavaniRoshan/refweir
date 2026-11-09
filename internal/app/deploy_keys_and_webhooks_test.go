@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/config"
-	"exist.io/internal/store"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/store"
 	"golang.org/x/crypto/ssh"
 )
 

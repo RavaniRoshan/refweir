@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/replication"
-	"exist.io/internal/store"
+	"refweir.dev/internal/replication"
+	"refweir.dev/internal/store"
 )
 
 func TestReplicationController_Lifecycle(t *testing.T) {
@@ -127,7 +127,7 @@ func TestReplicationController_StandbyPromotion(t *testing.T) {
 		NodeID:          "test-standby-02",
 		Role:            replication.RoleStandby,
 		DataDir:         tmpDir,
-		PrimaryEndpoint: "http://primary.corp.exist.io:8080",
+		PrimaryEndpoint: "http://primary.corp.refweir.dev:8080",
 	})
 	if err != nil {
 		t.Fatalf("failed to create standby controller: %v", err)
@@ -136,8 +136,8 @@ func TestReplicationController_StandbyPromotion(t *testing.T) {
 	if ctrl.GetRole() != replication.RoleStandby {
 		t.Errorf("Role = %s, want standby", ctrl.GetRole())
 	}
-	if ctrl.Status().PrimaryEndpoint != "http://primary.corp.exist.io:8080" {
-		t.Errorf("PrimaryEndpoint = %s, want http://primary.corp.exist.io:8080", ctrl.Status().PrimaryEndpoint)
+	if ctrl.Status().PrimaryEndpoint != "http://primary.corp.refweir.dev:8080" {
+		t.Errorf("PrimaryEndpoint = %s, want http://primary.corp.refweir.dev:8080", ctrl.Status().PrimaryEndpoint)
 	}
 
 	// Promote to primary

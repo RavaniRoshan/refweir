@@ -3,8 +3,8 @@ package store_test
 import (
 	"testing"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestRepoWebhookLifecycle(t *testing.T) {

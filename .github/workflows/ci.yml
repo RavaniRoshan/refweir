@@ -47,7 +47,7 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          go build -v ./cmd/exist ./cmd/existd
+          go build -v ./cmd/refweir ./cmd/refweird
 
       - name: Run go vet
         run: go vet ./...

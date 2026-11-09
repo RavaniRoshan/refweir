@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # test_first_run.sh — Automated 5-minute install and first-run agent loop validation.
 # Validates:
-#   1. Clean directory setup & existd compilation (CGO_ENABLED=0).
+#   1. Clean directory setup & refweird compilation (CGO_ENABLED=0).
 #   2. Offline bootstrap (admin account, namespace, initial repo, API key).
 #   3. Daemon startup and health probe.
 #   4. End-to-end agent loop (MCP lease request, git clone, branch push, MCP PR open, MCP PR merge).
@@ -17,7 +17,7 @@ if [[ "${1:-}" == "--mutation" || "${MUTATION_TEST:-}" == "1" ]]; then
 fi
 
 START_TIME=$(date +%s)
-echo "=== Starting exist.io first-run installation verification ==="
+echo "=== Starting Refweir first-run installation verification ==="
 
 # Ensure Go toolchain is available
 if ! command -v go >/dev/null 2>&1; then
@@ -27,7 +27,7 @@ if ! command -v go >/dev/null 2>&1; then
 fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR=$(mktemp -d -t exist_firstrun_XXXXXX)
+WORK_DIR=$(mktemp -d -t refweir_firstrun_XXXXXX)
 DATA_DIR="$WORK_DIR/data"
 BIN_DIR="$WORK_DIR/bin"
 mkdir -p "$BIN_DIR" "$DATA_DIR"
@@ -35,7 +35,7 @@ mkdir -p "$BIN_DIR" "$DATA_DIR"
 DAEMON_PID=""
 cleanup() {
     if [ -n "$DAEMON_PID" ]; then
-        echo "Stopping existd daemon (PID $DAEMON_PID)..."
+        echo "Stopping refweird daemon (PID $DAEMON_PID)..."
         kill -TERM "$DAEMON_PID" 2>/dev/null || true
         wait "$DAEMON_PID" 2>/dev/null || true
     fi
@@ -44,14 +44,14 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # 1. Build binaries
-echo "[1/6] Building pure-Go existd and exist binaries (CGO_ENABLED=0)..."
-CGO_ENABLED=0 go build -o "$BIN_DIR/existd" "$ROOT_DIR/cmd/existd"
-CGO_ENABLED=0 go build -o "$BIN_DIR/exist" "$ROOT_DIR/cmd/exist"
+echo "[1/6] Building pure-Go refweird and refweir binaries (CGO_ENABLED=0)..."
+CGO_ENABLED=0 go build -o "$BIN_DIR/refweird" "$ROOT_DIR/cmd/refweird"
+CGO_ENABLED=0 go build -o "$BIN_DIR/refweir" "$ROOT_DIR/cmd/refweir"
 
 # 2. Run bootstrap
 echo "[2/6] Running single-command bootstrap..."
 BOOTSTRAP_OUT="$WORK_DIR/bootstrap.out"
-"$BIN_DIR/existd" bootstrap --email admin@exist.io --namespace acme --data-dir "$DATA_DIR" > "$BOOTSTRAP_OUT" 2>&1
+"$BIN_DIR/refweird" bootstrap --email admin@refweir.dev --namespace acme --data-dir "$DATA_DIR" > "$BOOTSTRAP_OUT" 2>&1
 
 API_KEY=$(grep "API Key:" "$BOOTSTRAP_OUT" | awk '{print $3}')
 if [ -z "$API_KEY" ]; then
@@ -63,14 +63,14 @@ echo "Bootstrap successful. Generated API Key prefix: ${API_KEY:0:12}..."
 
 # 3. Pick random free port & start daemon
 PORT=$(( (RANDOM % 1000) + 18000 ))
-echo "[3/6] Starting existd daemon on 127.0.0.1:$PORT..."
-EXIST_DATA_DIR="$DATA_DIR" \
-EXIST_LISTEN_ADDR="127.0.0.1:$PORT" \
-EXIST_PUBLIC_URL="http://127.0.0.1:$PORT" \
-EXIST_GIT_URL="http://127.0.0.1:$PORT" \
-EXIST_SSH_ADDR="none" \
-EXISTD_PATH="$BIN_DIR/existd" \
-"$BIN_DIR/existd" > "$WORK_DIR/daemon.log" 2>&1 &
+echo "[3/6] Starting refweird daemon on 127.0.0.1:$PORT..."
+REFWEIR_DATA_DIR="$DATA_DIR" \
+REFWEIR_LISTEN_ADDR="127.0.0.1:$PORT" \
+REFWEIR_PUBLIC_URL="http://127.0.0.1:$PORT" \
+REFWEIR_GIT_URL="http://127.0.0.1:$PORT" \
+REFWEIR_SSH_ADDR="none" \
+REFWEIRD_PATH="$BIN_DIR/refweird" \
+"$BIN_DIR/refweird" > "$WORK_DIR/daemon.log" 2>&1 &
 DAEMON_PID=$!
 
 # Wait for server to become ready
@@ -140,7 +140,7 @@ if [ "$MUTATION_MODE" = true ]; then
     # If clone permitted anonymous read, test push with invalid lease
     cd "$WORKTREE"
     git config user.name "Claude Agent"
-    git config user.email "agent@exist.io"
+    git config user.email "agent@refweir.dev"
     git checkout -b agent/mutation-patch
     echo "mutation" >> README.md
     git commit -am "mutation test"
@@ -160,7 +160,7 @@ fi
 git clone "$CLONE_URL" "$WORKTREE" >/dev/null 2>&1
 cd "$WORKTREE"
 git config user.name "Claude Agent"
-git config user.email "agent@exist.io"
+git config user.email "agent@refweir.dev"
 git checkout -b agent/first-run-patch >/dev/null 2>&1
 echo "Automated patch applied by autonomous agent at $(date -u)" >> README.md
 git commit -am "feat: autonomous agent first run verification" >/dev/null 2>&1
@@ -231,6 +231,6 @@ fi
 END_TIME=$(date +%s)
 ELAPSED=$((END_TIME - START_TIME))
 echo "--------------------------------------------------------------------------------"
-echo "PASS: exist.io first-run installation and agent loop verified in ${ELAPSED}s"
+echo "PASS: Refweir first-run installation and agent loop verified in ${ELAPSED}s"
 echo "Target: < 180s (Passed in ${ELAPSED} seconds)"
 echo "--------------------------------------------------------------------------------"

@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestChecks_Handlers(t *testing.T) {

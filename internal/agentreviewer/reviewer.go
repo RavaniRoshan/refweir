@@ -1,5 +1,5 @@
 // Package agentreviewer provides automated, AI-native code review, security analysis,
-// and quality assurance gates for pull requests in exist.io.
+// and quality assurance gates for pull requests in refweir.dev.
 package agentreviewer
 
 import (
@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/agentactivity"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/agentactivity"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 // Violation represents a specific security or quality finding within a pull request.
@@ -244,7 +244,7 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 		SHA:         pr.HeadSHA,
 		BaseSHA:     pr.BaseSHA,
 		Key:         suiteKey,
-		Name:        "Exist Agent Reviewer",
+		Name:        "Refweir Agent Reviewer",
 		ActorUserID: "",
 		CreatedAt:   nowStr,
 		UpdatedAt:   nowStr,
@@ -262,7 +262,7 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 		SHA:           pr.HeadSHA,
 		BaseSHA:       pr.BaseSHA,
 		Key:           suiteKey,
-		Name:          "Exist Agent Reviewer",
+		Name:          "Refweir Agent Reviewer",
 		Status:        "completed",
 		Conclusion:    conclusion,
 		OutputTitle:   fmt.Sprintf("Agent Review: %s (Score %d/100)", strings.ToUpper(verdict), score),
@@ -281,7 +281,7 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 
 	// 8. Record telemetry to agent activity hub
 	agentactivity.DefaultHub.Record(agentactivity.Activity{
-		AgentName: "exist-reviewer",
+		AgentName: "refweir-reviewer",
 		AgentType: "reviewer",
 		Action:    "pr_review_completed",
 		Resource:  fmt.Sprintf("%s/%s#%d", ownerSlug, repo.Name, pr.Number),

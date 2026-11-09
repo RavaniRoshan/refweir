@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 // RepoWebhook represents a repository-specific webhook subscription.

@@ -23,7 +23,7 @@ describe('ArchiveRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyArchived={false}
         onSuccess={onSuccess}
       />
@@ -31,7 +31,7 @@ describe('ArchiveRepoModal Component', () => {
 
     expect(screen.getByText(/archive repository/i)).toBeInTheDocument()
     expect(screen.getByText(/mark repository as read-only and immutable/i)).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('shiva/exist-core')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('shiva/refweir-core')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /i understand, archive this repository/i })).toBeDisabled()
   })
 
@@ -44,19 +44,19 @@ describe('ArchiveRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyArchived={false}
         onSuccess={onSuccess}
       />
     )
 
-    const input = screen.getByPlaceholderText('shiva/exist-core')
+    const input = screen.getByPlaceholderText('shiva/refweir-core')
     const submitBtn = screen.getByRole('button', { name: /archive this repository/i })
 
     fireEvent.change(input, { target: { value: 'shiva/other-repo' } })
     expect(submitBtn).toBeDisabled()
 
-    fireEvent.change(input, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(input, { target: { value: 'shiva/refweir-core' } })
     expect(submitBtn).not.toBeDisabled()
   })
 
@@ -69,14 +69,14 @@ describe('ArchiveRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyArchived={false}
         onSuccess={onSuccess}
       />
     )
 
-    const input = screen.getByPlaceholderText('shiva/exist-core')
-    fireEvent.change(input, { target: { value: 'shiva/exist-core' } })
+    const input = screen.getByPlaceholderText('shiva/refweir-core')
+    fireEvent.change(input, { target: { value: 'shiva/refweir-core' } })
 
     const submitBtn = screen.getByRole('button', { name: /archive this repository/i })
     fireEvent.click(submitBtn)
@@ -96,7 +96,7 @@ describe('ArchiveRepoModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyArchived={true}
         onSuccess={onSuccess}
       />

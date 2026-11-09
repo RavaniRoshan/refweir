@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/scopes"
 )
 
 // Server holds the shared dependencies every Origin handler needs: the

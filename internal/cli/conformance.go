@@ -24,7 +24,7 @@ type ConformanceResult struct {
 
 func (c *CLI) runConformance(args []string) error {
 	fs := flag.NewFlagSet("conformance", flag.ContinueOnError)
-	endpoint := fs.String("endpoint", c.Endpoint, "existd instance URL (e.g. http://127.0.0.1:8080)")
+	endpoint := fs.String("endpoint", c.Endpoint, "refweird instance URL (e.g. http://127.0.0.1:8080)")
 	token := fs.String("token", c.Token, "Admin API key or PAT")
 	repoSlug := fs.String("repo", "acme/demo", "Target repository slug (owner/repo)")
 	jsonOut := fs.Bool("json", false, "Output results as JSON")

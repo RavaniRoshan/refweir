@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
@@ -173,8 +173,8 @@ func (a *App) ApplySuggestion(ctx context.Context, owner, repo string, prNumber 
 	}
 
 	author := object.Signature{
-		Name:  "exist.io",
-		Email: "support@exist.io",
+		Name:  "refweir.dev",
+		Email: "support@refweir.dev",
 		When:  time.Now().UTC(),
 	}
 	if comment.AuthorUserID != "" {

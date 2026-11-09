@@ -23,7 +23,7 @@ describe('ChangeVisibilityModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyPrivate={false}
         onSuccess={onSuccess}
       />
@@ -31,7 +31,7 @@ describe('ChangeVisibilityModal Component', () => {
 
     expect(screen.getByText(/change visibility to private/i)).toBeInTheDocument()
     expect(screen.getByText(/caution: high-impact security and visibility change/i)).toBeInTheDocument()
-    expect(screen.getAllByText(/shiva\/exist-core/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/shiva\/refweir-core/i).length).toBeGreaterThan(0)
     expect(screen.getByTestId('visibility-acknowledge-checkbox')).toBeInTheDocument()
     expect(screen.getByTestId('visibility-confirm-name-input')).toBeInTheDocument()
     expect(screen.getByTestId('visibility-sudo-secret-input')).toBeInTheDocument()
@@ -47,7 +47,7 @@ describe('ChangeVisibilityModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyPrivate={true}
         onSuccess={onSuccess}
       />
@@ -67,7 +67,7 @@ describe('ChangeVisibilityModal Component', () => {
     expect(submitBtn).toBeDisabled()
 
     // 3. Type matching repo name
-    fireEvent.change(nameInput, { target: { value: 'shiva/exist-core' } })
+    fireEvent.change(nameInput, { target: { value: 'shiva/refweir-core' } })
     expect(submitBtn).toBeDisabled()
 
     // 4. Enter sudo secret (< 4 chars)
@@ -89,7 +89,7 @@ describe('ChangeVisibilityModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyPrivate={true}
         onSuccess={onSuccess}
       />
@@ -97,7 +97,7 @@ describe('ChangeVisibilityModal Component', () => {
 
     fireEvent.click(screen.getByTestId('visibility-acknowledge-checkbox'))
     fireEvent.change(screen.getByTestId('visibility-confirm-name-input'), {
-      target: { value: 'shiva/exist-core' },
+      target: { value: 'shiva/refweir-core' },
     })
     fireEvent.change(screen.getByTestId('visibility-sudo-secret-input'), {
       target: { value: 'valid-sudo-token' },
@@ -122,7 +122,7 @@ describe('ChangeVisibilityModal Component', () => {
         isOpen={true}
         onClose={onClose}
         owner="shiva"
-        repoName="exist-core"
+        repoName="refweir-core"
         isCurrentlyPrivate={false}
         onSuccess={onSuccess}
       />
@@ -130,7 +130,7 @@ describe('ChangeVisibilityModal Component', () => {
 
     fireEvent.click(screen.getByTestId('visibility-acknowledge-checkbox'))
     fireEvent.change(screen.getByTestId('visibility-confirm-name-input'), {
-      target: { value: 'shiva/exist-core' },
+      target: { value: 'shiva/refweir-core' },
     })
     fireEvent.change(screen.getByTestId('visibility-sudo-secret-input'), {
       target: { value: 'wrong-secret' },

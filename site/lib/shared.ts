@@ -1,7 +1,7 @@
-export const appName = 'exist.io docs';
-export const siteUrl = 'https://ravaniroshan.github.io/exist.io';
+export const appName = 'refweir.dev docs';
+export const siteUrl = 'https://ravaniroshan.github.io/refweir';
 export const gitConfig = {
   user: 'RavaniRoshan',
-  repo: 'exist.io',
+  repo: 'refweir.dev',
   branch: 'main',
 };

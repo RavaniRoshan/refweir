@@ -13,7 +13,7 @@ Product Hunt gallery requires 16:9 or 1200x800 high-resolution images or GIFs sh
 ### Asset 2: Pull Request & Merge Gate UI — **captured**
 - **File:** `assets/launch/02-web-pr-view.png`
 - **Dimensions:** 1280 x 800 px
-- **Capture:** Playwright against a live `existd` with an open agent PR (see `scripts/capture/seed.sh` and `web/scripts/capture.mjs`)
+- **Capture:** Playwright against a live `refweird` with an open agent PR (see `scripts/capture/seed.sh` and `web/scripts/capture.mjs`)
 - **Caption:** *Pull request view with passing checks, review state, and the merge gate.*
 
 ### Asset 3: Multi-Agent MCP Integration — **capture required**

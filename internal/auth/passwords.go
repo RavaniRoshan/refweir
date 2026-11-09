@@ -12,7 +12,7 @@ import (
 
 const (
 	// SessionCookieName is the canonical cookie key for web session authentication.
-	SessionCookieName = "exist_session"
+	SessionCookieName = "refweir_session"
 
 	// DefaultSessionDuration is the standard lifetime of a user login session (30 days).
 	DefaultSessionDuration = 30 * 24 * time.Hour

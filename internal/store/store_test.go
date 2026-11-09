@@ -62,7 +62,7 @@ func TestMigrateRecordsVersion(t *testing.T) {
 
 func TestOpenFileOnDisk(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "exist.db")
+	path := filepath.Join(dir, "refweir.db")
 	db, err := Open(path)
 	if err != nil {
 		t.Fatalf("Open(%s) = %v", path, err)

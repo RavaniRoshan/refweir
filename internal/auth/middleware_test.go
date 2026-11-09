@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/pkg/scopes"
+	"refweir.dev/pkg/scopes"
 )
 
 // okHandler is a terminal handler that records that it was reached.

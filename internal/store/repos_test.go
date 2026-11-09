@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"exist.io/pkg/idgen"
+	"refweir.dev/pkg/idgen"
 )
 
 func seedNamespace(t *testing.T, db *DB, slug string) Namespace {

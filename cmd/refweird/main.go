@@ -1,4 +1,4 @@
-// Command existd is the primary server daemon for exist.io.
+// Command refweird is the primary server daemon for refweir.dev.
 // It hosts the Smart-HTTP Git transport, REST API, Model Context Protocol (MCP) server,
 // and supports offline administrator bootstrap.
 package main
@@ -18,16 +18,16 @@ import (
 	"syscall"
 	"time"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
-	"exist.io/internal/security"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/security"
 )
 
 var version = "dev"
 
 func main() {
 	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "version") {
-		fmt.Printf("existd %s\n", version)
+		fmt.Printf("refweird %s\n", version)
 		return
 	}
 
@@ -45,7 +45,7 @@ func main() {
 			}
 			return
 		}
-		fmt.Fprintln(os.Stderr, "Usage: existd hook pre-receive")
+		fmt.Fprintln(os.Stderr, "Usage: refweird hook pre-receive")
 		os.Exit(1)
 	}
 
@@ -53,17 +53,17 @@ func main() {
 		fs := flag.NewFlagSet("bootstrap", flag.ExitOnError)
 		email := fs.String("email", "", "Admin user email address (required)")
 		namespace := fs.String("namespace", "", "Initial admin namespace slug (required)")
-		dataDir := fs.String("data-dir", cfg.DataDir, "Path to exist.io data directory")
+		dataDir := fs.String("data-dir", cfg.DataDir, "Path to refweir.dev data directory")
 		if err := fs.Parse(os.Args[2:]); err != nil {
 			log.Fatalf("bootstrap: %v", err)
 		}
 
 		if *email == "" || *namespace == "" {
-			fmt.Fprintln(os.Stderr, "Usage: existd bootstrap --email <email> --namespace <slug> [--data-dir <path>]")
+			fmt.Fprintln(os.Stderr, "Usage: refweird bootstrap --email <email> --namespace <slug> [--data-dir <path>]")
 			os.Exit(1)
 		}
 
-		if os.Getenv("EXIST_TELEMETRY_OPT_IN") == "" {
+		if os.Getenv("REFWEIR_TELEMETRY_OPT_IN") == "" {
 			if info, err := os.Stdin.Stat(); err == nil && info.Mode()&os.ModeCharDevice != 0 {
 				fmt.Print("Send an anonymous activation metric? [y/N] ")
 				answer, _ := bufio.NewReader(os.Stdin).ReadString('\n')
@@ -83,7 +83,7 @@ func main() {
 			log.Fatalf("bootstrap failed: %v", err)
 		}
 
-		fmt.Println("exist.io bootstrap complete!")
+		fmt.Println("refweir.dev bootstrap complete!")
 		fmt.Println("--------------------------------------------------------------------------------")
 		fmt.Printf("User:       %s (id: %s)\n", res.User.Email, res.User.ID)
 		fmt.Printf("Namespace:  %s (id: %s)\n", res.Namespace.Slug, res.Namespace.ID)
@@ -95,11 +95,11 @@ func main() {
 		fmt.Println("=== Agent Configuration Snippets ===")
 		fmt.Println()
 		fmt.Println("Claude Code (~/.claude/settings.json or command line):")
-		fmt.Printf("  claude mcp add exist %s/mcp --header \"Authorization: Bearer %s\"\n\n", cfg.PublicURL, res.RawKey)
+		fmt.Printf("  claude mcp add refweir %s/mcp --header \"Authorization: Bearer %s\"\n\n", cfg.PublicURL, res.RawKey)
 		fmt.Println("  Or add to ~/.claude/settings.json:")
 		fmt.Printf(`  {
     "mcpServers": {
-      "exist": {
+      "refweir": {
         "url": "%s/mcp",
         "headers": {
           "Authorization": "Bearer %s"
@@ -111,7 +111,7 @@ func main() {
 		fmt.Println("Cursor (.cursor/mcp.json):")
 		fmt.Printf(`  {
     "mcpServers": {
-      "exist": {
+      "refweir": {
         "url": "%s/mcp",
         "headers": {
           "Authorization": "Bearer %s"
@@ -123,7 +123,7 @@ func main() {
 		fmt.Println("Cline (cline_mcp_settings.json):")
 		fmt.Printf(`  {
     "mcpServers": {
-      "exist": {
+      "refweir": {
         "url": "%s/mcp",
         "headers": {
           "Authorization": "Bearer %s"
@@ -135,7 +135,7 @@ func main() {
   }`+"\n", cfg.PublicURL, res.RawKey)
 		fmt.Println()
 		fmt.Println("Codex (TOML):")
-		fmt.Printf(`  [mcp.servers.exist]
+		fmt.Printf(`  [mcp.servers.refweir]
   url = "%s/mcp"
   headers = { Authorization = "Bearer %s" }`+"\n", cfg.PublicURL, res.RawKey)
 		return
@@ -143,19 +143,19 @@ func main() {
 
 	application, err := app.Open(cfg)
 	if err != nil {
-		log.Fatalf("existd: failed to initialize application: %v", err)
+		log.Fatalf("refweird: failed to initialize application: %v", err)
 	}
 	defer func() {
 		if err := application.Close(); err != nil {
-			log.Printf("existd: error closing application: %v", err)
+			log.Printf("refweird: error closing application: %v", err)
 		}
 	}()
 
 	if cfg.SSHAddr != "" && cfg.SSHAddr != "none" {
 		if err := application.StartSSH(); err != nil {
-			log.Printf("existd: failed to start SSH server on %s: %v", cfg.SSHAddr, err)
+			log.Printf("refweird: failed to start SSH server on %s: %v", cfg.SSHAddr, err)
 		} else {
-			fmt.Printf("existd SSH listening on %s\n", cfg.SSHAddr)
+			fmt.Printf("refweird SSH listening on %s\n", cfg.SSHAddr)
 		}
 	}
 
@@ -174,7 +174,7 @@ func main() {
 
 	serverErr := make(chan error, 1)
 	go func() {
-		fmt.Printf("existd listening on %s (publicURL=%s gitURL=%s dataDir=%s sshAddr=%s)\n",
+		fmt.Printf("refweird listening on %s (publicURL=%s gitURL=%s dataDir=%s sshAddr=%s)\n",
 			cfg.ListenAddr, cfg.PublicURL, cfg.GitURL, cfg.DataDir, cfg.SSHAddr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
@@ -183,13 +183,13 @@ func main() {
 
 	select {
 	case err := <-serverErr:
-		log.Fatalf("existd: server error: %v", err)
+		log.Fatalf("refweird: server error: %v", err)
 	case sig := <-shutdown:
-		fmt.Printf("\nexistd: received signal %v, shutting down gracefully...\n", sig)
+		fmt.Printf("\nrefweird: received signal %v, shutting down gracefully...\n", sig)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("existd: shutdown error: %v", err)
+			log.Printf("refweird: shutdown error: %v", err)
 		}
 	}
 }

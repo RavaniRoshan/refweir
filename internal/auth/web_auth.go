@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/slug"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/slug"
 	"golang.org/x/crypto/ssh"
 )
 

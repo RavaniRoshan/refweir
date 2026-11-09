@@ -10,11 +10,11 @@ import (
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/config"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 // BootstrapResult contains the details created by a successful initial bootstrap.
@@ -141,11 +141,11 @@ func Bootstrap(ctx context.Context, cfg config.Config, email, namespaceSlug stri
 	initialChanges := []gitstore.FileChange{
 		{
 			Path:    "README.md",
-			Content: fmt.Sprintf("# %s\n\nWelcome to exist.io — the neutral, self-hosted Git forge for coding agents.\n", repoName),
+			Content: fmt.Sprintf("# %s\n\nWelcome to refweir.dev — the neutral, self-hosted Git forge for coding agents.\n", repoName),
 		},
 	}
 	sig := object.Signature{
-		Name:  "exist.io",
+		Name:  "refweir.dev",
 		Email: email,
 		When:  time.Now().UTC(),
 	}

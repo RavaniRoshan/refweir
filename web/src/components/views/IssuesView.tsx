@@ -34,7 +34,7 @@ export interface IssuesViewProps {
 
 export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullRequest }) => {
   const owner = repo?.ownerSlug || 'shiva'
-  const repoName = repo?.name || 'exist.io'
+  const repoName = repo?.name || 'refweir.dev'
 
   const [issues, setIssues] = useState<Issue[]>([])
   const [loading, setLoading] = useState(true)
@@ -266,7 +266,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-foreground">
-                        Autonomous Issue Triage with Exist Agent
+                        Autonomous Issue Triage with Refweir Agent
                       </div>
                       <div className="text-[11px] text-muted-foreground">
                         Delegate reproduction, test synthesis, and draft pull request generation to the agent.

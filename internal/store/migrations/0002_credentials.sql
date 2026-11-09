@@ -1,6 +1,6 @@
--- 0002_credentials.sql — exist.io local credentials schema.
+-- 0002_credentials.sql — refweir.dev local credentials schema.
 --
--- Enables local, self-hosted API keys and access tokens so exist.io operates
+-- Enables local, self-hosted API keys and access tokens so refweir.dev operates
 -- completely independently of Cursor's authentication infrastructure.
 
 CREATE TABLE api_keys (

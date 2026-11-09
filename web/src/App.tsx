@@ -96,7 +96,7 @@ export default function App() {
     // If first-time user hasn't completed tour yet, auto-open tour (unless ?notour=1)
     const p = new URLSearchParams(window.location.search)
     if (p.get('notour') !== '1') {
-      const completed = localStorage.getItem('exist_onboarding_tour_completed')
+      const completed = localStorage.getItem('refweir_onboarding_tour_completed')
       if (completed !== 'true') {
         setTourOpen(true)
       }
@@ -284,7 +284,7 @@ export default function App() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
               </span>
-              <span>existd (127.0.0.1:8080)</span>
+              <span>refweird (127.0.0.1:8080)</span>
             </span>
             <span>•</span>
             <span className="text-foreground flex items-center gap-1">
@@ -297,7 +297,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <a
-              href="https://ravaniroshan.github.io/exist.io/docs/"
+              href="https://ravaniroshan.github.io/refweir/docs/"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors hover:underline"
@@ -305,7 +305,7 @@ export default function App() {
               Docs & Guide
             </a>
             <a
-              href="https://github.com/RavaniRoshan/exist.io"
+              href="https://github.com/RavaniRoshan/refweir"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors hover:underline"
@@ -314,7 +314,7 @@ export default function App() {
             </a>
             <span className="text-border">|</span>
             <span className="text-foreground font-semibold">
-              exist.io {systemInfo.version ?? ''}
+              refweir.dev {systemInfo.version ?? ''}
             </span>
           </div>
         </div>

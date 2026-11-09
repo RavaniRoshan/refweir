@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 var (

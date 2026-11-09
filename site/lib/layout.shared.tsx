@@ -7,15 +7,15 @@ export function baseOptions(): BaseLayoutProps {
       title: <Logo />,
       url: '/',
     },
-    githubUrl: 'https://github.com/RavaniRoshan/exist.io',
+    githubUrl: 'https://github.com/RavaniRoshan/refweir',
     links: [
       {
-        text: 'exist.io site',
+        text: 'refweir.dev site',
         url: '/',
       },
       {
         text: 'Releases',
-        url: 'https://github.com/RavaniRoshan/exist.io/releases',
+        url: 'https://github.com/RavaniRoshan/refweir/releases',
         external: true,
       },
     ],

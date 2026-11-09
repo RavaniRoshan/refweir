@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 // VerifySudoChallenge verifies whether a security secret provided by a user

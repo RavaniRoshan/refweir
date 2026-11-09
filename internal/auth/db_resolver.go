@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/scopes"
 )
 
 // ScopedToken represents an authenticated token with explicit scopes and subject.

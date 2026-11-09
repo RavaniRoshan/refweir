@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestLabels_Handlers(t *testing.T) {

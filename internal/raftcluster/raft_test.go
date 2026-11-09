@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/raftcluster"
+	"refweir.dev/internal/raftcluster"
 )
 
 type memoryTransport struct {
@@ -78,7 +78,7 @@ func TestSingleNodeCluster_LeaderElectionAndPropose(t *testing.T) {
 	cmd := raftcluster.Command{
 		Type:  raftcluster.CmdSetState,
 		Key:   "cluster.name",
-		Value: "exist-primary",
+		Value: "refweir-primary",
 	}
 
 	if err := node.Propose(ctx, cmd); err != nil {
@@ -86,8 +86,8 @@ func TestSingleNodeCluster_LeaderElectionAndPropose(t *testing.T) {
 	}
 
 	val, ok := node.FSM().Get("cluster.name")
-	if !ok || val != "exist-primary" {
-		t.Fatalf("FSM state mismatch: got %s, want exist-primary", val)
+	if !ok || val != "refweir-primary" {
+		t.Fatalf("FSM state mismatch: got %s, want refweir-primary", val)
 	}
 }
 

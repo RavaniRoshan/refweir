@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 // ActivationRecord is the once-only record of the first qualifying merge.

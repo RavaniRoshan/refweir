@@ -288,7 +288,7 @@ export const SsoConfig: React.FC = () => {
 
         <BoxBody className="p-4 space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            <code>exist.io</code> implements RFC 7643 and RFC 7644 SCIM 2.0. Users provisioned in Okta or Azure AD are automatically synchronized here, and departing employees have their repository access instantly revoked upon IdP suspension.
+            <code>refweir.dev</code> implements RFC 7643 and RFC 7644 SCIM 2.0. Users provisioned in Okta or Azure AD are automatically synchronized here, and departing employees have their repository access instantly revoked upon IdP suspension.
           </p>
 
           <div className="space-y-1 pt-1">

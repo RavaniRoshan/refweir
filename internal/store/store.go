@@ -1,4 +1,4 @@
-// Package store is exist.io's metadata store: a pure-Go SQLite database
+// Package store is refweir.dev's metadata store: a pure-Go SQLite database
 // (modernc.org/sqlite, no cgo) holding namespaces, repos, grants, pull
 // requests, checks, rulesets, apps, and every other Origin entity that is not
 // itself a git object. Git object data lives in internal/gitstore.

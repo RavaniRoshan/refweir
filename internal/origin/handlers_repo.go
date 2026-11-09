@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 // registerRepos wires the repository and namespace routes (Task 6).

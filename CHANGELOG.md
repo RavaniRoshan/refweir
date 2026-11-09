@@ -1,9 +1,23 @@
 # Changelog
 
-All notable changes to exist.io will be documented in this file.
+All notable changes to Refweir will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased] — Renamed to Refweir
+
+### Changed
+- **Product name:** `exist.io` → **Refweir**; canonical site `https://refweir.dev` and repository `https://github.com/RavaniRoshan/refweir`.
+- **Go module:** `exist.io` → `refweir.dev`; all imports updated.
+- **Binaries:** `cmd/exist` → `cmd/refweir` (CLI) and `cmd/existd` → `cmd/refweird` (daemon).
+- **Environment variables:** `EXIST_*` → `REFWEIR_*`; `EXISTD_PATH` → `REFWEIRD_PATH`.
+- **Session cookie:** `exist_session` → `refweir_session`; browser storage keys `exist_*` → `refweir_*`.
+- **Deploy surfaces:** Docker image/user and data path, Compose service, Helm chart (`deploy/helm/refweir-enterprise`), Terraform provider (`deploy/terraform-provider-refweir`), goreleaser archives, install scripts, and CI.
+- **Site:** GitHub Pages base path `/exist.io` → `/refweir`; docs and OG image renamed.
+
+### Migration
+See [`MIGRATION.md`](MIGRATION.md) for the old → new URL, module, binary, and environment-variable map. Historical entries below keep their original wording.
 
 ## [0.6.0-beta] - 2026-10-17
 
@@ -31,12 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0-beta] - 2026-10-17
 
 ### Added
-- **Embedded Web UI**: Single binary distribution where `existd` serves the compiled React 19 / Vite UI on port 8080 via Go `embed.FS` with automatic SPA fallback.
+- **Embedded Web UI**: Single binary distribution where `refweird` serves the compiled React 19 / Vite UI on port 8080 via Go `embed.FS` with automatic SPA fallback.
 - **Model Context Protocol (MCP) Server**: 16 core tools with `/mcp` full-access and `/mcp/readonly` sandbox for agent exploration.
 - **Agent Capability Leases**: Ephemeral HMAC-SHA256 capability tokens (`pkg/agentlease`) with ref-prefix isolation (`refs/heads/agent/*`) enforced on Smart-HTTP and pre-receive hooks.
 - **Pre-Receive Security Hook**: Automatic secret scanning, non-fast-forward push rejection, and default branch protection.
 - **AST Symbol Search Indexer**: In-memory AST symbol search for Go, TypeScript, and Python (`internal/symbolsearch`).
-- **One-Command Bootstrap**: `existd bootstrap` initializes admin user, namespace, repo, API key, and tailored agent MCP configuration snippets in < 5 seconds.
+- **One-Command Bootstrap**: `refweird bootstrap` initializes admin user, namespace, repo, API key, and tailored agent MCP configuration snippets in < 5 seconds.
 - **One-Line Installer**: `scripts/install.sh` for single-command installation across Linux, macOS, and Windows.
 - **Automated Conformance Harness**: `exist conformance` validating REST endpoints and MCP JSON-RPC protocol compliance.
 - **Concurrent Multi-Agent Benchmarks**: Rigorous benchmark suite measuring p50/p95 latency under 1, 5, and 20 concurrent autonomous agents.

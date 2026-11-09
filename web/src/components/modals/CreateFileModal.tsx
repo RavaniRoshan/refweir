@@ -25,7 +25,7 @@ export const CreateFileModal: React.FC<CreateFileModalProps> = ({
   const [filePath, setFilePath] = useState(initialPath)
   const [content, setContent] = useState(
     initialPath.toLowerCase() === 'readme.md'
-      ? `# ${name}\n\nA sovereign repository on exist.io.\n`
+      ? `# ${name}\n\nA sovereign repository on refweir.dev.\n`
       : ''
   )
   const [message, setMessage] = useState(`Create ${initialPath}`)

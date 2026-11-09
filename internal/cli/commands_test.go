@@ -20,7 +20,7 @@ func TestCLI_VersionAndHelp(t *testing.T) {
 	if err := c.Run([]string{"--version"}); err != nil {
 		t.Fatalf("version: %v", err)
 	}
-	if !strings.Contains(stdout.String(), "exist version") {
+	if !strings.Contains(stdout.String(), "refweir version") {
 		t.Errorf("expected version string, got: %s", stdout.String())
 	}
 
@@ -28,7 +28,7 @@ func TestCLI_VersionAndHelp(t *testing.T) {
 	if err := c.Run([]string{"--help"}); err != nil {
 		t.Fatalf("help: %v", err)
 	}
-	if !strings.Contains(stdout.String(), "exist <command>") {
+	if !strings.Contains(stdout.String(), "refweir <command>") {
 		t.Errorf("expected help string, got: %s", stdout.String())
 	}
 }

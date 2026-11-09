@@ -45,13 +45,13 @@ const emailHTMLTemplate = `<!DOCTYPE html>
     <tr>
       <td align="center" style="padding: 0 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #161b22; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; border-collapse: separate;">
-          <!-- Dark Header with exist.io Branding -->
+          <!-- Dark Header with refweir.dev Branding -->
           <tr>
             <td style="background-color: #0d1117; padding: 16px 24px; border-bottom: 1px solid #30363d;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">exist<span style="color: #38bdf8;">.io</span></span>
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">refweir<span style="color: #38bdf8;">.dev</span></span>
                   </td>
                   {{if .Repo}}
                   <td align="right">
@@ -229,12 +229,12 @@ func buildViewData(evt NotificationEvent) emailViewData {
 		url = p["issue_url"]
 	}
 	if url == "" {
-		url = "https://exist.io"
+		url = "https://refweir.dev"
 	}
 
 	unsub := p["unsubscribe_url"]
 	if unsub == "" {
-		unsub = "https://exist.io/settings/notifications"
+		unsub = "https://refweir.dev/settings/notifications"
 	}
 
 	author := p["author"]
@@ -340,7 +340,7 @@ func buildViewData(evt NotificationEvent) emailViewData {
 
 func renderText(data emailViewData) string {
 	var b strings.Builder
-	b.WriteString("exist.io")
+	b.WriteString("refweir.dev")
 	if data.Repo != "" {
 		b.WriteString(" - ")
 		b.WriteString(data.Repo)

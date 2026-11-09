@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 const (

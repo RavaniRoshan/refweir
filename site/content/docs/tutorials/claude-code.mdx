@@ -1,18 +1,18 @@
 ---
 title: "Agent Setup: Claude Code"
-description: "Step-by-step guide to pair programming with Anthropic's Claude Code against your self-hosted exist.io forge."
+description: "Step-by-step guide to pair programming with Anthropic's Claude Code against your self-hosted refweir.dev forge."
 ---
 
-Claude Code is Anthropic's command-line agentic tool for software development. This guide explains how to connect Claude Code to your self-hosted exist.io instance.
+Claude Code is Anthropic's command-line agentic tool for software development. This guide explains how to connect Claude Code to your self-hosted refweir.dev instance.
 
 ## 1. Configure the MCP Endpoint
 
-Add the exist.io MCP server to Claude Code using the CLI or direct configuration.
+Add the refweir.dev MCP server to Claude Code using the CLI or direct configuration.
 
 ### Option A: Command-Line One-Liner
 
 ```bash
-claude mcp add exist http://localhost:8080/mcp --header "Authorization: Bearer <YOUR_API_KEY>"
+claude mcp add refweir http://localhost:8080/mcp --header "Authorization: Bearer <YOUR_API_KEY>"
 ```
 
 ### Option B: Direct Configuration
@@ -22,7 +22,7 @@ Add the server definition to your `~/.claude/settings.json` file:
 ```json
 {
   "mcpServers": {
-    "exist": {
+    "refweir": {
       "url": "http://localhost:8080/mcp",
       "headers": {
         "Authorization": "Bearer <YOUR_API_KEY>"
@@ -70,7 +70,7 @@ claude
 ```
 
 **Prompt:**
-> "Connect to exist.io repository `acme/demo`. Create a new branch `agent/add-healthcheck`, implement an HTTP `/healthz` endpoint with unit tests, commit the changes, push to origin, and open a pull request."
+> "Connect to refweir.dev repository `acme/demo`. Create a new branch `agent/add-healthcheck`, implement an HTTP `/healthz` endpoint with unit tests, commit the changes, push to origin, and open a pull request."
 
 Claude Code will:
 1. Issue a capability lease via `lease_request`.
@@ -88,7 +88,7 @@ Claude Code will:
 - **Fix:** Instruct Claude to use branches starting with `agent/` (e.g., `git checkout -b agent/my-fix`).
 
 ### `401 Unauthorized: Invalid lease signature`
-- **Cause:** The lease token expired or the server's `EXIST_JWT_SECRET` changed.
+- **Cause:** The lease token expired or the server's `REFWEIR_JWT_SECRET` changed.
 - **Fix:** Request a fresh lease using `lease_request`.
 
 ### `Secret scan violation: Push rejected`

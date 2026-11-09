@@ -17,9 +17,9 @@ func main() {
 	flag.Parse()
 
 	if showVersion {
-		fmt.Printf("terraform-provider-exist %s (commit %s)\n", version, commit)
+		fmt.Printf("terraform-provider-refweir %s (commit %s)\n", version, commit)
 		os.Exit(0)
 	}
 
-	fmt.Println("exist.io official Terraform / OpenTofu provider plugin")
+	fmt.Println("refweir.dev official Terraform / OpenTofu provider plugin")
 }

@@ -19,18 +19,18 @@ NC='\033[0m'
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-DEMO_DIR="/tmp/exist_demo_run"
+DEMO_DIR="/tmp/refweir_demo_run"
 DEMO_DATA="$DEMO_DIR/data"
 DEMO_WORKTREE="$DEMO_DIR/worktree"
 
 rm -rf "$DEMO_DIR"
 mkdir -p "$DEMO_DIR"
-pkill -f existd 2>/dev/null || true
+pkill -f refweird 2>/dev/null || true
 sleep 1
 
 clear 2>/dev/null || true
 echo -e "${BOLD}${BLUE}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${BLUE}║       exist.io — The Neutral Git Forge for Coding Agents              ║${NC}"
+echo -e "${BOLD}${BLUE}║       Refweir — The Neutral Git Forge for Coding Agents              ║${NC}"
 echo -e "${BOLD}${BLUE}║       90-Second Demo: From Install to Merged Autonomous Agent PR      ║${NC}"
 echo -e "${BOLD}${BLUE}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -38,16 +38,16 @@ sleep 1.5
 
 # Step 1: Build
 echo -e "${CYAN}${BOLD}[1/8] Compiling hermetic pure-Go binaries (CGO_ENABLED=0)...${NC}"
-echo -e "${YELLOW}$ go build -o bin/existd ./cmd/existd${NC}"
-CGO_ENABLED=0 go build -o bin/existd ./cmd/existd
+echo -e "${YELLOW}$ go build -o bin/refweird ./cmd/refweird${NC}"
+CGO_ENABLED=0 go build -o bin/refweird ./cmd/refweird
 echo -e "${GREEN}✓ Binary compiled with embedded Web UI & zero host dependencies.${NC}"
 echo ""
 sleep 1.5
 
 # Step 2: Bootstrap
 echo -e "${CYAN}${BOLD}[2/8] Running single-command administrator bootstrap...${NC}"
-echo -e "${YELLOW}$ existd bootstrap --email admin@exist.io --namespace acme${NC}"
-./bin/existd bootstrap --email admin@exist.io --namespace acme --data-dir "$DEMO_DATA" > "$DEMO_DIR/bootstrap.out"
+echo -e "${YELLOW}$ refweird bootstrap --email admin@refweir.dev --namespace acme${NC}"
+./bin/refweird bootstrap --email admin@refweir.dev --namespace acme --data-dir "$DEMO_DATA" > "$DEMO_DIR/bootstrap.out"
 head -n 14 "$DEMO_DIR/bootstrap.out"
 API_KEY=$(grep "API Key:" "$DEMO_DIR/bootstrap.out" | awk '{print $3}')
 echo ""
@@ -55,8 +55,8 @@ sleep 2
 
 # Step 3: Start Daemon
 echo -e "${CYAN}${BOLD}[3/8] Launching forge daemon (Smart-HTTP :8080, pure-Go SSH :2222, MCP :8080/mcp)...${NC}"
-echo -e "${YELLOW}$ existd &${NC}"
-EXIST_DATA_DIR="$DEMO_DATA" EXIST_LISTEN_ADDR="127.0.0.1:8080" ./bin/existd > "$DEMO_DIR/existd.log" 2>&1 &
+echo -e "${YELLOW}$ refweird &${NC}"
+REFWEIR_DATA_DIR="$DEMO_DATA" REFWEIR_LISTEN_ADDR="127.0.0.1:8080" ./bin/refweird > "$DEMO_DIR/refweird.log" 2>&1 &
 DAEMON_PID=$!
 sleep 1.5
 

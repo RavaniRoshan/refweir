@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/engine"
-	"exist.io/internal/store"
-	"exist.io/internal/symbolsearch"
-	"exist.io/pkg/agentlease"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/store"
+	"refweir.dev/internal/symbolsearch"
+	"refweir.dev/pkg/agentlease"
+	"refweir.dev/pkg/idgen"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
@@ -609,7 +609,7 @@ func BuiltinTools() []ToolDef {
 					return nil, fmt.Errorf("merge blocked by ruleset: %s", strings.Join(msgs, "; "))
 				}
 
-				sig := object.Signature{Name: "Exist Agent", Email: "agent@exist.io", When: time.Now().UTC()}
+				sig := object.Signature{Name: "Refweir Agent", Email: "agent@refweir.dev", When: time.Now().UTC()}
 				commitSHA, err := s.git.Merge(owner, name, pr.BaseRef, pr.HeadRef, method, sig, fmt.Sprintf("Merge PR #%d: %s", pr.Number, pr.Title))
 				if err != nil {
 					return nil, fmt.Errorf("git merge: %w", err)
@@ -1111,7 +1111,7 @@ func BuiltinTools() []ToolDef {
 		// 34. list_namespaces
 		{
 			Name:        "list_namespaces",
-			Description: "List all namespaces in exist.io",
+			Description: "List all namespaces in refweir.dev",
 			ReadOnly:    true,
 			InputSchema: makeSchema(map[string]any{}, nil),
 			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
@@ -1535,7 +1535,7 @@ func BuiltinTools() []ToolDef {
 					return nil, fmt.Errorf("merge blocked by ruleset: %s", strings.Join(msgs, "; "))
 				}
 
-				sig := object.Signature{Name: "Exist Agent", Email: "agent@exist.io", When: time.Now().UTC()}
+				sig := object.Signature{Name: "Refweir Agent", Email: "agent@refweir.dev", When: time.Now().UTC()}
 				commitSHA, err := s.git.Merge(owner, name, pr.BaseRef, pr.HeadRef, method, sig, fmt.Sprintf("Merge PR #%d: %s", pr.Number, pr.Title))
 				if err != nil {
 					return nil, fmt.Errorf("git merge: %w", err)

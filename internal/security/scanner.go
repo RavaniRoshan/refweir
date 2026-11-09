@@ -1,4 +1,4 @@
-// Package security provides enterprise security scanning and push protection for exist.io.
+// Package security provides enterprise security scanning and push protection for refweir.dev.
 package security
 
 import (

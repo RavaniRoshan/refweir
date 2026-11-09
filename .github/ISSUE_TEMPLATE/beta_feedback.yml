@@ -6,12 +6,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for testing the **exist.io** beta! Your feedback helps us harden the forge for autonomous coding agents.
+        Thank you for testing the **Refweir** beta! Your feedback helps us harden the forge for autonomous coding agents.
   - type: dropdown
     id: environment
     attributes:
       label: Operating System / Architecture
-      description: What system did you install exist.io on?
+      description: What system did you install Refweir on?
       options:
         - Linux x86_64 / amd64
         - Linux aarch64 / arm64
@@ -25,7 +25,7 @@ body:
     id: agent
     attributes:
       label: Coding Agent Used
-      description: Which coding agent did you test with exist.io?
+      description: Which coding agent did you test with Refweir?
       options:
         - Claude Code
         - Cursor
@@ -39,7 +39,7 @@ body:
     id: install_duration
     attributes:
       label: Did installation take under 5 minutes?
-      description: From running the curl command or binary download to running existd.
+      description: From running the curl command or binary download to running refweird.
       options:
         - "Yes (< 2 minutes)"
         - "Yes (2 - 5 minutes)"

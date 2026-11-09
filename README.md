@@ -1,32 +1,32 @@
 <div align="center">
 
-<img src="assets/exist-logo.svg" alt="exist.io - Self-hosted Git forge built for coding agents" width="100%" max-width="800" />
+<img src="assets/refweir-logo.svg" alt="Refweir - Self-hosted Git forge built for coding agents" width="100%" max-width="800" />
 
 <p align="center">
   <strong>Self-hosted Git forge built for coding agents</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/RavaniRoshan/exist.io/actions/workflows/ci.yml"><img src="https://github.com/RavaniRoshan/exist.io/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
-  <a href="https://ravaniroshan.github.io/exist.io/?ref=readme"><img src="https://img.shields.io/badge/Documentation-exist.io-2D6A57?style=flat-square&logo=gitbook&logoColor=white" alt="Documentation"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/exist.io?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
+  <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml"><img src="https://github.com/RavaniRoshan/refweir/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="https://ravaniroshan.github.io/refweir/?ref=readme"><img src="https://img.shields.io/badge/Documentation-Refweir-2D6A57?style=flat-square&logo=gitbook&logoColor=white" alt="Documentation"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/refweir?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Go-Pure--Go%20(Zero%20CGO)-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Pure-Go">
   <img src="https://img.shields.io/badge/SSH-Pure--Go%20:2222-10B981?style=flat-square&logo=openssh&logoColor=white" alt="Pure-Go SSH">
   <img src="https://img.shields.io/badge/MCP-JSON--RPC%202.0-8A2BE2?style=flat-square" alt="MCP Server">
 </p>
 
-[**Product Documentation**](https://ravaniroshan.github.io/exist.io/?ref=readme) &nbsp;&bull;&nbsp; [**Getting Started**](https://ravaniroshan.github.io/exist.io/docs/getting-started?ref=readme) &nbsp;&bull;&nbsp; [**Architecture**](https://ravaniroshan.github.io/exist.io/docs/architecture?ref=readme) &nbsp;&bull;&nbsp; [**Roadmap**](ROADMAP.md) &nbsp;&bull;&nbsp; [**Claims Ledger**](CLAIMS.md) &nbsp;&bull;&nbsp; [**Contributing**](CONTRIBUTING.md)
+[**Product Documentation**](https://ravaniroshan.github.io/refweir/?ref=readme) &nbsp;&bull;&nbsp; [**Getting Started**](https://ravaniroshan.github.io/refweir/docs/getting-started?ref=readme) &nbsp;&bull;&nbsp; [**Architecture**](https://ravaniroshan.github.io/refweir/docs/architecture?ref=readme) &nbsp;&bull;&nbsp; [**Roadmap**](ROADMAP.md) &nbsp;&bull;&nbsp; [**Claims Ledger**](CLAIMS.md) &nbsp;&bull;&nbsp; [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-**exist.io** is a vendor-neutral, self-hosted Git forge engineered from first principles for **autonomous AI coding agents** (Claude Code, Codex, Cline, Cursor) alongside human engineering teams.
+**Refweir** is a vendor-neutral, self-hosted Git forge engineered from first principles for **autonomous AI coding agents** (Claude Code, Codex, Cline, Cursor) alongside human engineering teams.
 
-While proprietary platforms tie agent workspaces to closed cloud accounts, exist.io runs entirely on your own server. It ships as a single pure-Go binary with an embedded web UI, pure-Go SSH server on port `2222` (zero host OpenSSH dependency), native Model Context Protocol (MCP) server at `/mcp`, and ephemeral HMAC capability leases with ref isolation.
+While proprietary platforms tie agent workspaces to closed cloud accounts, Refweir runs entirely on your own server. It ships as a single pure-Go binary with an embedded web UI, pure-Go SSH server on port `2222` (zero host OpenSSH dependency), native Model Context Protocol (MCP) server at `/mcp`, and ephemeral HMAC capability leases with ref isolation.
 
-> *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary infrastructure, exist.io is 100% vendor-neutral and self-hosted on your own hardware for any agent.*
+> *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary infrastructure, Refweir is 100% vendor-neutral and self-hosted on your own hardware for any agent.*
 
 ---
 
@@ -36,8 +36,8 @@ While proprietary platforms tie agent workspaces to closed cloud accounts, exist
 
 | 🎬 **74-Second Architectural Explainer** | ⚡ **90-Second Agent Loop Demo** |
 | :---: | :---: |
-| <a href="https://github.com/RavaniRoshan/exist.io/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><img src="videos/exist-agent-git-explainer/contact-sheet.jpg" alt="exist.io Explainer Video Contact Sheet" width="100%" /></a> | <a href="https://github.com/RavaniRoshan/exist.io/raw/main/assets/demo.mp4"><img src="assets/demo.gif" alt="exist.io Terminal Demo" width="100%" /></a> |
-| **Why 15-Year-Old Forges Break Under Agent Swarms**<br /><em>Capability leases, sub-millisecond security, and native MCP</em><br /><a href="https://github.com/RavaniRoshan/exist.io/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><strong>▶ Watch 1080p Explainer Video (9.1 MB)</strong></a> | **From Cold Bootstrap to Merged Agent PR**<br /><em>Real-time terminal recording on macOS desktop canvas</em><br /><a href="https://github.com/RavaniRoshan/exist.io/raw/main/assets/demo.mp4"><strong>▶ Watch High-Definition Demo (1.4 MB)</strong></a> |
+| <a href="https://github.com/RavaniRoshan/refweir/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><img src="videos/exist-agent-git-explainer/contact-sheet.jpg" alt="Refweir Explainer Video Contact Sheet" width="100%" /></a> | <a href="https://github.com/RavaniRoshan/refweir/raw/main/assets/demo.mp4"><img src="assets/demo.gif" alt="Refweir Terminal Demo" width="100%" /></a> |
+| **Why 15-Year-Old Forges Break Under Agent Swarms**<br /><em>Capability leases, sub-millisecond security, and native MCP</em><br /><a href="https://github.com/RavaniRoshan/refweir/raw/main/videos/exist-agent-git-explainer/renders/video.mp4"><strong>▶ Watch 1080p Explainer Video (9.1 MB)</strong></a> | **From Cold Bootstrap to Merged Agent PR**<br /><em>Real-time terminal recording on macOS desktop canvas</em><br /><a href="https://github.com/RavaniRoshan/refweir/raw/main/assets/demo.mp4"><strong>▶ Watch High-Definition Demo (1.4 MB)</strong></a> |
 
 </div>
 
@@ -45,22 +45,22 @@ While proprietary platforms tie agent workspaces to closed cloud accounts, exist
 
 ## 🚀 5-Minute Quickstart
 
-`existd` is a single hermetic binary with the full web UI embedded. One command to install, one command to bootstrap, and your forge is live.
+`refweird` is a single hermetic binary with the full web UI embedded. One command to install, one command to bootstrap, and your forge is live.
 
 ### Option A: One-Line Installer (Linux, macOS, Windows)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/exist.io/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 ```
 
 ### Option B: Build from Source (Go 1.22+)
 
 ```bash
 # Build the forge daemon (single binary with embedded Web UI, zero cgo)
-go build -o bin/existd ./cmd/existd
+go build -o bin/refweird ./cmd/refweird
 
 # Build the companion CLI
-go build -o bin/exist ./cmd/exist
+go build -o bin/refweir ./cmd/refweir
 ```
 
 ### 2. Bootstrap Your Forge Administrator
@@ -69,20 +69,20 @@ Initialize the SQLite WAL database, create the initial organization namespace, a
 
 ```bash
 # If installed via 1-line script (binary in PATH):
-existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data
+refweird bootstrap --email admin@corp.Refweir --namespace acme --data-dir ./data
 
 # Or if built from source:
-# ./bin/existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir ./data
+# ./bin/refweird bootstrap --email admin@corp.Refweir --namespace acme --data-dir ./data
 ```
 
 ### 3. Start the Server
 
 ```bash
 # If installed via 1-line script:
-existd
+refweird
 
 # Or if built from source:
-# ./bin/existd
+# ./bin/refweird
 ```
 
 Open **`http://localhost:8080`** in your browser to view the living web dashboard.
@@ -91,12 +91,12 @@ Open **`http://localhost:8080`** in your browser to view the living web dashboar
 
 ## 🤖 Connecting AI Coding Agents (MCP)
 
-`exist.io` speaks the standard [Model Context Protocol (MCP)](https://modelcontextprotocol.io) over JSON-RPC 2.0. Add exist.io to your agent configuration (Claude Code, Cursor, Cline):
+`Refweir` speaks the standard [Model Context Protocol (MCP)](https://modelcontextprotocol.io) over JSON-RPC 2.0. Add Refweir to your agent configuration (Claude Code, Cursor, Cline):
 
 ```json
 {
   "mcpServers": {
-    "exist-io": {
+    "refweir": {
       "url": "http://localhost:8080/mcp",
       "headers": {
         "Authorization": "Bearer <your-admin-token>"
@@ -142,24 +142,24 @@ Only facts backed by code and tests at the current commit are reported below:
 
 ## ⚙️ Honest Architectural Limits & Scope
 
-To ensure realistic expectations, exist.io documents its design constraints explicitly:
+To ensure realistic expectations, Refweir documents its design constraints explicitly:
 
 1. **SQLite WAL Concurrency (Single-Writer)**:
-   exist.io uses pure-Go SQLite in Write-Ahead Logging (WAL) mode. Reads scale concurrently across goroutines, but write transactions (`git push`, PR creation, comments) are executed with a serialized database lock. exist.io is optimized for small to medium teams (1–25 concurrent agents and engineers), not hyper-scale thousands-of-pushes-per-second workloads.
+   Refweir uses pure-Go SQLite in Write-Ahead Logging (WAL) mode. Reads scale concurrently across goroutines, but write transactions (`git push`, PR creation, comments) are executed with a serialized database lock. Refweir is optimized for small to medium teams (1–25 concurrent agents and engineers), not hyper-scale thousands-of-pushes-per-second workloads.
 2. **go-git Performance Profile**:
    Bare repository operations use `go-git/v6` directly in Go memory. While completely hermetic and CGO-free, `go-git` exhibits higher memory consumption and slower packfile generation on massive monorepos (> 2 GB) compared to native C git.
 3. **Event-Driven Auto-Merge in v0.6.0-beta**:
-   exist.io provides an event-driven auto-merge engine (`AutoMergeEngine`) that monitors PR requirements and automatically executes squash/merge operations once required status check suites pass. Speculative batch-queue merges across interdependent PRs are planned for v0.7.0+.
+   Refweir provides an event-driven auto-merge engine (`AutoMergeEngine`) that monitors PR requirements and automatically executes squash/merge operations once required status check suites pass. Speculative batch-queue merges across interdependent PRs are planned for v0.7.0+.
 
 4. **Telemetry (Off by Default)**:
-   Telemetry is off by default and consent-based. When enabled, exist.io sends only an anonymous instance ID, event name, version, OS family, and day. It never sends repository names, commit content, paths, user identifiers, or hostnames.
+   Telemetry is off by default and consent-based. When enabled, Refweir sends only an anonymous instance ID, event name, version, OS family, and day. It never sends repository names, commit content, paths, user identifiers, or hostnames.
 
 
 ---
 
 ## 🌐 Service Endpoints
 
-`existd` serves all forge transports and APIs on documented, isolated endpoints:
+`refweird` serves all forge transports and APIs on documented, isolated endpoints:
 
 | Endpoint | Protocol | Description |
 | :--- | :--- | :--- |
@@ -201,7 +201,7 @@ The following modules build cleanly and pass automated unit tests, but are froze
 
 - **Git LFS File Locking (`/info/lfs/locks`)**: Implemented in `internal/gitlfs`, frozen.
 - **Enterprise Federation (SCIM 2.0 & OIDC/SAML)**: Implemented in `internal/auth`, frozen for external security review.
-- **Infrastructure as Code**: Terraform provider (`deploy/terraform-provider-exist`) and Helm chart (`deploy/helm/exist-enterprise`), frozen.
+- **Infrastructure as Code**: Terraform provider (`deploy/terraform-provider-refweir`) and Helm chart (`deploy/helm/exist-enterprise`), frozen.
 - **Enterprise Multi-Service Compose**: `docker-compose.enterprise.yml` with MinIO and Litestream, frozen.
 
 ---

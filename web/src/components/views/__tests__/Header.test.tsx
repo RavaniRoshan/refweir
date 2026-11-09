@@ -14,7 +14,7 @@ vi.mock('@/lib/api', async () => {
         id: 'u-admin-1',
         login: 'shiva',
         name: 'Roshan Ravani',
-        email: 'roshan@exist.io',
+        email: 'roshan@refweir.dev',
         role: 'admin',
         status: 'active',
       },
@@ -36,15 +36,15 @@ vi.mock('@/lib/api', async () => {
 describe('Header Component', () => {
   const mockRepo = {
     ownerSlug: 'shiva',
-    name: 'exist.io',
+    name: 'refweir.dev',
     description: 'Sovereign GitHub Enterprise alternative',
     defaultBranch: 'main',
     isPrivate: false,
     starsCount: 42,
     forksCount: 7,
     updatedAt: '2 hours ago',
-    cloneUrlHttp: 'http://localhost:8080/shiva/exist.io.git',
-    cloneUrlSsh: 'git@localhost:2222/shiva/exist.io.git',
+    cloneUrlHttp: 'http://localhost:8080/shiva/refweir.dev.git',
+    cloneUrlSsh: 'git@localhost:2222/shiva/refweir.dev.git',
   }
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('Header Component', () => {
     )
 
     expect(screen.getByText('shiva')).toBeInTheDocument()
-    expect(screen.getAllByText('exist.io').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('refweir.dev').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('42')).toBeInTheDocument()
     expect(screen.getByText('7')).toBeInTheDocument()
   })
@@ -125,11 +125,11 @@ describe('Header Component', () => {
       expect(screen.getByText('Clone repository')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('git clone http://localhost:8080/shiva/exist.io.git')).toBeInTheDocument()
+    expect(screen.getByText('git clone http://localhost:8080/shiva/refweir.dev.git')).toBeInTheDocument()
 
     // Switch to SSH tab
     const sshTab = screen.getByRole('button', { name: /ssh \(port 2222\)/i })
     fireEvent.click(sshTab)
-    expect(screen.getByText('git clone git@localhost:2222/shiva/exist.io.git')).toBeInTheDocument()
+    expect(screen.getByText('git clone git@localhost:2222/shiva/refweir.dev.git')).toBeInTheDocument()
   })
 })

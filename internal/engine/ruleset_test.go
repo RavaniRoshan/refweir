@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"exist.io/internal/engine"
-	"exist.io/internal/store"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/store"
 )
 
 func TestEvaluateMerge_Ruleset(t *testing.T) {

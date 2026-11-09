@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"time"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 var (
@@ -105,7 +105,7 @@ func (s *Server) pingWebhook(w http.ResponseWriter, r *http.Request) {
 		ID:            deliveryID,
 		AppID:         appID,
 		Event:         "ping",
-		Payload:       `{"zen":"Exist smoothly."}`,
+		Payload:       `{"zen":"Refweir smoothly."}`,
 		Signature:     "v1ed_test_signature",
 		Delivered:     true,
 		DeliveredAt:   now,

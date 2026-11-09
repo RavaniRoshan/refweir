@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"exist.io/internal/objectshard"
+	"refweir.dev/internal/objectshard"
 )
 
 func TestHashRing_DeterminismAndLocate(t *testing.T) {

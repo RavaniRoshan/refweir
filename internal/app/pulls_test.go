@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/config"
+	"refweir.dev/internal/config"
 )
 
 func TestPullRequestsLifecycle(t *testing.T) {

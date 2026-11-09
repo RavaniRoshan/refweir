@@ -15,7 +15,7 @@ vi.mock('@/lib/api', async () => {
         id: 'u-1',
         name: 'Roshan Ravani',
         login: 'shiva',
-        email: 'roshan@exist.io',
+        email: 'roshan@refweir.dev',
         role: 'admin',
         status: 'active',
         createdAt: '2026-01-01T00:00:00Z',
@@ -84,7 +84,7 @@ describe('UserProfileView', () => {
       expect(screen.getByText('@shiva')).toBeInTheDocument()
     })
     expect(screen.getByText('Enterprise Owner')).toBeInTheDocument()
-    expect(screen.getByText(/exist\.io Inc\./i)).toBeInTheDocument()
+    expect(screen.getByText(/refweir\.dev Inc\./i)).toBeInTheDocument()
     expect(screen.getByText(/San Francisco, CA/i)).toBeInTheDocument()
   })
 

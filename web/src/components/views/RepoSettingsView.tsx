@@ -511,7 +511,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                       type="text"
                       value={repoDescription}
                       onChange={(e) => setRepoDescription(e.target.value)}
-                      placeholder="Enterprise repository on exist.io"
+                      placeholder="Enterprise repository on refweir.dev"
                       className="flex-1 h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                     />
                     <Button

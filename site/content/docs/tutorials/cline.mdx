@@ -1,6 +1,6 @@
 ---
 title: "Agent Setup: Cline"
-description: "How to configure autonomous coding with Cline (VS Code extension) on your self-hosted exist.io instance."
+description: "How to configure autonomous coding with Cline (VS Code extension) on your self-hosted refweir.dev instance."
 ---
 
 Cline is an open-source autonomous coding agent that runs inside VS Code. It uses MCP to communicate with development tools and Git forges.
@@ -12,7 +12,7 @@ Open Cline's settings in VS Code, click the **MCP Servers** tab, and edit `cline
 ```json
 {
   "mcpServers": {
-    "exist": {
+    "refweir": {
       "url": "http://localhost:8080/mcp",
       "headers": {
         "Authorization": "Bearer <YOUR_API_KEY>"
@@ -58,7 +58,7 @@ Cline uses capability leases to ensure safe ref isolation when pushing code auto
 
 In Cline's chat panel:
 
-> "Inspect `acme/demo` on exist.io. Read `README.md` and `main.go`. Create branch `agent/cline-docs-update`, improve the quickstart documentation, push the branch, and open a pull request."
+> "Inspect `acme/demo` on refweir.dev. Read `README.md` and `main.go`. Create branch `agent/cline-docs-update`, improve the quickstart documentation, push the branch, and open a pull request."
 
 Cline executes the sequence:
 1. Calls `file_read` to review `README.md`.

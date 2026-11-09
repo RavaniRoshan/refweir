@@ -8,10 +8,10 @@ describe('UserManualModal Component', () => {
     const onClose = vi.fn()
     render(<UserManualModal isOpen={true} onClose={onClose} />)
 
-    expect(screen.getByText('exist.io User Manual & Architecture Guide')).toBeInTheDocument()
-    expect(screen.getByText('Getting Started with exist.io')).toBeInTheDocument()
+    expect(screen.getByText('refweir.dev User Manual & Architecture Guide')).toBeInTheDocument()
+    expect(screen.getByText('Getting Started with refweir.dev')).toBeInTheDocument()
     expect(screen.getByText(/ssh-keygen -t ed25519/i)).toBeInTheDocument()
-    expect(screen.getByText(/claude mcp add exist/i)).toBeInTheDocument()
+    expect(screen.getByText(/claude mcp add refweir/i)).toBeInTheDocument()
   })
 
   it('switches between tabs: Architecture, AI Agents, Security, Federation, and CLI', async () => {
@@ -41,7 +41,7 @@ describe('UserManualModal Component', () => {
     const cliTab = screen.getByRole('tab', { name: /cli reference/i })
     fireEvent.click(cliTab)
     expect(screen.getByText('Command Line Reference')).toBeInTheDocument()
-    expect(screen.getByText(/existd bootstrap --email/i)).toBeInTheDocument()
+    expect(screen.getByText(/refweird bootstrap --email/i)).toBeInTheDocument()
   })
 
   it('calls onClose when close button is clicked', () => {

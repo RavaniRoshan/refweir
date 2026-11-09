@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 
-const work = process.env.EXIST_CAPTURE_DIR || '/tmp/exist-capture'
+const work = process.env.REFWEIR_CAPTURE_DIR || '/tmp/exist-capture'
 const port = readFileSync(`${work}/port`, 'utf8').trim()
 const token = readFileSync(`${work}/key`, 'utf8').trim()
 

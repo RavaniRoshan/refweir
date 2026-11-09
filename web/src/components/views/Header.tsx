@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
           id: 'u-admin-1',
           login: 'shiva',
           name: 'Roshan Ravani',
-          email: 'roshan@exist.io',
+          email: 'roshan@refweir.dev',
           role: 'admin',
           status: 'active',
           createdAt: '2026-01-01T00:00:00Z',
@@ -186,7 +186,7 @@ export const Header: React.FC<HeaderProps> = ({
       case 'ssh':
         return `git clone ${repo.cloneUrlSsh}`
       case 'mcp':
-        return `claude mcp add exist -- http://localhost:8080/mcp`
+        return `claude mcp add refweir -- http://localhost:8080/mcp`
     }
   }
 
@@ -233,7 +233,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="w-7 h-7 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs">
                   <GitBranch className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-sm tracking-tight text-foreground hidden sm:inline">exist.io</span>
+                <span className="font-bold text-sm tracking-tight text-foreground hidden sm:inline">refweir.dev</span>
               </button>
 
               {/* Mode Toggle Capsule */}
@@ -302,7 +302,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* GitHub Link */}
               <a
-                href="https://github.com/RavaniRoshan/exist.io"
+                href="https://github.com/RavaniRoshan/refweir"
                 target="_blank"
                 rel="noreferrer"
                 className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors"
@@ -584,7 +584,7 @@ export const Header: React.FC<HeaderProps> = ({
           <p className="text-[11px] text-muted-foreground">
             {cloneType === 'http' && 'Clone using Git Smart-HTTP transfer over standard HTTPS/HTTP.'}
             {cloneType === 'ssh' && 'Clone using embedded zero-cgo pure-Go SSH server with enrolled keys.'}
-            {cloneType === 'mcp' && 'Add exist.io Model Context Protocol endpoint to Claude Desktop or cursor-agent.'}
+            {cloneType === 'mcp' && 'Add refweir.dev Model Context Protocol endpoint to Claude Desktop or cursor-agent.'}
           </p>
         </div>
       </Dialog>

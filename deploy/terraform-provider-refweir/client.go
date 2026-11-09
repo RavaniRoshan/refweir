@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Client is a typed API client for interacting with the exist.io Git forge.
+// Client is a typed API client for interacting with the refweir.dev Git forge.
 type Client struct {
 	BaseURL    string
 	Token      string
@@ -50,7 +50,7 @@ func (c *Client) do(ctx context.Context, method, path string, in, out any) (int,
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "terraform-provider-exist/1.0.0")
+	req.Header.Set("User-Agent", "terraform-provider-refweir/1.0.0")
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {

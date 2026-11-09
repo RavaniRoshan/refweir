@@ -1,16 +1,16 @@
-# exist.io Product Roadmap
+# Refweir Product Roadmap
 
 <p align="center">
-  <strong>A forward-looking architectural and feature roadmap for the open-source exist.io forge.</strong>
+  <strong>A forward-looking architectural and feature roadmap for the open-source Refweir forge.</strong>
 </p>
 
 ---
 
 ## Vision & Philosophy
 
-**exist.io** is designed to be the definitive open-source, self-hosted Git forge built from the ground up for both **human engineering teams** and **autonomous AI coding agents**.
+**Refweir** is designed to be the definitive open-source, self-hosted Git forge built from the ground up for both **human engineering teams** and **autonomous AI coding agents**.
 
-Traditional Git forges were created 15+ years ago for humans clicking in web browsers. exist.io bridges this generational gap: providing dual Git transports (Smart-HTTP + embedded pure-Go SSH :2222), Git LFS v1 CAS storage, cryptographic commit signature verification, first-class Model Context Protocol (MCP) agent connectivity, deterministic 3-way merge policies, enterprise identity federation (OIDC/SAML/SCIM 2.0), and official Infrastructure as Code (Terraform & Helm)—all running hermetically on infrastructure you control.
+Traditional Git forges were created 15+ years ago for humans clicking in web browsers. Refweir bridges this generational gap: providing dual Git transports (Smart-HTTP + embedded pure-Go SSH :2222), Git LFS v1 CAS storage, cryptographic commit signature verification, first-class Model Context Protocol (MCP) agent connectivity, deterministic 3-way merge policies, enterprise identity federation (OIDC/SAML/SCIM 2.0), and official Infrastructure as Code (Terraform & Helm)—all running hermetically on infrastructure you control.
 
 This document outlines the evolutionary phases of the project, from current foundational milestones to upcoming capabilities.
 
@@ -45,7 +45,7 @@ flowchart LR
 - [x] **Model Context Protocol (MCP) Server:** Built-in JSON-RPC 2.0 server at `/mcp` (34 tools) and `/mcp/readonly` sandbox for AI coding agents.
 - [x] **3-Way Merge & Ruleset Engine:** Native 3-way merge, squash merge, conflict detection, required review gates, and passing check enforcement.
 - [x] **Enterprise Security & Policy:** Branch/tag rulesets, bypass actor hierarchies, inbound IP allowlists (CIDR filtering), and SSH Certificate Authorities.
-- [x] **Companion CLI:** `exist` command-line utility in `cmd/exist` for managing repos, PRs, apps, and credentials.
+- [x] **Companion CLI:** `exist` command-line utility in `cmd/refweir` for managing repos, PRs, apps, and credentials.
 - [x] **Hermetic Storage:** Pure-Go SQLite in WAL mode (`modernc.org/sqlite`, zero cgo) paired with `go-git/v6` bare repository storage.
 
 ---
@@ -56,7 +56,7 @@ flowchart LR
 - [x] **Git LFS v1 Batch & CAS Engine:** Content-Addressable Storage (CAS) with SHA-256 validation, streaming chunked upload/download, and binary file locking protocol (`/info/lfs/locks`).
 - [x] **Cryptographic Commit Verification:** Real-time OpenSSH SIGSPEC and GPG (RFC 4880) signature parsing with public key fingerprint matching.
 - [x] **Enterprise Identity Federation & SCIM 2.0:** RFC 7644 SCIM user sync at `/scim/v2/Users` with automated provisioning and immediate offboarding revocation; OIDC & SAML 2.0 Single Sign-On.
-- [x] **Official Terraform / OpenTofu Provider:** Dedicated provider in `deploy/terraform-provider-exist` managing namespaces, repos, rulesets, CIDR allowlists, and SSH CAs.
+- [x] **Official Terraform / OpenTofu Provider:** Dedicated provider in `deploy/terraform-provider-refweir` managing namespaces, repos, rulesets, CIDR allowlists, and SSH CAs.
 - [x] **Production Kubernetes Helm Chart:** Complete chart in `deploy/helm/exist-enterprise` with dual-port service (HTTP 8080, SSH 2222), PVC storage, Prometheus ServiceMonitor, and non-root security contexts.
 
 ---
@@ -91,7 +91,7 @@ Achieving pixel-accurate developer ergonomics and end-user workflow parity with 
 - [x] **Strict GitHub Primer Design System:** Canonical 6px squircle radius, 1px crisp borders, UnderlineNav tabs with aria attributes, flush Box rows, and custom OKLCH color token architecture.
 - [x] **User Profile Page (`UserProfileView`):** Developer identity card, company/location/timezone metadata, organizations list, 52-week contribution activity calendar heatmap, filterable repository catalog, SSH key management with validation, and Personal Access Tokens (PATs) with scope selection.
 - [x] **Global Enterprise Activity Feed (`GlobalHomeView`):** Organization-wide activity feed displaying autonomous agent merges, releases, commits, and PRs, paired with cluster telemetry metrics.
-- [x] **Enterprise Issues System (`IssuesView`):** Open/closed issue catalog, label taxonomy, comment thread with markdown support, and 1-click autonomous triage delegation to Exist Agent.
+- [x] **Enterprise Issues System (`IssuesView`):** Open/closed issue catalog, label taxonomy, comment thread with markdown support, and 1-click autonomous triage delegation to Refweir Agent.
 - [x] **Releases & Tags Distribution (`ReleasesView`):** Tagged binary distribution, cryptographic checksum validation, downloadable source code archives, and draft release publishing.
 - [x] **Enterprise Administration Suites:** Dedicated cluster health telemetry inspector, SSO configuration form, enterprise user seat management, and audit log compliance query engine.
 - [x] **Zero-Mock Production & Interactive User Guide:** Live Git and SQLite WAL aggregation with authentic GitHub Primer empty states, interactive 5-step onboarding walkthrough (`ProductTour`), and comprehensive architectural manual (`UserManualModal`).
@@ -111,7 +111,7 @@ Achieving pixel-accurate developer ergonomics and end-user workflow parity with 
 
 ## Phase 6: High Availability & Active-Active Consensus (v0.5.0+) — COMPLETED
 
-Scaling exist.io for massive enterprise footprints:
+Scaling Refweir for massive enterprise footprints:
 
 - [x] **Disaster Recovery Failover Controller (`internal/replication`):** Zero-downtime automated failover controller, automated SQLite WAL truncate checkpointing, immutable point-in-time snapshot engine with SHA-256 validation, cross-region replica synchronization, standby-to-primary promotion, and cluster telemetry API at `GET /api/v1/cluster/replication`.
 - [x] **Multi-Region Active-Active Raft Replication (`internal/raftcluster`):** Pure-Go Raft consensus state machine, leader election, log replication, deterministic FSM, and cluster APIs at `GET /api/v1/cluster/raft/status` and `POST /api/v1/cluster/raft/propose`.

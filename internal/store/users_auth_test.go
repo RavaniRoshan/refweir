@@ -17,7 +17,7 @@ func TestUsersAndSessionsStore(t *testing.T) {
 	// 1. Create User
 	u := User{
 		ID:           "user_test_admin",
-		Email:        "admin@exist.io",
+		Email:        "admin@refweir.dev",
 		Login:        "admin",
 		Name:         "Cluster Admin",
 		PasswordHash: "$argon2id$v=19$m=65536,t=3,p=2$mockhash",
@@ -29,7 +29,7 @@ func TestUsersAndSessionsStore(t *testing.T) {
 	}
 
 	// 2. Fetch User by Email and Login
-	byEmail, err := db.GetUserByEmail(ctx, "admin@exist.io")
+	byEmail, err := db.GetUserByEmail(ctx, "admin@refweir.dev")
 	if err != nil {
 		t.Fatalf("GetUserByEmail: %v", err)
 	}

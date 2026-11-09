@@ -3,9 +3,9 @@ package origin
 import (
 	"net/http"
 
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 // registerGrants wires the grant routes (Task 7). Grants use POST/DELETE on the
@@ -59,7 +59,7 @@ type grantDTO struct {
 }
 
 // resolvePrincipal turns a request principal into a store principal, resolving
-// user_email→user_ and group_name→grp_ against exist.io's own tables (our
+// user_email→user_ and group_name→grp_ against refweir.dev's own tables (our
 // replacement for Origin's Cursor admin bridges). teamGroup needs no resolution.
 func (s *Server) resolvePrincipal(r *http.Request, namespaceID string, req grantRequest) (store.GrantPrincipal, error) {
 	switch {

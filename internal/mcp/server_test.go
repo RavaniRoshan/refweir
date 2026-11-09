@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
@@ -348,7 +348,7 @@ func TestMCP_CanonicalAgentLoopTools(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sig := object.Signature{Name: "Dev", Email: "dev@exist.io", When: time.Now().UTC()}
+	sig := object.Signature{Name: "Dev", Email: "dev@refweir.dev", When: time.Now().UTC()}
 	c1, err := git.WriteFiles("agentcorp", "webforge", "main", []gitstore.FileChange{
 		{Path: "main.go", Content: "package main\n\nfunc main() {}\n"},
 	}, sig, "Initial commit")

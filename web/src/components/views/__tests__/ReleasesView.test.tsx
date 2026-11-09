@@ -22,7 +22,7 @@ vi.mock('@/lib/api', async () => {
         commitSha: '5c92f55',
         assets: [
           {
-            name: 'existd-linux-amd64.tar.gz',
+            name: 'refweird-linux-amd64.tar.gz',
             size: 34500000,
             downloadCount: 412,
             sha256: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b',
@@ -65,7 +65,7 @@ describe('ReleasesView', () => {
     })
     expect(screen.getByText('Latest')).toBeInTheDocument()
     expect(screen.getByText('5c92f55')).toBeInTheDocument()
-    expect(screen.getByText('existd-linux-amd64.tar.gz')).toBeInTheDocument()
+    expect(screen.getByText('refweird-linux-amd64.tar.gz')).toBeInTheDocument()
     expect(screen.getByText('34.5 MB')).toBeInTheDocument()
     expect(screen.getByText('412 downloads')).toBeInTheDocument()
   })
@@ -74,7 +74,7 @@ describe('ReleasesView', () => {
     render(<ReleasesView />)
 
     await waitFor(() => {
-      expect(screen.getByText('existd-linux-amd64.tar.gz')).toBeInTheDocument()
+      expect(screen.getByText('refweird-linux-amd64.tar.gz')).toBeInTheDocument()
     })
 
     const checksumBtn = screen.getByTitle(/SHA256: 9a8b7c6d/i)

@@ -42,7 +42,7 @@ export const AuditLogs: React.FC = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `exist-audit-log-${Date.now()}.json`
+    a.download = `refweir-audit-log-${Date.now()}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -65,7 +65,7 @@ export const AuditLogs: React.FC = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `exist-audit-log-${Date.now()}.csv`
+    a.download = `refweir-audit-log-${Date.now()}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

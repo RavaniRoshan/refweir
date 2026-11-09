@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"exist.io/internal/app"
-	"exist.io/internal/config"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/config"
 )
 
 type StepTimings struct {
@@ -48,10 +48,10 @@ type ConcurrencyStats struct {
 }
 
 func main() {
-	fmt.Println("=== exist.io Autonomous Agent Concurrent Benchmark ===")
+	fmt.Println("=== refweir.dev Autonomous Agent Concurrent Benchmark ===")
 	fmt.Println("Simulating concurrent coding agents: lease request -> clone -> push -> PR open")
 
-	tmpDir, err := os.MkdirTemp("", "exist-bench-*")
+	tmpDir, err := os.MkdirTemp("", "refweir-bench-*")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create temp dir: %v\n", err)
 		os.Exit(1)
@@ -67,7 +67,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	bRes, err := app.Bootstrap(ctx, cfg, "admin@exist.io", "benchteam")
+	bRes, err := app.Bootstrap(ctx, cfg, "admin@refweir.dev", "benchteam")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "bootstrap failed: %v\n", err)
 		os.Exit(1)
@@ -84,8 +84,8 @@ func main() {
 	defer srv.Close()
 
 	// Update git backend hooks
-	existdPath, _ := os.Executable()
-	_ = os.Setenv("EXISTD_PATH", existdPath)
+	refweirdPath, _ := os.Executable()
+	_ = os.Setenv("REFWEIRD_PATH", refweirdPath)
 
 	tiers := []int{1, 5, 20, 50}
 	var allStats []ConcurrencyStats
@@ -238,10 +238,10 @@ func runSingleAgentLoop(serverURL, apiKey, ownerSlug, repoName string, workerID,
 	filePath := filepath.Join(cloneDir, fmt.Sprintf("patch-%d-%d.txt", workerID, iteration))
 	_ = os.WriteFile(filePath, []byte(fmt.Sprintf("Benchmark patch %d-%d\n", workerID, iteration)), 0600)
 
-	_ = exec.Command("git", "-C", cloneDir, "config", "user.name", "Bench Agent").Run()     // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
-	_ = exec.Command("git", "-C", cloneDir, "config", "user.email", "bench@exist.io").Run() // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
-	_ = exec.Command("git", "-C", cloneDir, "add", ".").Run()                               // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
-	_ = exec.Command("git", "-C", cloneDir, "commit", "-m", "bench commit").Run()           // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+	_ = exec.Command("git", "-C", cloneDir, "config", "user.name", "Bench Agent").Run()        // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+	_ = exec.Command("git", "-C", cloneDir, "config", "user.email", "bench@refweir.dev").Run() // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+	_ = exec.Command("git", "-C", cloneDir, "add", ".").Run()                                  // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+	_ = exec.Command("git", "-C", cloneDir, "commit", "-m", "bench commit").Run()              // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 
 	cmdPush := exec.Command("git", "-C", cloneDir, "push", "origin", branchName) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 	_ = cmdPush.Run()

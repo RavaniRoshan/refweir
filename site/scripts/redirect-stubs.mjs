@@ -2,11 +2,11 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { dirname, join, relative, resolve } from 'node:path';
 
 // Emits redirect stubs for every docs page at its pre-restructure URL,
-// so external links to /exist.io/<page>/ keep working after the docs
-// moved under /exist.io/docs/<page>/.
+// so external links to /refweir.dev/<page>/ keep working after the docs
+// moved under /refweir.dev/docs/<page>/.
 
 const outDir = resolve(import.meta.dirname, '..', 'out');
-const baseUrl = 'https://ravaniroshan.github.io/exist.io';
+const baseUrl = 'https://ravaniroshan.github.io/refweir';
 const docsDir = join(outDir, 'docs');
 
 if (!existsSync(docsDir)) {
@@ -49,7 +49,7 @@ for (const file of walk(docsDir)) {
       '<html lang="en">',
       '<head>',
       '<meta charset="utf-8">',
-      '<title>moved · exist.io docs</title>',
+      '<title>moved · refweir.dev docs</title>',
       `<link rel="canonical" href="${target}">`,
       `<meta http-equiv="refresh" content="0; url=${target}">`,
       '<meta name="robots" content="noindex">',

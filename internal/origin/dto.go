@@ -1,6 +1,6 @@
 package origin
 
-import "exist.io/internal/store"
+import "refweir.dev/internal/store"
 
 // This file maps store entities to Origin wire DTOs. JSON field names are
 // camelCase, matching the Origin OpenAPI 3.1 spec exactly.

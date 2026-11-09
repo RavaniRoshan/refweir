@@ -1,6 +1,6 @@
 # Testing Strategy & Mutation Checks (`docs/testing.md`)
 
-This document outlines the testing architecture, validation invariants, and mutation verification protocols for **exist.io**.
+This document outlines the testing architecture, validation invariants, and mutation verification protocols for **Refweir**.
 
 ---
 
@@ -17,7 +17,7 @@ This document outlines the testing architecture, validation invariants, and muta
 
 ## 2. End-to-End Agent Loop Verification (`TestAgentLoop_EndToEnd_RealServer`)
 
-The canonical autonomous agent workflow is executed without any mocks against a running `existd` instance:
+The canonical autonomous agent workflow is executed without any mocks against a running `refweird` instance:
 
 ```mermaid
 sequenceDiagram
@@ -25,7 +25,7 @@ sequenceDiagram
     actor Agent as Autonomous Agent
     participant MCP as MCP Server (:8080/mcp)
     participant Git as Git Smart-HTTP (:8080)
-    participant Hook as Pre-Receive Hook (existd)
+    participant Hook as Pre-Receive Hook (refweird)
     participant Engine as Ruleset & Policy Engine
 
     Agent->>MCP: lease_request (ttl: 600s, ref: refs/heads/agent/*)
@@ -36,12 +36,12 @@ sequenceDiagram
     Git-->>Agent: Cloned Worktree
     Note over Agent: Create branch refs/heads/agent/patch-v1<br/>Commit changes to disk
     Agent->>Git: git push origin agent/patch-v1:refs/heads/agent/patch-v1
-    Git->>Hook: Execute hook with EXIST_LEASE_* env
+    Git->>Hook: Execute hook with REFWEIR_LEASE_* env
     Hook-->>Git: Allowed (prefix matches refs/heads/agent/*)
     Git-->>Agent: Push Accepted (200 OK)
     Note over Agent: Negative check: attempt push to refs/heads/main
     Agent->>Git: git push origin agent/patch-v1:refs/heads/main
-    Git->>Hook: Execute hook with EXIST_LEASE_* env
+    Git->>Hook: Execute hook with REFWEIR_LEASE_* env
     Hook-->>Git: Rejection: GH007 (Prohibited ref modification)
     Git-->>Agent: Push Rejected (exit status 1)
     Agent->>MCP: pull_request_create (head: agent/patch-v1, base: main)

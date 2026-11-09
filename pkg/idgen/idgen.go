@@ -1,4 +1,4 @@
-// Package idgen generates the prefixed entity IDs used across exist.io.
+// Package idgen generates the prefixed entity IDs used across refweir.dev.
 // Every ID is "<prefix>_<26-char ULID>" (e.g. "repo_01k..."); the ULID
 // portion is produced with oklog/ulid's monotonic entropy reader so IDs
 // created within the same millisecond sort strictly increasing.

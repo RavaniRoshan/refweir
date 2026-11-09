@@ -1,13 +1,13 @@
 ---
 title: How to configure Enterprise SSO and SCIM 2.0 (experimental)
-description: Experimental reference for OIDC, SAML 2.0, and RFC 7644 SCIM user sync in exist.io.
+description: Experimental reference for OIDC, SAML 2.0, and RFC 7644 SCIM user sync in refweir.dev.
 ---
 
 :::caution[Not available in this build]
 SSO and SCIM are experimental and frozen for launch. The SSO callback returns HTTP 501 and derives no identity from client input. Do not enable this module for production use.
 :::
 
-exist.io provides experimental identity federation supporting **OpenID Connect (OIDC)**, **SAML 2.0**, and **RFC 7643 / RFC 7644 SCIM 2.0** automated directory synchronization.
+refweir.dev provides experimental identity federation supporting **OpenID Connect (OIDC)**, **SAML 2.0**, and **RFC 7643 / RFC 7644 SCIM 2.0** automated directory synchronization.
 
 ## Step 1: OpenID Connect (OIDC) Integration
 
@@ -29,7 +29,7 @@ OIDC allows employees to log in using Microsoft Entra ID (Azure AD), Okta, Googl
 Register this Redirect URI in your Identity Provider (Azure AD / Okta):
 
 ```text
-https://git.corp.exist.io/api/v1/auth/sso/callback
+https://git.corp.refweir.dev/api/v1/auth/sso/callback
 ```
 
 ---
@@ -41,16 +41,16 @@ For organizations requiring standard SAML 2.0 Web Browser SSO profiles:
 1. Select **SAML 2.0** under SSO Configuration.
 2. Provide your Identity Provider Metadata XML:
    - Paste the raw XML into the **IdP Metadata XML** field, or point to your IdP metadata federation endpoint.
-3. exist.io exposes the following Service Provider (SP) parameters:
-   - **SP Entity ID (Audience URI)**: `https://git.corp.exist.io/api/v1/auth/sso/saml/metadata`
-   - **Assertion Consumer Service (ACS) URL**: `https://git.corp.exist.io/api/v1/auth/sso/saml/acs`
+3. refweir.dev exposes the following Service Provider (SP) parameters:
+   - **SP Entity ID (Audience URI)**: `https://git.corp.refweir.dev/api/v1/auth/sso/saml/metadata`
+   - **Assertion Consumer Service (ACS) URL**: `https://git.corp.refweir.dev/api/v1/auth/sso/saml/acs`
    - **NameID Format**: `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
 
 ---
 
 ## Step 3: SCIM 2.0 Automated User Provisioning
 
-exist.io implements a compliant **RFC 7644 SCIM 2.0 Service Provider** mounted at `/scim/v2`.
+refweir.dev implements a compliant **RFC 7644 SCIM 2.0 Service Provider** mounted at `/scim/v2`.
 
 ### SCIM Endpoints
 
@@ -67,13 +67,13 @@ exist.io implements a compliant **RFC 7644 SCIM 2.0 Service Provider** mounted a
 1. In your IdP, enable **SCIM Provisioning**.
 2. Set **SCIM Connector Base URL**:
    ```text
-   https://git.corp.exist.io/scim/v2
+   https://git.corp.refweir.dev/scim/v2
    ```
 3. Set **Authentication**: Bearer Token (generate an admin token under **User Management &rarr; Personal Access Tokens**).
 4. Supported attribute mappings:
-   - `userName` &rarr; exist.io login handle.
+   - `userName` &rarr; refweir.dev login handle.
    - `emails[type eq "work"].value` &rarr; primary email.
    - `name.formatted` / `name.givenName` &rarr; user display name.
    - `active` &rarr; `true` (active) / `false` (suspended, revoking all Git HTTP/SSH tokens).
 
-When an employee is deactivated in your corporate IdP, exist.io immediately terminates active web sessions, disables Personal Access Tokens, and denies all Git push/clone operations.
+When an employee is deactivated in your corporate IdP, refweir.dev immediately terminates active web sessions, disables Personal Access Tokens, and denies all Git push/clone operations.

@@ -72,7 +72,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.vars.outputs.version }}
-          name: exist.io ${{ steps.vars.outputs.version }}
+          name: Refweir ${{ steps.vars.outputs.version }}
           draft: false
           prerelease: ${{ contains(steps.vars.outputs.version, '-beta') || contains(steps.vars.outputs.version, '-rc') }}
           generate_release_notes: false
@@ -109,16 +109,16 @@ jobs:
 
       - name: Install, bootstrap, and health-check
         env:
-          EXIST_VERSION: ${{ needs.release.outputs.version }}
+          REFWEIR_VERSION: ${{ needs.release.outputs.version }}
         run: |
           set -euo pipefail
           ./scripts/install.sh
           export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
 
-          DATA_DIR="$RUNNER_TEMP/exist-data"
-          existd bootstrap --email admin@corp.exist.io --namespace acme --data-dir "$DATA_DIR"
+          DATA_DIR="$RUNNER_TEMP/refweir-data"
+          refweird bootstrap --email admin@corp.refweir.dev --namespace acme --data-dir "$DATA_DIR"
 
-          EXIST_DATA_DIR="$DATA_DIR" EXIST_LISTEN_ADDR="127.0.0.1:18080" EXIST_SSH_ADDR="none" existd > daemon.log 2>&1 &
+          REFWEIR_DATA_DIR="$DATA_DIR" REFWEIR_LISTEN_ADDR="127.0.0.1:18080" REFWEIR_SSH_ADDR="none" refweird > daemon.log 2>&1 &
           DAEMON_PID=$!
 
           START=$(date +%s)

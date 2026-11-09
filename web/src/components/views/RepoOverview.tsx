@@ -126,8 +126,8 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
   useEffect(() => {
     loadTree()
     const onModeChange = () => loadTree()
-    window.addEventListener('exist_mode_changed', onModeChange)
-    return () => window.removeEventListener('exist_mode_changed', onModeChange)
+    window.addEventListener('refweir_mode_changed', onModeChange)
+    return () => window.removeEventListener('refweir_mode_changed', onModeChange)
   }, [owner, name, currentBranch])
 
   useEffect(() => {
@@ -653,7 +653,7 @@ git push -u origin main`}
                   <button
                     onClick={() =>
                       handleCopy(
-                        `exist agent lease --repo ${owner}/${name} --role full-forge --ttl 1h`,
+                        `refweir agent lease --repo ${owner}/${name} --role full-forge --ttl 1h`,
                         'block-agent'
                       )
                     }
@@ -673,7 +673,7 @@ git push -u origin main`}
                   </button>
                 </div>
                 <pre className="p-3 rounded-md bg-input border border-border font-mono text-[11px] text-foreground leading-relaxed overflow-x-auto whitespace-pre">
-{`exist agent lease --repo ${owner}/${name} --role full-forge --ttl 1h`}
+{`refweir agent lease --repo ${owner}/${name} --role full-forge --ttl 1h`}
                 </pre>
               </div>
             </div>
@@ -777,7 +777,7 @@ git push -u origin main`}
                         <span>{repo.name}</span>
                       </h2>
                       <p className="text-foreground/90 leading-relaxed text-xs sm:text-sm">
-                        {repo.description || 'Enterprise repository on exist.io.'}
+                        {repo.description || 'Enterprise repository on refweir.dev.'}
                       </p>
                     </div>
                   )}

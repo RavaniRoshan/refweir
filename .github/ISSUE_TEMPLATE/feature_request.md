@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea or capability for exist.io
+about: Suggest an idea or capability for Refweir
 title: 'feat: '
 labels: enhancement
 assignees: ''

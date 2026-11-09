@@ -186,7 +186,7 @@ export const WebhooksView: React.FC = () => {
                         {del.event || 'push'}
                       </span>
                       <span className="text-xs text-foreground font-mono hidden sm:inline truncate max-w-sm">
-                        {del.targetUrl || del.url || 'https://ci.internal.exist.io/hooks/forge'}
+                        {del.targetUrl || del.url || 'https://ci.internal.refweir.dev/hooks/forge'}
                       </span>
                     </div>
 

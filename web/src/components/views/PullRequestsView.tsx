@@ -150,8 +150,8 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
     const onModeChange = () => {
       loadPRs()
     }
-    window.addEventListener('exist_mode_changed', onModeChange)
-    return () => window.removeEventListener('exist_mode_changed', onModeChange)
+    window.addEventListener('refweir_mode_changed', onModeChange)
+    return () => window.removeEventListener('refweir_mode_changed', onModeChange)
   }, [owner, repoName])
 
   useEffect(() => {
@@ -260,7 +260,7 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
 
       const agentComment = {
         id: res.reviewId || `rev-${Date.now()}`,
-        author: 'Exist Agent Reviewer',
+        author: 'Refweir Agent Reviewer',
         isAgent: true,
         createdAt: 'Just now',
         body: res.overviewMd || res.summary,
@@ -273,7 +273,7 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
           ...(selectedPr.checks || []),
           {
             id: res.checkRunId || `chk-${Date.now()}`,
-            name: 'Exist Agent Reviewer',
+            name: 'Refweir Agent Reviewer',
             status: 'completed',
             conclusion: res.conclusion,
             duration: '0.2s',
@@ -694,8 +694,8 @@ git push origin feature/agent-capabilities`
 
                     <div className="flex items-center justify-between text-muted-foreground pt-1">
                       <div className="flex items-center gap-2">
-                        <LivingAvatar name="Exist Review Bot" isAgent={true} size="sm" />
-                        <span className="text-foreground">Exist Review Bot</span>
+                        <LivingAvatar name="Refweir Review Bot" isAgent={true} size="sm" />
+                        <span className="text-foreground">Refweir Review Bot</span>
                       </div>
                       <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
                     </div>

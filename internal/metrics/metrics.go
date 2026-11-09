@@ -1,4 +1,4 @@
-// Package metrics provides Prometheus-compatible telemetry for exist.io.
+// Package metrics provides Prometheus-compatible telemetry for refweir.dev.
 package metrics
 
 import (
@@ -78,7 +78,7 @@ func (r *Registry) Handler() http.Handler {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		uptime := time.Since(r.startTime).Seconds()
 
-		fmt.Fprintln(w, "# HELP exist_uptime_seconds Total runtime of the existd daemon.")
+		fmt.Fprintln(w, "# HELP exist_uptime_seconds Total runtime of the refweird daemon.")
 		fmt.Fprintln(w, "# TYPE exist_uptime_seconds gauge")
 		fmt.Fprintf(w, "exist_uptime_seconds %.1f\n", uptime)
 

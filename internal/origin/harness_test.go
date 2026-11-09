@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"exist.io/internal/auth"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 // testServer wires a Server over in-memory store + temp git store and returns
@@ -32,7 +32,7 @@ func testServer(t *testing.T) (*Server, *store.DB, http.Handler) {
 
 	srv := New(db, git, auth.NewRegistry(), "http://127.0.0.1:8080", "127.0.0.1:8080")
 	// Ensure default user_test exists in database for foreign keys
-	_, _ = db.UpsertUserByEmail(t.Context(), "test@exist.io", func() string { return "user_test" })
+	_, _ = db.UpsertUserByEmail(t.Context(), "test@refweir.dev", func() string { return "user_test" })
 
 	// Default resolver: a user token with every scope, so handler tests focus
 	// on behavior, not auth. Auth-denial paths are tested separately.

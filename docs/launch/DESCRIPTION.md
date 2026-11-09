@@ -6,7 +6,7 @@ Product Hunt enforces a strict limit of **260 characters** for short description
 
 ## Selected Short Description (Recommended)
 
-> **exist.io is the neutral, self-hosted Git forge built for AI coding agents (Claude Code, Cursor, Cline, Codex). Single pure-Go binary with embedded UI, embedded SSH (:2222), native Model Context Protocol (MCP) server, and ephemeral capability leases with ref isolation.**
+> **Refweir is the neutral, self-hosted Git forge built for AI coding agents (Claude Code, Cursor, Cline, Codex). Single pure-Go binary with embedded UI, embedded SSH (:2222), native Model Context Protocol (MCP) server, and ephemeral capability leases with ref isolation.**
 
 *Character count:* **258 / 260**
 

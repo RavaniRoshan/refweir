@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/app"
-	"exist.io/internal/auth"
-	"exist.io/internal/config"
-	"exist.io/internal/store"
-	"exist.io/pkg/idgen"
-	"exist.io/pkg/scopes"
+	"refweir.dev/internal/app"
+	"refweir.dev/internal/auth"
+	"refweir.dev/internal/config"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
+	"refweir.dev/pkg/scopes"
 )
 
 type testToken struct {
@@ -27,7 +27,7 @@ func (t testToken) Subject() string  { return "user_test" }
 func TestTerraformProvider_OriginResourcesCompatibility(t *testing.T) {
 	ctx := context.Background()
 
-	// 1. Initialize exist.io application in test mode
+	// 1. Initialize refweir.dev application in test mode
 	cfg := config.Config{
 		DataDir:   ":memory:",
 		PublicURL: "http://localhost:8080/v1/origin",

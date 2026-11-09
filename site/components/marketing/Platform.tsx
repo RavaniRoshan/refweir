@@ -23,7 +23,7 @@ const COLUMNS = [
     span: 'lg:col-span-3',
     title: 'One binary.',
     body: 'Smart-HTTP, embedded SSH, the Web UI, REST and MCP ship in a single static binary. SQLite WAL on disk. No database server, no queue, no control plane.',
-    meta: 'existd · single process',
+    meta: 'refweird · single process',
     href: asset('/docs/getting-started/'),
   },
 ] as const;

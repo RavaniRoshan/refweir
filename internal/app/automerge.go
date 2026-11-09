@@ -11,9 +11,9 @@ import (
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 
-	"exist.io/internal/engine"
-	"exist.io/internal/gitstore"
-	"exist.io/internal/store"
+	"refweir.dev/internal/engine"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
 )
 
 // AutoMergeEvent represents a trigger for auto-merge evaluation.
@@ -225,8 +225,8 @@ func (e *AutoMergeEngine) evaluate(ctx context.Context, evt AutoMergeEvent) erro
 	}
 
 	authorSig := object.Signature{
-		Name:  "Exist Engine",
-		Email: "merge@exist.io",
+		Name:  "Refweir Engine",
+		Email: "merge@refweir.dev",
 		When:  time.Now().UTC(),
 	}
 

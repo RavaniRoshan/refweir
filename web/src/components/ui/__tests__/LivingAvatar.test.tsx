@@ -17,7 +17,7 @@ describe('LivingAvatar Component', () => {
   })
 
   it('renders Bot icon when isAgent is true', () => {
-    const { container } = render(<LivingAvatar name="exist-agent" isAgent={true} />)
+    const { container } = render(<LivingAvatar name="refweir-agent" isAgent={true} />)
 
     // Agent Cyber Shimmer is rendered for agent
     expect(container.querySelector('svg.lucide-bot')).toBeInTheDocument()

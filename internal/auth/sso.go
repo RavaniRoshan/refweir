@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"exist.io/internal/audit"
-	"exist.io/internal/store"
+	"refweir.dev/internal/audit"
+	"refweir.dev/internal/store"
 )
 
 // RegisterSSORoutes mounts enterprise SSO (OIDC/SAML) endpoints onto the router.

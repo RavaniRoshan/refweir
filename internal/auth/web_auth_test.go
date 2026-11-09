@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"exist.io/internal/store"
+	"refweir.dev/internal/store"
 )
 
 func TestWebAuthLifecycle(t *testing.T) {
@@ -18,7 +18,7 @@ func TestWebAuthLifecycle(t *testing.T) {
 	defer db.Close()
 
 	// 1. Register first user (should automatically become "admin")
-	regPayload := `{"email": "founder@exist.io", "login": "founder", "name": "Lead Architect", "password": "SuperSecretPassword123!"}`
+	regPayload := `{"email": "founder@refweir.dev", "login": "founder", "name": "Lead Architect", "password": "SuperSecretPassword123!"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString(regPayload))
 	rec := httptest.NewRecorder()
 	RegisterHandler(db).ServeHTTP(rec, req)
@@ -53,7 +53,7 @@ func TestWebAuthLifecycle(t *testing.T) {
 	}
 
 	// 3. Login with correct password
-	loginPayload := `{"email": "founder@exist.io", "password": "SuperSecretPassword123!"}`
+	loginPayload := `{"email": "founder@refweir.dev", "password": "SuperSecretPassword123!"}`
 	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(loginPayload))
 	loginRec := httptest.NewRecorder()
 	LoginHandler(db).ServeHTTP(loginRec, loginReq)
@@ -63,7 +63,7 @@ func TestWebAuthLifecycle(t *testing.T) {
 	}
 
 	// 4. Login with bad password
-	badLoginPayload := `{"email": "founder@exist.io", "password": "wrong-password"}`
+	badLoginPayload := `{"email": "founder@refweir.dev", "password": "wrong-password"}`
 	badReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(badLoginPayload))
 	badRec := httptest.NewRecorder()
 	LoginHandler(db).ServeHTTP(badRec, badReq)

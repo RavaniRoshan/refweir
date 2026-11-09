@@ -5,7 +5,7 @@ import "testing"
 func TestValidateSlug(t *testing.T) {
 	valid := []string{
 		"repo-name",
-		"exist.io",
+		"refweir.dev",
 		"cool_project",
 		"a",
 		"user123",

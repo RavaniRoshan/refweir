@@ -2,7 +2,7 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
-/* ─── Exist design system (see DESIGN.md) ─────────────────────────────
+/* ─── Refweir design system (see DESIGN.md) ─────────────────────────────
    One palette for the landing, the docs, and the product. The values
    below mirror web/src/styles/tokens.css byte for byte: Primer structure,
    Patina (oxidized copper) signal, brass secondary. Light is the default;
