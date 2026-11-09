@@ -12,6 +12,9 @@ import (
 //go:embed origin.openapi.yaml
 var RawSpec []byte
 
+//go:embed forge.openapi.yaml
+var ForgeSpec []byte
+
 var opIDRegex = regexp.MustCompile(`(?m)^\s*operationId:\s*([^\s#]+)`)
 
 // Spec returns the raw embedded OpenAPI 3.1 YAML bytes.
@@ -25,6 +28,16 @@ func Handler() http.Handler {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(RawSpec)
+	})
+}
+
+// ForgeHandler returns an HTTP handler serving the OpenAPI 3.1 Refweir Forge spec.
+func ForgeHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(ForgeSpec)
 	})
 }
 

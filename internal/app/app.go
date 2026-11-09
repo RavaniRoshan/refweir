@@ -3646,6 +3646,8 @@ func Open(cfg config.Config) (*App, error) {
 	originServer.RegisterRoutes(mux)
 
 	mux.Handle("GET /v1/origin/openapi.yaml", openapi.Handler())
+	mux.Handle("GET /api/openapi.yaml", openapi.ForgeHandler())
+	mux.Handle("GET /api/v1/openapi.yaml", openapi.ForgeHandler())
 
 	mcpServer := mcp.New(db, git)
 	if cfg.JWTSecret != "" {

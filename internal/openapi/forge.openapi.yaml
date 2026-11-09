@@ -1,0 +1,741 @@
+openapi: 3.1.0
+info:
+  title: Refweir Forge API
+  version: 0.6.0-beta
+  description: Sovereign REST and agent-native API for the Refweir Git forge.
+servers:
+  - url: http://localhost:8080
+    description: Local forge daemon
+paths:
+  /healthz:
+    get:
+      summary: Health check probe
+      description: Returns 200 OK when daemon is healthy.
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      description: Exposes Prometheus telemetry exposition.
+      responses:
+        '200':
+          description: Metrics exposition
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/system/info:
+    get:
+      summary: System information
+      description: Returns runtime, memory, WAL size, and architecture telemetry.
+      responses:
+        '200':
+          description: System info response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfo'
+
+  /api/v1/repos:
+    get:
+      summary: List repositories
+      description: Returns a list of repositories hosted on the forge.
+      responses:
+        '200':
+          description: Repository list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RepositoryRecord'
+    post:
+      summary: Create repository
+      description: Creates a new bare repository on the forge.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                visibility:
+                  type: string
+                  enum: [public, private, internal]
+                defaultBranch:
+                  type: string
+      responses:
+        '201':
+          description: Repository created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryRecord'
+
+  /api/v1/repos/{owner}/{name}:
+    get:
+      summary: Get repository details
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repository details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepoInfo'
+    patch:
+      summary: Update repository settings
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Repository updated
+    delete:
+      summary: Delete repository
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Repository deleted
+
+  /api/v1/repos/{owner}/{name}/commits:
+    get:
+      summary: List commit history
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ref
+          in: query
+          required: false
+          schema:
+            type: string
+            default: main
+      responses:
+        '200':
+          description: Commit list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommitItem'
+
+  /api/v1/repos/{owner}/{name}/contents:
+    get:
+      summary: Get repository tree or file content
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ref
+          in: query
+          required: false
+          schema:
+            type: string
+            default: main
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+            default: ''
+      responses:
+        '200':
+          description: File tree entries or file payload
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FileItem'
+
+  /api/v1/repos/{owner}/{name}/pulls:
+    get:
+      summary: List pull requests
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pull request list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PullRequest'
+    post:
+      summary: Create pull request
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, head, base]
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                head:
+                  type: string
+                base:
+                  type: string
+      responses:
+        '201':
+          description: Created pull request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullRequest'
+
+  /api/v1/repos/{owner}/{name}/pulls/{number}:
+    get:
+      summary: Get pull request
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: number
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Pull request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullRequest'
+
+  /api/v1/repos/{owner}/{name}/pulls/{number}/merge:
+    post:
+      summary: Merge pull request
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: number
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mergeMethod:
+                  type: string
+                  enum: [merge, squash, rebase]
+      responses:
+        '200':
+          description: Merged successfully
+
+  /api/v1/repos/{owner}/{name}/pulls/{number}/reviews/agent:
+    post:
+      summary: Trigger autonomous agent review
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: number
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Agent review completed
+
+  /api/v1/repos/{owner}/{name}/issues:
+    get:
+      summary: List issues
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Issue list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+    post:
+      summary: Create issue
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+      responses:
+        '201':
+          description: Created issue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+
+  /api/v1/repos/{owner}/{name}/releases:
+    get:
+      summary: List releases
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Release list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReleaseItem'
+    post:
+      summary: Create release
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tagName, name]
+              properties:
+                tagName:
+                  type: string
+                name:
+                  type: string
+                body:
+                  type: string
+                commitSha:
+                  type: string
+      responses:
+        '201':
+          description: Created release
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseItem'
+
+  /api/v1/repos/{owner}/{name}/rulesets:
+    get:
+      summary: List rulesets
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rulesets list
+
+  /api/v1/agent/activities:
+    get:
+      summary: Snapshot of recent agent operations
+      description: Returns the latest bounded agent activity entries.
+      responses:
+        '200':
+          description: Activities snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentActivity'
+                  count:
+                    type: integer
+
+  /api/v1/agent/activities/stream:
+    get:
+      summary: Real-time SSE agent activity stream
+      description: Pushes snapshot, live activities, and periodic heartbeats via Server-Sent Events.
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/v1/agent/leases:
+    post:
+      summary: Issue cryptographic capability lease
+      description: Issues HMAC-SHA256 lease token with ref-prefix isolation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agentId, repository, allowedRefPrefix]
+              properties:
+                agentId:
+                  type: string
+                repository:
+                  type: string
+                allowedRefPrefix:
+                  type: string
+                ttlSeconds:
+                  type: integer
+      responses:
+        '201':
+          description: Lease issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentLease'
+
+components:
+  schemas:
+    SystemInfo:
+      type: object
+      properties:
+        version:
+          type: string
+        uptime:
+          type: string
+        goVersion:
+          type: string
+        goroutines:
+          type: integer
+        sqliteWalSizeBytes:
+          type: integer
+        litestreamSyncStatus:
+          type: string
+
+    RepositoryRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        full_name:
+          type: string
+        default_branch:
+          type: string
+        visibility:
+          type: string
+        description:
+          type: string
+        stars:
+          type: integer
+        forks:
+          type: integer
+        updated_at:
+          type: string
+
+    RepoInfo:
+      type: object
+      properties:
+        ownerSlug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        defaultBranch:
+          type: string
+        isPrivate:
+          type: boolean
+        isArchived:
+          type: boolean
+        starsCount:
+          type: integer
+        forksCount:
+          type: integer
+        updatedAt:
+          type: string
+        cloneUrlHttp:
+          type: string
+        cloneUrlSsh:
+          type: string
+
+    CommitItem:
+      type: object
+      properties:
+        sha:
+          type: string
+        shortSha:
+          type: string
+        message:
+          type: string
+        author:
+          type: string
+        date:
+          type: string
+        verified:
+          type: boolean
+        signatureType:
+          type: string
+
+    FileItem:
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+          enum: [file, dir, submodule]
+        size:
+          type: integer
+
+    PullRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        author:
+          type: string
+        state:
+          type: string
+          enum: [open, closed, merged]
+        headBranch:
+          type: string
+        baseBranch:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        state:
+          type: string
+          enum: [open, closed]
+        author:
+          type: string
+        createdAt:
+          type: string
+
+    ReleaseItem:
+      type: object
+      properties:
+        id:
+          type: string
+        tagName:
+          type: string
+        name:
+          type: string
+        body:
+          type: string
+        author:
+          type: string
+        createdAt:
+          type: string
+        commitSha:
+          type: string
+
+    AgentActivity:
+      type: object
+      properties:
+        id:
+          type: string
+        agentName:
+          type: string
+        agentType:
+          type: string
+        action:
+          type: string
+        toolName:
+          type: string
+        resource:
+          type: string
+        status:
+          type: string
+        durationMs:
+          type: integer
+        details:
+          type: string
+        timestamp:
+          type: string
+
+    AgentLease:
+      type: object
+      properties:
+        tokenId:
+          type: string
+        token:
+          type: string
+        agentId:
+          type: string
+        repository:
+          type: string
+        allowedRefPrefix:
+          type: string
+        expiresAt:
+          type: string
