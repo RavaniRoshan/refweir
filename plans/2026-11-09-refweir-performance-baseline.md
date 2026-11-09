@@ -177,3 +177,12 @@ Measured using `go test -bench=BenchmarkGitStore -benchmem -run=^$ -count=5`:
    - 45 test files execute in 23.64s, but 109.68s of CPU time is spent recreating JSDOM instances (35% of total test runtime). Vitest `vmThreads` or worker pooling can optimize developer test feedback loop.
 3. **Web SPA Route Code-Splitting (Task 3):**
    - The primary vendor bundle is 712 KB (197 KB gzip). High-probability route preloading via TanStack Router and lazy component chunking will minimize time to interactive on first navigation.
+
+---
+
+## 9. Task 4 Static Marketing/Docs Site Audit Findings
+
+- **Architecture Stability:** Static Next.js 16.4.4 with Fumadocs export verified. Build compiles in 4.4s and generates 28 static pages in 1.63s.
+- **Link & Route Integrity:** 45 HTML pages inspected; all 649 internal links resolved cleanly. Zero host-specific paths or broken anchors.
+- **Redirect Stubs:** 20 legacy redirect stubs emitted to preserve pre-restructure URLs (`/refweir/<page>/` → `/refweir/docs/<page>/`).
+- **Framework Evaluation:** Next.js static export generates a 12 KB initial landing page HTML and 1.2 MB total static JS chunks. Build is fast and passes all claims audits; no migration to Astro or alternative framework is justified.
