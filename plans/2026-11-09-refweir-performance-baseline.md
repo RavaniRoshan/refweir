@@ -87,18 +87,18 @@
 
 ## 6. Pre-Change Correctness Gates Status
 
-Executed on 2026-11-09:
+Executed on 2026-11-09 (post-Phase 4.2 OpenAPI & TanStack Query, and Phase 4.3 SSE Activity Stream integration):
 
 1. **Go Backend Validation (`go test ./...`):**
-   - Result: **PASS** (33 packages tested, 0 failures, total wall time 20.03s, peak RSS 719 MB).
+   - Result: **PASS** (36 packages tested, 0 failures, total wall time 3.35s uncached key suites, 0 warnings).
 2. **Site Documentation & Marketing Validation (`cd site && npm run verify`):**
-   - Result: **PASS** (`typecheck` clean, Next.js 16.4.4 static build 28 pages generated in 1.59s, 45 pages / 649 links verified, 9 claims / 19 forbidden phrases verified). Wall-clock: 14.00s, peak RSS 320 MB.
+   - Result: **PASS** (`typecheck` clean, Next.js 16.4.4 static build 28 pages generated in 1.21s, 45 pages / 649 links verified, 9 claims / 19 forbidden phrases verified). Total wall-clock: 7.24s.
 3. **Frontend Vitest Suites (`cd web && npm test`):**
-   - Initial Result: 44 passed, 1 failed due to stray `EOF` from commit `ce90841`.
-   - After cleaning stray `EOF` syntax artifacts: **PASS** (45 files passed, 168 tests passed, duration 23.64s).
+   - Result: **PASS** (51 test files passed, 201 tests passed, duration 16.92s).
 4. **Frontend Production Build (`cd web && npm run build`):**
-   - Initial Result: Failed on `EOF` TS errors.
-   - After cleaning stray `EOF` syntax artifacts: **PASS** (10.44s wall-clock, peak RSS 887 MB).
+   - Result: **PASS** (8.47s wall-clock, emits 13 optimized chunks to `internal/webui/dist/`).
+5. **Capability Counts Drift Gate (`go run ./internal/tools/gencounts`):**
+   - Result: **PASS** (128 HTTP route patterns, 46 MCP tools, 36 Go packages, 51 frontend test files; 0 drift).
 
 ---
 
@@ -150,14 +150,20 @@ Measured using `go test -bench=BenchmarkGitStore -benchmem -run=^$ -count=5`:
 ### 7.5 Frontend Asset & Transfer Payloads
 
 #### Web Product SPA (`internal/webui/dist/assets/`):
-- Main JS Bundle (`index-C6RND4o2.js`): **712 KB uncompressed**, **197.3 KB gzipped**
-- Main CSS (`index-DW-Z4Dc-.css`): **126 KB uncompressed**, **19.6 KB gzipped**
-- Font (`mona-sans-latin-wght-normal.woff2`): **39 KB**
-- Route Chunks:
-  - `Card-Zc37UclV.js`: 93 KB
-  - `Dialog-7c7IFL76.js`: 65 KB
-  - `RepoSettingsView-CZhs8yxS.js`: 55 KB
-- **Critical path initial transfer budget:** ~217 KB over the wire (gzipped HTML + JS + CSS).
+- Main JS Bundle (`index-B1dRoUhf.js`): **322.99 KB uncompressed**, **103.01 KB gzipped**
+- Route Chunk (`routes-CQ-E4dKB.js`): **601.10 KB uncompressed**, **158.76 KB gzipped**
+- Main CSS (`index-BxY7PGAw.css`): **128.31 KB uncompressed**, **19.75 KB gzipped**
+- Font (`mona-sans-latin-wght-normal-Pz49MTQZ.woff2`): **39.78 KB**
+- Modular Route / View Chunks:
+  - `api-D7yB0_3W.js`: 90.79 KB (27.20 KB gzip)
+  - `RepoSettingsView-Altytfi3.js`: 55.96 KB (10.27 KB gzip)
+  - `UserProfileView-CCtEHsYp.js`: 32.85 KB (7.88 KB gzip)
+  - `ClusterHealth-Z4wW8za6.js`: 12.67 KB (2.88 KB gzip)
+  - `SsoConfig-BcZyIgNf.js`: 10.86 KB (3.16 KB gzip)
+  - `EnterpriseUsers-DY29XSvW.js`: 8.92 KB (2.59 KB gzip)
+  - `AuditLogs-DZjvQKb7.js`: 7.16 KB (2.19 KB gzip)
+  - `DeleteRepoModal-CMMjA0IK.js`: 4.23 KB (1.46 kB gzip)
+- **Critical path initial transfer budget:** ~123 KB over the wire (gzipped HTML + index JS + CSS).
 
 #### Public Marketing & Docs Site (`site/out/`):
 - Landing page HTML (`site/out/index.html`): **12 KB**
