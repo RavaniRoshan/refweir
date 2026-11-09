@@ -2,6 +2,7 @@ import { Nav } from '@/components/marketing/Nav';
 import { Hero } from '@/components/marketing/Hero';
 import { SwarmBand } from '@/components/marketing/SwarmBand';
 import { Loop } from '@/components/marketing/Loop';
+import { ContainmentDemo } from '@/components/marketing/ContainmentDemo';
 import { Product } from '@/components/marketing/Product';
 import { Platform } from '@/components/marketing/Platform';
 import { Quickstart } from '@/components/marketing/Quickstart';
@@ -18,6 +19,7 @@ export default function Home() {
         <SwarmBand />
         <Loop />
         <Product />
+        <ContainmentDemo />
         <Platform />
         <Quickstart />
         <Evidence />

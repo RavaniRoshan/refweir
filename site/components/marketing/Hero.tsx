@@ -1,6 +1,7 @@
 import { CommandChip } from './CommandChip';
 import { ForgeDemo } from './ForgeDemo';
 import { Reveal } from './Reveal';
+import { KineticWords } from './KineticWords';
 import { IconArrowUpRight } from './icons';
 import { asset } from '@/lib/asset';
 
@@ -31,7 +32,7 @@ export function Hero() {
 
           <Reveal>
             <h1 className="mt-6 text-[clamp(3.05rem,7.2vw,5.15rem)] font-light leading-[0.98] tracking-[-0.045em] text-text-1">
-              The self-hosted forge for <span className="marker text-patina">coding&nbsp;agents.</span>
+              The self-hosted forge for <KineticWords />
             </h1>
           </Reveal>
 
