@@ -14,7 +14,7 @@
 | **SQLite Disk Write Transactions** | 2,725,942 ns (~2.73 ms) | 101,205 ns (~101.2 µs) | **26.9× faster throughput** (~366 tx/s → ~9,880 tx/s) | **ACCEPTED** (Task 7) |
 | **SQLite Index Read Lookups** | 14,912 ns (~14.9 µs) | 14,909 ns (~14.9 µs) | **~67,100 queries/s** sustained | **ACCEPTED** (Task 7) |
 | **`InlineDiffViewer` Line Render** | $O(N \times M)$ filter loop on every diff line | $O(1)$ indexed lookup via `useMemo` map | Eliminated redundant comment array allocations | **ACCEPTED** (Task 3) |
-| **SPA Route Preloading** | Default eager/on-click | TanStack Router `intent` preloading + 30s stale time | Reduced navigation latency on hover/focus | **ACCEPTED** (Task 3) |
+| **SPA Route Preloading (Preparatory)** | Default eager/on-click | TanStack Router configured with `intent` preloading + 30s stale time | Preparatory routing foundation for app shell migration; unmounted in current `<App />` tab view | **PREPARATORY / NO LIVE RUNTIME IMPACT** (Task 3) |
 | **Frontend Unit Test Suite (`web`)** | 44 passed, 1 failed (stray `EOF` defect) | **45/45 passed, 169/169 tests passed** | Zero test failures, 100% green | **ACCEPTED** (Task 2 & 3) |
 | **Frontend Production Build (`web`)** | Failed (TypeScript syntax errors) | **Clean build (1.26s Vite transform)** | Production bundles emitted to `internal/webui/dist` | **ACCEPTED** (Task 2 & 3) |
 | **Static Docs Site Verify (`site`)** | 14.00s wall-clock, 649 links verified | **14.00s wall-clock, 649 links verified** | 28 static pages, 0 broken links | **ACCEPTED** (Task 4) |
@@ -35,7 +35,8 @@
    - Replaces $O(N \times M)$ linear filtering on every rendered diff hunk line with $O(1)$ constant-time lookup.
    - Enforced by test in `web/src/components/views/__tests__/InlineDiffViewer.test.tsx`.
 3. **TanStack Router Intent Preloading (`web/src/router.ts`):**
-   - Configured `defaultPreload: 'intent'` and `defaultPreloadStaleTime: 30_000` to preload high-probability route bundles and data on hover/focus.
+   - Configured `defaultPreload: 'intent'` and `defaultPreloadStaleTime: 30_000` to establish the intent-based preloading baseline for the ongoing app shell migration.
+   - Note: The running product currently renders `<App />` with internal tab state; this configuration becomes active on client routes once `<RouterProvider>` is mounted.
 4. **Correction of Build & Test Syntax Artifacts:**
    - Removed stray `EOF` strings from `web/src/lib/events.ts`, `web/src/lib/queryClient.ts`, `web/src/lib/store.ts`, and `web/src/app/AppShell.tsx`.
    - Restored Vitest passing count from 44 to 45 suites (169/169 tests) and restored `npm run build` from failing to 100% green.

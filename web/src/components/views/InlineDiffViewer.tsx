@@ -86,14 +86,22 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   // Pre-index comments by path:line:side for O(1) per-line lookup instead of O(N*M) filtering
   const commentsByLine = React.useMemo(() => {
     const map = new Map<string, ReviewComment[]>()
-    for (const c of comments) {
-      const side = c.side || 'RIGHT'
-      const key = `${c.path}:${c.line}:${side}`
+    const addComment = (key: string, c: ReviewComment) => {
       const list = map.get(key)
       if (list) {
         list.push(c)
       } else {
         map.set(key, [c])
+      }
+    }
+
+    for (const c of comments) {
+      if (c.side) {
+        addComment(`${c.path}:${c.line}:${c.side}`, c)
+      } else {
+        // When side is omitted, match both sides so comments render on deleted or added lines
+        addComment(`${c.path}:${c.line}:LEFT`, c)
+        addComment(`${c.path}:${c.line}:RIGHT`, c)
       }
     }
     return map

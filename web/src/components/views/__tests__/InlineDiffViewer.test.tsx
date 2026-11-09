@@ -227,4 +227,43 @@ describe('InlineDiffViewer Component', () => {
     expect(screen.getByText('Comment on deleted line 1')).toBeInTheDocument()
     expect(screen.getByText('Comment on added line 2')).toBeInTheDocument()
   })
+
+  it('renders comments without explicit side on deleted lines', () => {
+    const diffWithDeletion = [
+      {
+        oldPath: 'src/deleted.ts',
+        newPath: 'src/deleted.ts',
+        additions: 0,
+        deletions: 1,
+        hunk: '@@ -10,1 +10,0 @@\n-const obsoleteCode = true',
+      },
+    ]
+    const commentWithoutSide = [
+      {
+        id: 'c-del-no-side',
+        author: 'auditor',
+        isAgent: true,
+        createdAt: '5m ago',
+        body: 'Why was obsoleteCode removed?',
+        path: 'src/deleted.ts',
+        line: 10,
+        // side is deliberately undefined
+        threadId: 'th-del-1',
+        resolved: false,
+      },
+    ]
+
+    render(
+      <InlineDiffViewer
+        owner="shiva"
+        repoName="refweir.dev"
+        prNumber={103}
+        diffHunks={diffWithDeletion}
+        comments={commentWithoutSide}
+        onRefreshComments={() => {}}
+      />
+    )
+
+    expect(screen.getByText('Why was obsoleteCode removed?')).toBeInTheDocument()
+  })
 })

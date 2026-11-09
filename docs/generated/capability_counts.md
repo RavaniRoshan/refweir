@@ -7,6 +7,6 @@ Derived from source at the current commit. CI fails when this file drifts.
 | Capability | Count | Derived from |
 | :--- | ---: | :--- |
 | MCP tools | 46 | `internal/mcp.BuiltinTools()` |
-| HTTP route patterns | 122 | `mux.Handle*` registrations in `internal/app` and `internal/origin` |
+| HTTP route patterns | 125 | `mux.Handle*` registrations in `internal/app` and `internal/origin` |
 | Go packages | 36 | `go list ./...` |
-| Frontend test files | 43 | `web/src/**/*.test.{ts,tsx}` |
+| Frontend test files | 45 | `web/src/**/*.test.{ts,tsx}` |

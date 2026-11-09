@@ -1,6 +1,8 @@
 package store
 
 import (
+	"context"
+	"database/sql"
 	"path/filepath"
 	"testing"
 )
@@ -107,6 +109,49 @@ func TestDiskPragmas(t *testing.T) {
 	}
 	if syncMode != 1 {
 		t.Errorf("synchronous = %d, want 1 (NORMAL)", syncMode)
+	}
+
+	var fk int
+	if err := db.sql.QueryRow(`PRAGMA foreign_keys`).Scan(&fk); err != nil {
+		t.Fatalf("PRAGMA foreign_keys: %v", err)
+	}
+	if fk != 1 {
+		t.Errorf("foreign_keys = %d, want 1", fk)
+	}
+}
+
+func TestPooledConnectionForeignKeys(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "refweir_pooled_fk.db")
+	db, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer db.Close()
+
+	// Acquire multiple concurrent connections simultaneously across the pool
+	conns := make([]*sql.Conn, 6)
+	for i := 0; i < len(conns); i++ {
+		c, err := db.sql.Conn(context.Background())
+		if err != nil {
+			t.Fatalf("Conn %d: %v", i, err)
+		}
+		conns[i] = c
+	}
+	defer func() {
+		for _, c := range conns {
+			_ = c.Close()
+		}
+	}()
+
+	for i, c := range conns {
+		var fk int
+		if err := c.QueryRowContext(context.Background(), `PRAGMA foreign_keys`).Scan(&fk); err != nil {
+			t.Fatalf("query foreign_keys on conn %d: %v", i, err)
+		}
+		if fk != 1 {
+			t.Errorf("conn %d: foreign_keys = %d, want 1 (must be set in DSN)", i, fk)
+		}
 	}
 }
 
