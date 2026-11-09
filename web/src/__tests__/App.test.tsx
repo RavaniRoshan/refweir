@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 import App from '../App'
 import * as api from '@/lib/api'
+import { useUIStore } from '@/lib/store'
 
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof api>('@/lib/api')
@@ -190,5 +191,28 @@ describe('App End-to-End Navigation', () => {
       expect(screen.getByText('Enterprise Activity Feed')).toBeInTheDocument()
       expect(screen.getByText('Cluster Telemetry')).toBeInTheDocument()
     })
+  })
+
+  it('renders inside AppShell when newShell is active in store, and maps rail navigation to views', async () => {
+    useUIStore.setState({ newShell: true })
+    try {
+      render(<App />)
+
+      await waitFor(() => {
+        expect(screen.getByRole('tablist', { name: /global navigation/i })).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole('tab', { name: /repos/i })).toHaveAttribute('aria-selected', 'true')
+
+      const runsTab = screen.getByRole('tab', { name: /runs/i })
+      fireEvent.click(runsTab)
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: /runs/i })).toHaveAttribute('aria-selected', 'true')
+        expect(screen.getByText(/AI Agent Telemetry/i)).toBeInTheDocument()
+      })
+    } finally {
+      useUIStore.setState({ newShell: false })
+    }
   })
 })

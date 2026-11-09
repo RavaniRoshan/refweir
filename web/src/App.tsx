@@ -22,6 +22,8 @@ import { ProductTour } from '@/components/views/ProductTour'
 import { UserManualModal } from '@/components/views/UserManualModal'
 import { defaultRepo, getRepoInfo, getRepositories, isDemoModeActive } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { AppShell } from '@/app/AppShell'
+import { useUIStore } from '@/lib/store'
 
 // Lazy-loaded views for bundle optimization & code splitting
 const RepoSettingsView = lazy(() =>
@@ -135,8 +137,34 @@ export default function App() {
     { id: 'audit', label: 'Audit Log & Security', icon: <ShieldAlert className="w-4 h-4" /> },
   ] as const
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/25 selection:text-primary">
+  const { newShell } = useUIStore()
+  const [isShellParamActive] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search)
+      return p.get('shell') === '1' || p.get('shell') === 'true'
+    }
+    return false
+  })
+  const isShellActive = newShell || isShellParamActive
+
+  const shellNav = (() => {
+    if (activeTab === 'home') return 'inbox'
+    if (activeTab === 'agents') return 'runs'
+    if (activeTab === 'prs') return 'reviews'
+    if (activeTab === 'rulesets') return 'policies'
+    return 'repos'
+  })()
+
+  const handleShellNavChange = (nav: string) => {
+    if (nav === 'inbox') setActiveTab('home')
+    else if (nav === 'runs') setActiveTab('agents')
+    else if (nav === 'reviews') setActiveTab('prs')
+    else if (nav === 'policies') setActiveTab('rulesets')
+    else if (nav === 'repos') setActiveTab('code')
+  }
+
+  const content = (
+    <div className={cn("bg-background text-foreground flex flex-col font-sans selection:bg-primary/25 selection:text-primary", isShellActive ? "min-h-full" : "min-h-screen")}>
       {/* Hosted demo banner — only when the server reports REFWEIR_DEMO_MODE=1 */}
       {systemInfo.demoMode ? <DemoBanner repo={systemInfo.demoRepo} /> : null}
 
@@ -328,6 +356,18 @@ export default function App() {
           </div>
         </div>
       </footer>
+    </div>
+  )
+
+  return (
+    <>
+      {isShellActive ? (
+        <AppShell activeNav={shellNav} onNavChange={handleShellNavChange}>
+          {content}
+        </AppShell>
+      ) : (
+        content
+      )}
 
       {/* Interactive First-Time Onboarding Tour */}
       <ProductTour
@@ -341,6 +381,6 @@ export default function App() {
         isOpen={manualOpen}
         onClose={() => setManualOpen(false)}
       />
-    </div>
+    </>
   )
 }
