@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { ProductPreview } from './ProductPreview';
 import { MergeGate } from './MergeGate';
-
-const LEASE_TOKEN = 'lease_hmac_9a2f7c01e8b44d12';
+import { LeaseBuilder } from './LeaseBuilder';
 
 const STREAM_ITEMS = [
   { agent: 'claude-code', action: 'lease_request', target: 'refs/heads/agent/fix-auth', time: '12s ago', status: 'granted' },
@@ -14,17 +13,6 @@ const STREAM_ITEMS = [
 
 export function Product() {
   const [activeProto, setActiveProto] = useState<'http' | 'ssh'>('http');
-  const [copiedToken, setCopiedToken] = useState(false);
-
-  const copyToken = async () => {
-    try {
-      await navigator.clipboard.writeText(LEASE_TOKEN);
-      setCopiedToken(true);
-      setTimeout(() => setCopiedToken(false), 2000);
-    } catch {
-      // fallback
-    }
-  };
 
   return (
     <section id="product" className="relative border-b border-line bg-canvas py-20 lg:py-28 scroll-mt-20">
@@ -67,26 +55,8 @@ export function Product() {
                 Agents never get static passwords or long-lived tokens. They receive cryptographically signed capability leases strictly scoped to <code className="mono rounded bg-raised px-1.5 py-0.5 text-xs text-patina">refs/heads/agent/*</code> with automatic 1-hour expiration.
               </p>
 
-              {/* Interactive Token Simulation Pill */}
-              <div className="mt-5 rounded-lg border border-line bg-raised p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <code className="mono text-xs font-semibold text-text-1">{LEASE_TOKEN}</code>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={copyToken}
-                    className="mono rounded bg-slab px-2.5 py-1 text-[11px] font-medium text-text-2 transition-colors hover:bg-patina hover:text-white"
-                  >
-                    {copiedToken ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs text-text-3">
-                  <span>Scope: <span className="text-text-1 font-mono">refs/heads/agent/*</span></span>
-                  <span className="text-emerald-500 font-mono">TTL: 58m remaining</span>
-                </div>
-              </div>
+              {/* Interactive Capability Lease Builder */}
+              <LeaseBuilder />
             </div>
 
             <div className="mt-6 flex items-center justify-between border-t border-line/80 pt-4 text-xs text-text-3">
