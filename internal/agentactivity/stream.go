@@ -8,7 +8,7 @@ import (
 )
 
 // StreamHandler returns an SSE handler that pushes agent activities to the
-// client as they are recorded, with heartbeats every 15 seconds.
+// client in real time as they are recorded, with periodic heartbeats.
 func StreamHandler(h *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
@@ -29,7 +29,10 @@ func StreamHandler(h *Hub) http.HandlerFunc {
 		fmt.Fprintf(w, "event: snapshot\ndata: %s\n\n", data)
 		flusher.Flush()
 
-		lastCount := h.Count()
+		// Subscribe to real-time broadcasts
+		subCh, cancel := h.Subscribe(64)
+		defer cancel()
+
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
 
@@ -37,19 +40,19 @@ func StreamHandler(h *Hub) http.HandlerFunc {
 			select {
 			case <-r.Context().Done():
 				return
+			case act, ok := <-subCh:
+				if !ok {
+					return
+				}
+				actData, err := json.Marshal(act)
+				if err == nil {
+					fmt.Fprintf(w, "event: activity\ndata: %s\n\n", actData)
+					flusher.Flush()
+				}
 			case <-ticker.C:
-				// Heartbeat
+				// Periodic heartbeat for reverse-proxy keepalive
 				fmt.Fprintf(w, "event: heartbeat\ndata: {\"ts\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
 				flusher.Flush()
-
-				// Check for new entries
-				current := h.Recent(50)
-				if newCount := h.Count(); newCount != lastCount {
-					data, _ := json.Marshal(map[string]any{"activities": current})
-					fmt.Fprintf(w, "event: update\ndata: %s\n\n", data)
-					flusher.Flush()
-					lastCount = newCount
-				}
 			}
 		}
 	}

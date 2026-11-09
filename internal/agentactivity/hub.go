@@ -23,11 +23,13 @@ type Activity struct {
 	Details    string    `json:"details,omitempty"`
 }
 
-// Hub maintains an in-memory thread-safe bounded buffer of recent agent operations.
+// Hub maintains an in-memory thread-safe bounded buffer of recent agent operations
+// and broadcasts live events to active subscribers.
 type Hub struct {
-	mu         sync.RWMutex
-	maxEntries int
-	entries    []Activity
+	mu          sync.RWMutex
+	maxEntries  int
+	entries     []Activity
+	subscribers map[chan Activity]struct{}
 }
 
 // NewHub creates a new agent activity hub with the given capacity limit.
@@ -36,15 +38,16 @@ func NewHub(maxEntries int) *Hub {
 		maxEntries = 200
 	}
 	return &Hub{
-		maxEntries: maxEntries,
-		entries:    make([]Activity, 0, maxEntries),
+		maxEntries:  maxEntries,
+		entries:     make([]Activity, 0, maxEntries),
+		subscribers: make(map[chan Activity]struct{}),
 	}
 }
 
 // DefaultHub is the singleton activity hub used by refweird.
 var DefaultHub = NewHub(200)
 
-// Record adds an activity entry to the buffer.
+// Record adds an activity entry to the buffer and fans out to active subscribers.
 func (h *Hub) Record(act Activity) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -60,6 +63,42 @@ func (h *Hub) Record(act Activity) {
 	if len(h.entries) > h.maxEntries {
 		h.entries = h.entries[len(h.entries)-h.maxEntries:]
 	}
+
+	for ch := range h.subscribers {
+		select {
+		case ch <- act:
+		default:
+			// Non-blocking drop for slow subscriber to avoid latency spikes
+		}
+	}
+}
+
+// Subscribe registers a new subscriber channel with the given buffer size.
+// Returns the receive channel and a cleanup cancel func.
+func (h *Hub) Subscribe(bufferSize int) (<-chan Activity, func()) {
+	if bufferSize <= 0 {
+		bufferSize = 32
+	}
+	ch := make(chan Activity, bufferSize)
+
+	h.mu.Lock()
+	if h.subscribers == nil {
+		h.subscribers = make(map[chan Activity]struct{})
+	}
+	h.subscribers[ch] = struct{}{}
+	h.mu.Unlock()
+
+	var once sync.Once
+	cancel := func() {
+		once.Do(func() {
+			h.mu.Lock()
+			delete(h.subscribers, ch)
+			close(ch)
+			h.mu.Unlock()
+		})
+	}
+
+	return ch, cancel
 }
 
 // Recent returns the most recent agent activities up to limit, newest first.
@@ -88,21 +127,23 @@ func (h *Hub) Count() int {
 	defer h.mu.RUnlock()
 	return len(h.entries)
 }
+
+// Clear resets all stored entries.
 func (h *Hub) Clear() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.entries = make([]Activity, 0, h.maxEntries)
 }
 
-// Handler returns an HTTP handler for streaming recent agent operations.
+// Handler returns an HTTP handler for streaming recent agent operations as a JSON snapshot.
 func Handler(h *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		activities := h.Recent(100)
+		limit := 50
+		activities := h.Recent(limit)
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"activities": activities,
+			"count":      len(activities),
 		})
 	}
 }
