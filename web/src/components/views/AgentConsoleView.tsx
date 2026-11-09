@@ -27,6 +27,7 @@ import {
   type AgentActivityItem,
   type AgentLease,
 } from '@/lib/api'
+import { subscribeAgentActivity } from '@/lib/events'
 
 export const AgentConsoleView: React.FC = () => {
   const [activities, setActivities] = useState<AgentActivityItem[]>([])
@@ -66,14 +67,41 @@ export const AgentConsoleView: React.FC = () => {
   }
 
   useEffect(() => {
-    loadActivities()
-    const interval = setInterval(loadActivities, 4000)
+    if (isDemoModeActive()) {
+      loadActivities()
+      const interval = setInterval(loadActivities, 4000)
+      const onModeChange = () => loadActivities()
+      window.addEventListener('refweir_mode_changed', onModeChange)
+
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('refweir_mode_changed', onModeChange)
+      }
+    }
+
+    setLoadingActivities(true)
+    const unsubscribe = subscribeAgentActivity({
+      onSnapshot: (items) => {
+        setActivities(items)
+        setLoadingActivities(false)
+      },
+      onActivity: (item) => {
+        setActivities((prev) => {
+          if (prev.some((a) => a.id === item.id)) return prev
+          return [item, ...prev].slice(0, 100)
+        })
+        setLoadingActivities(false)
+      },
+      onError: () => {
+        loadActivities()
+      },
+    })
 
     const onModeChange = () => loadActivities()
     window.addEventListener('refweir_mode_changed', onModeChange)
 
     return () => {
-      clearInterval(interval)
+      unsubscribe()
       window.removeEventListener('refweir_mode_changed', onModeChange)
     }
   }, [])

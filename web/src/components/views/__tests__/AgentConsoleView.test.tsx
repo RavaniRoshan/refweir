@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 import { AgentConsoleView } from '../AgentConsoleView'
 import * as api from '@/lib/api'
+import * as events from '@/lib/events'
 
 vi.mock('@/lib/api', async () => {
   const actual = await vi.importActual<typeof api>('@/lib/api')
@@ -100,5 +101,44 @@ describe('AgentConsoleView Component', () => {
     fireEvent.click(catalogTab)
 
     expect(screen.getByText(/Model Context Protocol Tools/i)).toBeInTheDocument()
+  })
+
+  it('subscribes to live SSE agent activity and prepends incoming events', async () => {
+    let capturedHandler: ((act: any) => void) | undefined
+    vi.spyOn(events, 'subscribeAgentActivity').mockImplementation((opts: any) => {
+      capturedHandler = opts.onActivity
+      opts.onSnapshot?.([
+        {
+          id: 'seed-1',
+          agentName: 'seed-agent',
+          toolName: 'list_pull_requests',
+          status: 'success',
+          timestamp: '11:00:00 AM',
+          responseSummary: 'Initial snapshot item',
+        },
+      ])
+      return vi.fn()
+    })
+
+    render(<AgentConsoleView />)
+
+    await waitFor(() => {
+      expect(screen.getByText('seed-agent')).toBeInTheDocument()
+    })
+
+    // Now trigger a live event through the SSE subscription handler
+    capturedHandler?.({
+      id: 'live-streamed-1',
+      agentName: 'live-agent',
+      toolName: 'search_symbols',
+      status: 'success',
+      timestamp: '11:05:00 AM',
+      responseSummary: 'Found 12 symbols in AST',
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('live-agent')).toBeInTheDocument()
+      expect(screen.getByText('Found 12 symbols in AST')).toBeInTheDocument()
+    })
   })
 })
