@@ -24,9 +24,9 @@ export const metadata: Metadata = {
       'Scoped leases, pull requests, and policy-gated merges for coding agents — on your hardware, in one pure-Go binary.',
     images: [
       {
-        url: 'og-refweir-os.png',
-        width: 1200,
-        height: 630,
+        url: 'product/forge-home.png',
+        width: 1440,
+        height: 900,
         alt: 'refweir.dev — the self-hosted forge for coding agents',
       },
     ],

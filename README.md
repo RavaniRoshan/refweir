@@ -50,19 +50,6 @@ Refweir enforces a strict containment model: agents never receive root credentia
 
 ---
 
-## 🎬 Demonstrations
-
-<div align="center">
-
-| ⚡ **90-Second Agent Loop Demo** | 🛡️ **Autonomous Containment Walkthrough** |
-| :---: | :---: |
-| <a href="assets/demo.mp4"><img src="assets/demo.gif" alt="Refweir Terminal Demo" width="100%" /></a> | <a href="assets/demo.mp4"><img src="assets/desktop_with_browser.png" alt="Refweir Browser View" width="100%" /></a> |
-| **Cold Bootstrap to Merged Agent PR**<br /><em>Real-time terminal recording on macOS canvas</em><br /><a href="assets/demo.mp4"><strong>▶ Watch High-Definition Demo (1.4 MB)</strong></a> | **Live Web UI & Realtime SSE Stream**<br /><em>Primer design system, live agent console & audit log</em><br /><a href="assets/demo.mp4"><strong>▶ Watch Walkthrough</strong></a> |
-
-</div>
-
----
-
 ## 🚀 5-Minute Quickstart
 
 `refweird` is a single hermetic binary with the full web UI embedded. One command to install, one command to bootstrap, and your forge is live.
