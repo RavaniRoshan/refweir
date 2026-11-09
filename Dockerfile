@@ -27,15 +27,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=
 # ------------------------------------------------------------------------------
 # Stage 3: Hardened, Non-Root Enterprise Production Container
 # ------------------------------------------------------------------------------
-FROM alpine:3.21
+FROM debian:bookworm-slim
 
-# Install runtime dependencies: git and git-http-backend are required for Smart-HTTP transport
-RUN apk add --no-cache git ca-certificates tzdata \
-    && rm -rf /var/cache/apk/*
+# Install runtime dependencies: git (incl. git-http-backend) is required for Smart-HTTP transport
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates tzdata wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create unprivileged service user and group
-RUN addgroup -g 1000 refweir && \
-    adduser -u 1000 -G refweir -s /bin/sh -D refweir
+RUN groupadd -g 1000 refweir && \
+    useradd -u 1000 -g refweir -s /bin/sh -m refweir
 
 # Create persistent storage directories with strict access permissions
 RUN mkdir -p /var/lib/refweir/git /var/lib/refweir/audit && \
@@ -47,7 +48,7 @@ COPY --from=go-builder /bin/refweird /usr/local/bin/refweird
 COPY --from=go-builder /bin/refweir /usr/local/bin/refweir
 
 # Copy static Web UI assets into daemon directory
-COPY --from=web-builder /app/web/dist /var/lib/refweir/web/dist
+COPY --from=web-builder /app/internal/webui/dist /var/lib/refweir/web/dist
 
 USER refweir:refweir
 WORKDIR /var/lib/refweir
