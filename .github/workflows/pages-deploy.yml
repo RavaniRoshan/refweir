@@ -1,11 +1,11 @@
-name: Build and deploy site
+name: Build and Deploy Docs & Marketing Sites
 
 on:
   push:
     branches: [main]
     paths:
       - "site/**"
-      - ".github/workflows/pages.yml"
+      - ".github/workflows/pages-deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,14 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
           cache-dependency-path: site/package-lock.json
 
@@ -39,7 +39,7 @@ jobs:
         run: npm run typecheck
         working-directory: site
 
-      - name: Build static site
+      - name: Build static export
         run: npm run build
         working-directory: site
 
@@ -52,7 +52,7 @@ jobs:
         working-directory: site
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site/out
           include-hidden-files: true
@@ -69,4 +69,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4

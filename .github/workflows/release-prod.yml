@@ -1,5 +1,5 @@
-name: Release
- 
+name: Production Release & Container Publishing
+
 on:
   push:
     tags:
@@ -7,16 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version tag (e.g. v0.5.0-beta)'
+        description: 'Release version tag (e.g. v0.6.0-beta)'
         required: true
-        default: 'v0.5.0-beta'
+        default: 'v0.6.0-beta'
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
-    name: Build & Publish Release
+    name: Build Multi-Arch Binaries & Publish Release
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.vars.outputs.version }}
@@ -83,6 +84,36 @@ jobs:
             dist/release/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Build & Publish Container Images
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/refweird:${{ needs.release.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/refweird:latest
+          build-args: |
+            VERSION=${{ needs.release.outputs.version }}
 
   install:
     name: Install (${{ matrix.platform }})
