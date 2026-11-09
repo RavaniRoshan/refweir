@@ -129,6 +129,33 @@ func TestDemoAgentRunCreatesRealPRAndAudit(t *testing.T) {
 		}
 	}
 
+	// The visitor can merge the resulting agent PR without an account.
+	mergeBody, _ := json.Marshal(map[string]any{"prNumber": res.PRNumber})
+	reqMerge := httptest.NewRequest(http.MethodPost, "/api/v1/demo/merge", bytes.NewReader(mergeBody))
+	reqMerge.RemoteAddr = "203.0.113.7:12345"
+	recMerge := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recMerge, reqMerge)
+	if recMerge.Code != http.StatusOK {
+		t.Fatalf("merge status = %d, body = %s", recMerge.Code, recMerge.Body.String())
+	}
+	var merged demoMergeResult
+	if err := json.Unmarshal(recMerge.Body.Bytes(), &merged); err != nil {
+		t.Fatalf("decode merge response: %v", err)
+	}
+	if !merged.OK || merged.MergeCommitSHA == "" || merged.PRNumber != res.PRNumber {
+		t.Fatalf("unexpected merge result: %+v", merged)
+	}
+	afterMerge, err := application.Store.GetPullRequest(context.Background(), repo.ID, res.PRNumber)
+	if err != nil {
+		t.Fatalf("reload pull request: %v", err)
+	}
+	if !afterMerge.Merged || afterMerge.MergeCommitSHA != merged.MergeCommitSHA {
+		t.Fatalf("expected merged PR, got %+v", afterMerge)
+	}
+	if !strings.Contains(auditBuf.String(), "demo.merge") {
+		t.Fatalf("expected demo.merge in audit stream, got: %s", auditBuf.String())
+	}
+
 	// A second immediate run is rate-limited.
 	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/demo/agent-run", nil)
 	req2.RemoteAddr = "203.0.113.7:12345"
@@ -136,6 +163,47 @@ func TestDemoAgentRunCreatesRealPRAndAudit(t *testing.T) {
 	application.Handler().ServeHTTP(rec2, req2)
 	if rec2.Code != http.StatusTooManyRequests {
 		t.Fatalf("second run status = %d, want 429", rec2.Code)
+	}
+}
+
+func TestDemoMergeRejectsNonAgentBranch(t *testing.T) {
+	application := newDemoTestApp(t, true)
+	srv := httptest.NewServer(application.Handler())
+	defer srv.Close()
+	application.Config.DemoSelfURL = srv.URL
+
+	repo, err := application.Store.GetRepo(context.Background(), "demo", "agent-lab")
+	if err != nil {
+		t.Fatalf("get repo: %v", err)
+	}
+	mainSHA, err := application.Git.ResolveRef("demo", "agent-lab", "main")
+	if err != nil {
+		t.Fatalf("resolve main: %v", err)
+	}
+	pr := &store.PullRequest{
+		ID:        idgen.NewPR(),
+		RepoID:    repo.ID,
+		Title:     "human branch",
+		State:     "open",
+		HeadRef:   "feature/human",
+		BaseRef:   "main",
+		HeadSHA:   mainSHA.String(),
+		BaseSHA:   mainSHA.String(),
+		Mergeable: "mergeable",
+	}
+	if err := application.Store.CreatePullRequest(context.Background(), pr); err != nil {
+		t.Fatalf("create PR: %v", err)
+	}
+
+	body, _ := json.Marshal(map[string]any{"prNumber": pr.Number})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/demo/merge", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	application.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400 for a non-agent branch: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "agent/*") {
+		t.Fatalf("expected an agent/* error, got: %s", rec.Body.String())
 	}
 }
 

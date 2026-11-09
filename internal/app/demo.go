@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"refweir.dev/internal/audit"
 	"refweir.dev/internal/store"
 	"refweir.dev/pkg/agentlease"
@@ -73,6 +74,9 @@ func (a *App) registerDemoRoutes(mux *http.ServeMux) {
 	if a.demoLimiter == nil {
 		a.demoLimiter = newDemoRateLimiter()
 	}
+	if a.demoMergeLimiter == nil {
+		a.demoMergeLimiter = newDemoRateLimiter()
+	}
 	if a.demoSlots == nil {
 		a.demoSlots = make(chan struct{}, 1)
 	}
@@ -127,6 +131,130 @@ func (a *App) registerDemoRoutes(mux *http.ServeMux) {
 		}
 		_ = json.NewEncoder(w).Encode(result)
 	})
+
+	mux.HandleFunc("POST /api/v1/demo/merge", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+
+		ok, retry := a.demoMergeLimiter.allow(clientKey(r), time.Now())
+		if !ok {
+			w.Header().Set("Retry-After", fmt.Sprintf("%d", int(retry.Seconds())+1))
+			w.WriteHeader(http.StatusTooManyRequests)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"ok":      false,
+				"error":   "The demo allows one merge every 20 seconds (five per hour).",
+				"retryIn": retry.Round(time.Second).String(),
+			})
+			return
+		}
+
+		var req struct {
+			PRNumber int `json:"prNumber"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+
+		result, err := a.runDemoMerge(r.Context(), req.PRNumber)
+		if err != nil {
+			status := http.StatusBadRequest
+			if errors.Is(err, errDemoRepoUnavailable) {
+				status = http.StatusServiceUnavailable
+			}
+			w.WriteHeader(status)
+			_ = json.NewEncoder(w).Encode(map[string]any{"ok": false, "error": err.Error()})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(result)
+	})
+}
+
+type demoMergeResult struct {
+	OK             bool   `json:"ok"`
+	PRNumber       int    `json:"prNumber"`
+	MergeCommitSHA string `json:"mergeCommitSha"`
+	BaseRef        string `json:"baseRef"`
+}
+
+// runDemoMerge merges only an open agent/* pull request in the demo repository.
+// It cannot merge arbitrary PRs or any branch in a normal deployment.
+func (a *App) runDemoMerge(ctx context.Context, prNumber int) (*demoMergeResult, error) {
+	owner, name, ok := strings.Cut(a.Config.DemoRepo, "/")
+	if !ok || owner == "" || name == "" {
+		return nil, fmt.Errorf("REFWEIR_DEMO_REPO must be owner/name, got %q", a.Config.DemoRepo)
+	}
+	repo, err := a.Store.GetRepo(ctx, owner, name)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			return nil, errDemoRepoUnavailable
+		}
+		return nil, fmt.Errorf("load demo repository: %w", err)
+	}
+
+	var pr store.PullRequest
+	if prNumber > 0 {
+		pr, err = a.Store.GetPullRequest(ctx, repo.ID, prNumber)
+		if err != nil {
+			return nil, fmt.Errorf("pull request #%d not found", prNumber)
+		}
+	} else {
+		pulls, _, err := a.Store.ListPullRequests(ctx, repo.ID, "open", 20, "")
+		if err != nil {
+			return nil, fmt.Errorf("list demo pull requests: %w", err)
+		}
+		found := false
+		for _, candidate := range pulls {
+			if strings.HasPrefix(candidate.HeadRef, "agent/") {
+				pr = candidate
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errors.New("no open agent pull request to merge; run the agent first")
+		}
+	}
+
+	if !strings.HasPrefix(pr.HeadRef, "agent/") {
+		return nil, errors.New("the demo can only merge agent/* pull requests")
+	}
+	if pr.Merged {
+		return nil, fmt.Errorf("pull request #%d is already merged", pr.Number)
+	}
+	if pr.BaseRef != repo.DefaultBranch {
+		return nil, errors.New("the demo can only merge into the default branch")
+	}
+
+	sig := object.Signature{Name: "Refweir Demo", Email: "demo@refweir.dev", When: time.Now().UTC()}
+	msg := fmt.Sprintf("Merge pull request #%d from %s\n\n%s", pr.Number, pr.HeadRef, pr.Title)
+	mergeSHA, err := a.Git.Merge(owner, name, pr.BaseRef, pr.HeadRef, "squash", sig, msg)
+	if err != nil {
+		return nil, fmt.Errorf("merge demo pull request: %w", err)
+	}
+	if err := a.Store.SetPullRequestMergeResult(ctx, pr.ID, mergeSHA); err != nil {
+		return nil, fmt.Errorf("record demo merge: %w", err)
+	}
+
+	_ = audit.Log(audit.Event{
+		Actor:     "demo-visitor",
+		ActorType: "user",
+		Action:    "demo.merge",
+		Resource:  repo.FullName + "#" + fmt.Sprintf("%d", pr.Number),
+		Severity:  audit.SeverityInfo,
+		Details:   "Hosted demo visitor merged an agent/* pull request",
+		Metadata: map[string]interface{}{
+			"prNumber":       pr.Number,
+			"mergeCommitSha": mergeSHA,
+			"headRef":        pr.HeadRef,
+			"baseRef":        pr.BaseRef,
+			"demo":           true,
+		},
+	})
+
+	return &demoMergeResult{
+		OK:             true,
+		PRNumber:       pr.Number,
+		MergeCommitSHA: mergeSHA,
+		BaseRef:        pr.BaseRef,
+	}, nil
 }
 
 var errDemoRepoUnavailable = errors.New("demo repository is not seeded yet; run deploy/demo/seed.sh")

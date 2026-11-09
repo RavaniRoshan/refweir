@@ -33,7 +33,12 @@ The banner has two actions:
    repo over Smart-HTTP with that lease, commits a note on a new `agent/demo-*`
    branch, pushes it, and opens a real pull request. The lease cannot write
    `main`. The action is rate-limited at the app and at the edge.
-2. **Self-host Refweir** — links to the quickstart.
+2. **Merge the PR** — after a run, the banner can merge only that `agent/*`
+   pull request into the default branch through `POST /api/v1/demo/merge`. This
+   is demo-only, scoped to the demo repository, and rate-limited. It exists so a
+   visitor can complete the loop without an account; it is not a general
+   unauthenticated merge path.
+3. **Self-host Refweir** — links to the quickstart.
 
 The first run needs no signup. The demo exposes no admin credentials and no
 write path to `main`.
@@ -182,9 +187,11 @@ evidence.
 | Layer | Control |
 |---|---|
 | App | One agent run per client per 20 seconds; five per hour; one run in flight |
+| App | One merge per client per 20 seconds; five per hour |
 | App | Agent runs are capped to a single demo repository and `refs/heads/agent/*` |
+| App | Merges are capped to the demo repo, an `agent/*` head, and the default base |
 | App | A fresh lease expires after 10 minutes; the lease cannot touch `main`/`master` |
-| nginx | `10r/s` general API, `30r/m` agent-run, connection caps, 100 MB body |
+| nginx | `10r/s` general API, `30r/m` for demo runs/merges, connection caps, 100 MB body |
 | Container | `no-new-privileges`, all capabilities dropped, 2 GB / 2 CPU / 512 PID limits |
 
 The app limiter is in-memory, so it resets when the process restarts. The nginx
@@ -222,6 +229,7 @@ Run these on the deployed host, from a phone and a desktop, on a fresh network:
 - [ ] The seeded PR, issues, and release are visible.
 - [ ] **Try an agent run** returns a PR number in under 60 seconds.
 - [ ] The PR's head branch is `agent/demo-*`; `main` is unchanged.
+- [ ] **Merge the PR** succeeds, records a merge commit, and closes the PR.
 - [ ] A second run inside 20 seconds returns `429` with a retry hint.
 - [ ] `audit.log` contains `agent.lease_issued`, `git.receive_pack`,
       `demo.agent_run`, and the lease ID.

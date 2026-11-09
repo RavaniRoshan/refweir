@@ -187,7 +187,7 @@ checklist in §10 remains open.
 **Output:** `deploy/demo/` + a public demo URL
 **Tasks:**
 - [x] Seed a realistic repo: commits, issues, a PR, a release, an agent run, a lease, an audit trail. → `deploy/demo/seed.sh` (verified locally)
-- [x] Add a one-click "Try an agent run" flow; no signup wall for the first run. → `POST /api/v1/demo/agent-run`, `DemoBanner` button; performs a real lease-backed push and PR
+- [x] Add a one-click "Try an agent run" flow; no signup wall for the first run. → `POST /api/v1/demo/agent-run` + `POST /api/v1/demo/merge`, `DemoBanner` buttons; performs a real lease-backed push, PR, and scoped merge
 - [x] Reset the demo on a schedule; rate-limit; isolate tenants. → `deploy/demo/reset.sh`, systemd timer, app + nginx limits; single-tenant instance, isolation is the container/host (documented)
 - [x] Add a persistent "Demo" banner and a clear "self-host" CTA. → `web/src/components/views/DemoBanner.tsx`, gated by `demoMode` from `/api/v1/system/info`
 - [ ] Load-test the demo for launch day; add a status page. → blocked on deployment host

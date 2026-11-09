@@ -64,8 +64,9 @@ type App struct {
 	Telemetry     *telemetry.Client
 	LeaseSecret   []byte
 
-	demoLimiter *demoRateLimiter
-	demoSlots   chan struct{}
+	demoLimiter      *demoRateLimiter
+	demoMergeLimiter *demoRateLimiter
+	demoSlots        chan struct{}
 
 	handler http.Handler
 }

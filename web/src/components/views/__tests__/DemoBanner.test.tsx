@@ -9,10 +9,12 @@ vi.mock('@/lib/api', async () => {
   return {
     ...actual,
     runDemoAgent: vi.fn(),
+    mergeDemoPullRequest: vi.fn(),
   }
 })
 
 const mockedRun = vi.mocked(api.runDemoAgent)
+const mockedMerge = vi.mocked(api.mergeDemoPullRequest)
 
 describe('DemoBanner', () => {
   beforeEach(() => {
@@ -53,6 +55,36 @@ describe('DemoBanner', () => {
       'href',
       '/?tab=prs'
     )
+  })
+
+  it('merges the resulting agent PR through the demo endpoint', async () => {
+    mockedRun.mockResolvedValue({
+      ok: true,
+      agent: 'demo-agent',
+      leaseId: 'lease_123',
+      expiresAt: '2026-11-09T12:10:00Z',
+      branch: 'agent/demo-20261109-120000',
+      title: 'docs: add an agent-authored run note',
+      prNumber: 7,
+      prUrl: '/?tab=prs',
+      files: ['notes/agent-runs/20261109-120000.md'],
+      auditTail: [],
+    })
+    mockedMerge.mockResolvedValue({
+      ok: true,
+      prNumber: 7,
+      mergeCommitSha: 'abcdef1234567890',
+      baseRef: 'main',
+    })
+
+    render(<DemoBanner repo="demo/agent-lab" />)
+    fireEvent.click(screen.getByRole('button', { name: /try an agent run/i }))
+    await waitFor(() => expect(screen.getByText(/PR #7 opened/i)).toBeTruthy())
+
+    fireEvent.click(screen.getByRole('button', { name: /merge the demo pull request/i }))
+    await waitFor(() => expect(mockedMerge).toHaveBeenCalledWith(7))
+    await waitFor(() => expect(screen.getByText(/Merged PR #7 into/i)).toBeTruthy())
+    expect(screen.getByText(/abcdef1/)).toBeTruthy()
   })
 
   it('surfaces the server error without fabricating a result', async () => {

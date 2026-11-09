@@ -2306,6 +2306,34 @@ export async function runDemoAgent(): Promise<DemoAgentRunResult> {
   return data as DemoAgentRunResult
 }
 
+export interface DemoMergeResult {
+  ok: boolean
+  prNumber: number
+  mergeCommitSha: string
+  baseRef: string
+}
+
+/**
+ * Merge the open agent/* pull request in the hosted demo. The server only
+ * permits this in demo mode, only for the demo repository, and only for an
+ * agent/* head branch into the default branch.
+ */
+export async function mergeDemoPullRequest(prNumber: number): Promise<DemoMergeResult> {
+  if (isDemoModeActive()) {
+    throw new Error('The hosted demo merge needs a live demo server. Turn off sandbox demo mode.')
+  }
+  const res = await fetch('/api/v1/demo/merge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prNumber }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || `Demo merge failed (HTTP ${res.status})`)
+  }
+  return data as DemoMergeResult
+}
+
 // Export initial fallback values for components that need synchronous defaults
 export const defaultRepo = mockDefaultRepo
 export const sampleReadme = mockSampleReadme
