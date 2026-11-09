@@ -21,8 +21,8 @@ type DB struct {
 // Open opens (creating if necessary) the SQLite database at path, applies
 // pragmas, and runs migrations. Use ":memory:" for an ephemeral database.
 func Open(path string) (*DB, error) {
-	// modernc's driver expects a file: DSN with a few pragmas for durability.
-	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
+	// modernc's driver expects a file: DSN with a few pragmas for durability and performance in WAL mode.
+	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-16000)"
 	if path == ":memory:" {
 		dsn = "file::memory:?_pragma=busy_timeout(5000)"
 	}

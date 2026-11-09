@@ -84,6 +84,32 @@ func TestOpenEnablesForeignKeys(t *testing.T) {
 	}
 }
 
+func TestDiskPragmas(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "refweir_pragmas.db")
+	db, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open(%s): %v", path, err)
+	}
+	defer db.Close()
+
+	var jm string
+	if err := db.sql.QueryRow(`PRAGMA journal_mode`).Scan(&jm); err != nil {
+		t.Fatalf("PRAGMA journal_mode: %v", err)
+	}
+	if jm != "wal" {
+		t.Errorf("journal_mode = %q, want wal", jm)
+	}
+
+	var syncMode int
+	if err := db.sql.QueryRow(`PRAGMA synchronous`).Scan(&syncMode); err != nil {
+		t.Fatalf("PRAGMA synchronous: %v", err)
+	}
+	if syncMode != 1 {
+		t.Errorf("synchronous = %d, want 1 (NORMAL)", syncMode)
+	}
+}
+
 func tableExists(t *testing.T, db *DB, name string) bool {
 	t.Helper()
 	var n int
