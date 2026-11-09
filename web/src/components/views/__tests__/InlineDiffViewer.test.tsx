@@ -175,4 +175,56 @@ describe('InlineDiffViewer Component', () => {
     const textarea = screen.getByPlaceholderText(/leave a comment or review suggestion/i) as HTMLTextAreaElement
     expect(textarea.value).toContain('```suggestion')
   })
+
+  it('efficiently renders multi-file diffs with comments across both sides', () => {
+    const multiHunks = [
+      {
+        oldPath: 'src/file1.ts',
+        newPath: 'src/file1.ts',
+        additions: 2,
+        deletions: 2,
+        hunk: '@@ -1,2 +1,2 @@\n-deletedLineOne\n-deletedLineTwo\n+addedLineOne\n+addedLineTwo',
+      },
+    ]
+    const multiComments = [
+      {
+        id: 'c-left-1',
+        author: 'reviewer',
+        isAgent: false,
+        createdAt: '1m ago',
+        body: 'Comment on deleted line 1',
+        path: 'src/file1.ts',
+        line: 1,
+        side: 'LEFT' as const,
+        threadId: 'th-left-1',
+        resolved: false,
+      },
+      {
+        id: 'c-right-2',
+        author: 'reviewer',
+        isAgent: false,
+        createdAt: '1m ago',
+        body: 'Comment on added line 2',
+        path: 'src/file1.ts',
+        line: 2,
+        side: 'RIGHT' as const,
+        threadId: 'th-right-2',
+        resolved: false,
+      },
+    ]
+
+    render(
+      <InlineDiffViewer
+        owner="shiva"
+        repoName="refweir.dev"
+        prNumber={102}
+        diffHunks={multiHunks}
+        comments={multiComments}
+        onRefreshComments={() => {}}
+      />
+    )
+
+    expect(screen.getByText('Comment on deleted line 1')).toBeInTheDocument()
+    expect(screen.getByText('Comment on added line 2')).toBeInTheDocument()
+  })
 })

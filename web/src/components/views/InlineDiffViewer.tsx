@@ -83,6 +83,22 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Pre-index comments by path:line:side for O(1) per-line lookup instead of O(N*M) filtering
+  const commentsByLine = React.useMemo(() => {
+    const map = new Map<string, ReviewComment[]>()
+    for (const c of comments) {
+      const side = c.side || 'RIGHT'
+      const key = `${c.path}:${c.line}:${side}`
+      const list = map.get(key)
+      if (list) {
+        list.push(c)
+      } else {
+        map.set(key, [c])
+      }
+    }
+    return map
+  }, [comments])
+
   const handleApplySuggestion = async (commentId: string) => {
     setApplyingSuggestionId(commentId)
     setActionMessage(null)
@@ -358,13 +374,9 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                 const lineNumForComment = isDel ? currentOldLine : currentNewLine
                 const sideForComment: 'RIGHT' | 'LEFT' = isDel ? 'LEFT' : 'RIGHT'
 
-                // Filter comments for this path, line, and side
-                const lineComments = comments.filter(
-                  (c) =>
-                    c.path === diff.newPath &&
-                    c.line === lineNumForComment &&
-                    (!c.side || c.side === sideForComment)
-                )
+                // O(1) indexed lookup for line comments
+                const lineComments =
+                  commentsByLine.get(`${diff.newPath}:${lineNumForComment}:${sideForComment}`) || []
 
                 const isComposerOpen =
                   activeComposer?.path === diff.newPath &&
