@@ -281,12 +281,7 @@ checklist in §10 remains open.
 
 ## Phase 3 — IA and design system (Weeks 3–6)
 
-Template research: `docs/launch/FRONTEND_TEMPLATES.md` (free templates: Velora UI, Aceternity, Magic UI, Animata, Cruip, Launch UI; copy-paste component libraries; motion stack; "lowest effort, highest ROI" 5-day plan).
-
-Research input: `docs/launch/FRONTEND_RESEARCH.md` (best-in-class landing pages,
-component libraries, motion, and PH launch patterns; recommends keeping
-Patina/React Aria/Tailwind/Vite and adding TanStack Router/Query, SSE, Motion on
-the marketing site only, and Pierre/CodeMirror for diffs).
+Consolidated research (single source of truth): `research/full-frontend-launch.md` (11 parallel subagents + adversarial verification; covers GitHub/Cursor Origin/Scion/Cloudflare/Supabase/frontend architecture/design systems/motion/PH launch/OSS marketing/agentic UX/accessibility). Companion detail: `docs/launch/FRONTEND_RESEARCH.md`, `docs/launch/FRONTEND_TEMPLATES.md`.
 
 ### 3.1 Three IA prototypes — P0
 **Owner:** Design + Frontend
