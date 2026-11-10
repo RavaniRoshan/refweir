@@ -1,9 +1,16 @@
 # Refweir — one design system for the forge, the site, and the docs
 
-The product (`web/`), the landing (`site/`), and the documentation (`site/docs`)
-share one palette, one typeface, and one set of surfaces. There is no separate
-"marketing theme". A visitor can move from the landing into the docs and flip
-light/dark without the identity changing underneath them.
+The product (`web/`) and the documentation (`site/docs`) keep one palette, one
+typeface, and one set of surfaces. **The public landing (`site/app/page.tsx`)
+has its own approved marketing identity — "Ledger of record" — scoped to its
+own CSS module.** Docs and product keep their existing scopes; the landing does
+not reach into their tokens, and they do not reach into the landing's.
+
+Approved 2026-11-10 by the owner from three rendered concept routes
+(A · Ledger of record — chosen; B · Clearance document; C · Shutdown desk —
+rejected). The previous marketing presentation (pale-gray grid canvas, thin
+Mona Sans display, coral patina highlight, mono eyebrows, live-style demo
+widgets, agent-traffic band) was rejected wholesale and has been removed.
 
 ## Source of truth
 
@@ -11,141 +18,87 @@ light/dark without the identity changing underneath them.
 |---|---|---|
 | Product tokens | `web/src/styles/tokens.css` | OKLCH palette, radii, font stacks, motion |
 | Product semantics | `web/src/styles/theme.css` | shadcn-style semantic aliases |
-| Site mirror | `site/app/global.css` | the same palette plus landing/docs devices |
-| Site fonts | `site/app/layout.tsx` | Mona Sans Variable via `@fontsource-variable/mona-sans` |
+| Docs theme | `site/app/global.css` | canvas/text tokens + `--color-fd-*` docs mapping (unchanged) |
+| Landing tokens | `site/components/marketing/ledger/ledger.module.css` | scoped "Ledger of record" palette + type roles |
+| Landing copy/facts | `site/components/marketing/ledger/facts.ts` | the one verified fact set, traceable to CLAIMS.md |
+| Site fonts | `site/app/layout.tsx` | Mona Sans Variable via `@fontsource-variable/mona-sans` (body/UI role on the landing; docs unchanged) |
 
-If a colour changes, it changes in `web/src/styles/tokens.css` first, then the
-matching values in `site/app/global.css`. The site deliberately keeps legacy
-names (`--paper`, `--ink`, `--signal`, `--ember`) as aliases so older marketing
-components resolve to the new palette instead of drifting.
+If a colour changes in the product, it changes in `web/src/styles/tokens.css`
+first, then the matching values in `site/app/global.css`. Landing values live
+only in the landing module and are independent of the `.dark` flip (the
+landing is a fixed light surface; docs keep their theme toggle).
 
-## The palette — Patina on Primer structure
+## The landing palette — "Ledger of record"
 
-Primer supplies the *structure*: canvas / slab / raised surfaces, hairline
-borders, muted text, 6px controls. Patina (oxidized copper) is the signal;
-brass is the warm secondary. Light is the default, dark is a real token flip.
+Warm paper, ink text, oxblood accent, one green for allowed states. Authorized
+values (hex, from measured OKLCH); no other hues, no gradients on text, no
+grid textures, no glows.
 
-| Token | Light | Dark | Role |
-|---|---|---|---|
-| `--canvas` | `oklch(0.972 0.002 250)` ≈ `#f6f8fa` | `oklch(0.155 0.012 258)` ≈ `#10151c` | page |
-| `--slab` | `oklch(1 0 0)` | `oklch(0.195 0.014 258)` | cards, plates |
-| `--raised` | `oklch(0.955 0.003 250)` | `oklch(0.225 0.013 258)` | hover fills, bars |
-| `--hairline` | `oklch(0.885 0.006 255)` | `oklch(0.285 0.01 255)` | 1px borders |
-| `--text-1` | `oklch(0.238 0.008 265)` | `oklch(0.935 0.012 250)` | primary text |
-| `--text-2` | `oklch(0.44 0.012 258)` | `oklch(0.635 0.013 252)` | body |
-| `--text-3` | `oklch(0.575 0.012 258)` | `oklch(0.485 0.012 252)` | captions, meta |
-| `--patina` | `oklch(0.45 0.065 184)` ≈ `#2E6F63` | `oklch(0.82 0.06 186)` ≈ `#8CD2C3` | primary signal |
-| `--patina-hover` | `oklch(0.39 0.07 184)` | `oklch(0.75 0.06 186)` | primary hover |
-| `--patina-ink` | `oklch(0.965 0.012 181)` | `oklch(0.16 0.02 184)` | text on patina |
-| `--patina-soft` | `oklch(0.93 0.025 184)` | `oklch(0.28 0.03 186)` | selected rows, badges |
-| `--brass` | `oklch(0.63 0.115 86)` | `oklch(0.78 0.1 88)` | secondary / warning |
-| `--brass-soft` | `oklch(0.94 0.045 88)` | `oklch(0.3 0.045 86)` | brass wash |
-| `--danger` | `oklch(0.55 0.2 25)` | same | destructive |
+| Token | Value | Role |
+|---|---|---|
+| `--a-canvas` | `#fbf5eb` | page (warm paper) |
+| `--a-slab` | `#fffdf9` | figure sheets |
+| `--a-ink` | `#29211a` | primary text |
+| `--a-ink2` | `#322820` | body/secondary text |
+| `--a-ox` | `#710909` | accent + CTA + denied text |
+| `--a-ox-hover` | `#5c0505` | CTA hover |
+| `--a-green` | `#003d01` | allowed-state text only (never a fill) |
+| rules | `color-mix(#29211a 26%/12%, transparent)` | hairlines / soft rules |
 
-Rules:
+Contrast was measured (WCAG 2.x, computed OKLCH→sRGB; recorded in the plan
+ledger): ink/canvas 5.50:1 · ink2/canvas 4.77:1 · ox/canvas 7.03:1 ·
+ox/slab 7.23:1 · CTA paper-ink/ox 7.01:1 · green/slab 4.70:1 · green/canvas
+4.57:1. Status meaning is never color-only: every row spells out
+granted/accepted/denied/opened/passing/merged/revoked in text.
 
-- Patina carries primary actions, active states, pass states, and the one
-  accented phrase in a headline. It is not a background for body copy.
-- Brass is for "denied", warnings, and the second window dot. Never for primary
-  actions.
-- Hairlines are 1px. Strong frames use `color-mix(text-1 82%, transparent)`;
-  dark mode uses 75%.
-- No other hues. Product screenshots may contain their own interior colours.
-- Selection is patina with `--patina-ink`; focus is a 2px patina ring at 3px.
+## Landing typography
 
-### Dark mode
+- **Display (serif role):** `Iowan Old Style, 'Palatino Linotype', Palatino,
+  Georgia, 'Times New Roman', serif` — system stack, weight 400, display
+  clamp(2.45rem → 4.4rem), line-height 1.04, tracking −0.012em, `text-wrap: balance`.
+- **Body/UI role:** Mona Sans Variable (already local; kept after the rendered
+  comparison — display serif and body sans roles are distinct identities).
+- **Code/technical role:** `ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo,
+  Consolas, 'Liberation Mono', monospace` — labels, indexes, run records,
+  install block. Mono meta is capped (11–13px), uppercase + 0.08–0.16em
+  tracking for statuses.
 
-The Fumadocs provider (`components/provider.tsx`) owns a `next-themes`
-provider with `attribute: "class"`. The `.dark` class flips every token,
-including the `--color-fd-*` docs variables and the shadcn aliases. There is no
-`prefers-color-scheme` CSS branch. `ThemeToggle` in the marketing nav calls the
-same provider, so the landing and docs stay in sync and the choice persists.
+## Landing layout and content rules
 
-## Typography
+- One 880px narrative column (`.wrap`), sections separated by soft hairlines,
+  numbered like a ledger (`fig 1`, `§1…§7`). No cards, no grids, no
+  window-chrome simulations, no status rails.
+- Landing order: `Nav → Hero → Proof (run record) → Clauses (facts) →
+  Install → Footer`. Nothing repeats the lease/merge story per-section.
+- The single proof element is fig 1: a static transaction table
+  (lease → allowed push → denied protected push → PR → checks → human merge →
+  revoke). It is labeled *illustrative* with an explicit "not a live
+  connection" caption. The word LIVE is reserved for genuinely live
+  connections and does not appear on the page.
+- Primary CTA → the on-page install block (verified quickstart commands from
+  `scripts/install.sh` + docs: install via
+  `raw.githubusercontent.com/RavaniRoshan/refweir/...`, bootstrap with
+  `refweird bootstrap --email admin@corp.refweir.dev --namespace acme
+  --data-dir ./data`, open `http://localhost:8080`).
+- No client-side JavaScript is added for the landing (static server
+  components only). Motion: none — no marquees, reveals, carets, or pulses.
+  `prefers-reduced-motion` is trivially satisfied.
+- Accessibility: skip link, one `h1`, section `aria-labelledby`, natural link
+  tab order, in-module `:focus-visible` (2px oxblood, 3px offset).
 
-- **Mona Sans Variable** — everything sans. Weights: 300 for display, 400 for
-  body, 500–600 for UI labels and the wordmark. Display tracking `-0.035em` to
-  `-0.047em`; display line-height `0.98–1.02`.
-- **`ui-monospace`** — eyebrows, coordinates, code, status bars, command chips,
-  figure captions, terminal. No second webfont.
-- Headlines are `font-light` with one patina phrase: "From lease to **merge.**",
-  "**Policy** at every step", "Built for **agents.**", "**Evidence,** not
-  adjectives." Do not colour whole headlines.
-- Body copy is 15–18px with `text-wrap: pretty`; headings use `balance`.
-- Mono meta is uppercase with `0.14em–0.22em` tracking, 9–11px.
+## The docs identity (unchanged scope)
 
-## Layout
+- Fumadocs tokens derive from the `global.css` palette:
+  `--color-fd-background: var(--canvas)`, `--color-fd-primary: var(--patina)`,
+  etc. The docs sidebar, TOC, search, and code blocks keep today's identity.
+- `lib/layout.shared.tsx` and every marketing/docs link route through
+  `asset()` / `basePath` so production URLs stay under `/refweir/`.
+- Docs MDX exposes the shared `Kbd` primitive; figures use fumadocs `Frame`.
+- The Fumadocs provider owns `next-themes` (`class` attribute); `.dark`
+  flips every token including the `--color-fd-*` variables. There is no
+  `prefers-color-scheme` CSS branch.
 
-- `.container-site`: max 1400px, 16px gutters, 32px from `md`.
-- Sections: `py-16` mobile / `py-24` desktop. Major sections end in a hairline.
-- 12-column grids, asymmetric spans (`5/4/3`, `7/5`). Never three equal cards.
-- Landing order: `Nav → Hero → SwarmBand → Loop → Product → Platform →
-  Quickstart → Evidence → FinalCta → StatusFooter`.
-- Every section starts with a numbered mono eyebrow (`01 — the agent loop`).
-- Rules, crosshairs, rulers, and dither seams provide structure instead of
-  shadows. Cards are flat; only media plates get a slight elevation.
-
-## Surfaces and devices
-
-| Class | Use |
-|---|---|
-| `.frame` / `.frame-strong` | flat hairline panels (lease JSON, ref isolation, layers) |
-| `.window` / `.window-bar` / `.window-dots` | browser/terminal chrome around live demos and screenshots |
-| `.plate` / `.plate-inner` | double-bezel media plate, 14px outer / 9px inner |
-| `.btn` / `.btn-signal` / `.btn-ink` / `.btn-ghost` | 44px controls, 6px radius, 1px border, hover inversions; disabled resolves to `--raised` + `--text-3` |
-| `.btn-chip` | circular trailing icon; nudges on hover |
-| `.cmd` / `.cmd-scroll` / `.cmd-copy` | install chip; horizontal scroll with mask, copy button |
-| `.tab` | mono tab strip; patina underline on `aria-selected="true"` |
-| `.kbd` | keyboard key, mono 10px |
-| `.eyebrow` / `.marker` | indexed label; patina wash behind one headline phrase |
-| `.ruler` / `.crosshair` / `.halftone` / `.grid-field` / `.hatch` / `.dither` | print-engineering instruments |
-| `.statusbar` / `.pixel` | footer rail and square mark |
-| `.gate-item` / `.gate-box` | merge-gate checklist rows |
-
-Frames are 6–8px radius; media windows 10px. Controls are 6px. No pill-shaped
-cards, no glassmorphism, no gradients on text.
-
-## Motion
-
-- Easing: `--ease-out: cubic-bezier(0.2, 0, 0, 1)`; entrances use
-  `--ease-spring: cubic-bezier(0.32, 0.72, 0, 1)`.
-- Entrance: `.reveal` = opacity 0 → 1, `translateY(28px)` → 0, `blur(6px)` → 0,
-  760ms, driven by an IntersectionObserver in `Reveal.tsx`.
-- State changes: 140–200ms colour/border transitions. Press translates 1px; it
-  never scales.
-- Looping devices: marquee 38s, caret 1.05s step-end, status dot pulse 2.4s,
-  scanline 1.1s, pulse ring 2s, `rise-in` 420ms.
-- Hover inversions: platform cards, evidence rows, and primary buttons flip
-  foreground/background rather than adding a shadow.
-- `prefers-reduced-motion` disables reveals, marquees, carets, pulses,
-  scanlines, and smooth scrolling; content renders in its final state.
-
-## Interactive modules
-
-- **`ForgeDemo`** (hero) — auto-sequences lease → push → PR → checks → merge in
-  5 rows, with pause/play, replay, clickable progress segments, an aria-live
-  narration, and a "merged" stamp. Reduced motion jumps to the completed state.
-- **`Loop`** (01) — six-step tabbed pipeline. Auto-advances every 4.6s until
-  the pointer or focus enters; supports Arrow keys, Home, End; each step types
-  a terminal transcript with `rise-in` lines and a caret.
-- **`ProductPreview`** (02) — keyboard-accessible tabs over the three real
-  screenshots; changes trigger a scanline and a caption/badge swap.
-- **`MergeGate`** — check the three policy items to enable the merge button;
-  merging shows an inverted success panel with a pulse ring and reset.
-- **`QuickstartTerminal`** (04) — scroll-triggered, types install → bootstrap →
-  run, prints verified output lines, supports skip/run-again, copies all
-  commands. The visible typing is `aria-hidden`; an `sr-only` block keeps the
-  real commands in the initial HTML for the claims gate.
-- **`PixelField` + `SwarmBand`** — canvas blueprint dots with agent cells,
-  trails, and a pointer wake; pauses off-screen and under reduced motion.
-- **`ScrollProgress`** — 1px patina rail at the bottom of the sticky nav.
-- **`LiveClock`** — UTC clock in the status bar; hydrates without mismatch.
-- **`ThemeToggle`** — one switch for landing + docs.
-
-## Screenshots
-
-All product imagery is captured from a real seeded `refweird`, not mocked in the
-site:
+## Product screenshots (docs imagery)
 
 ```bash
 bash scripts/capture/seed.sh /tmp/refweir-capture 18081
@@ -159,45 +112,36 @@ bash scripts/capture/seed.sh /tmp/refweir-capture 18081
 | `site/public/product/forge-agents.png` | agent console / MCP + leases |
 | `site/public/product/forge-pr.png` | pull request + checks + merge gate |
 | `site/public/forge-pr.png` | docs hero (same capture) |
-| `site/public/og-refweir-os.png` | 1200×630 social card, dark Patina |
+| `site/public/og-refweir-os.png` | 1200×630 social card (legacy from the previous presentation) |
 
-The captures are 2880×1800 (2× DPR) but are rendered in a 1440×900 box, so
-`next/image` dimensions stay `1440×900`. Figures are numbered 1–4 because the
-hero demo is fig. 1. Captions state the view and "real ui".
+The landing page itself renders no product imagery; docs keep their captures.
 
-## Documentation
+## Accessibility (docs + landing)
 
-- Fumadocs tokens are derived from the same palette:
-  `--color-fd-background: var(--canvas)`, `--color-fd-primary: var(--patina)`,
-  etc. The docs sidebar, TOC, search, and code blocks inherit the identity.
-- `lib/layout.shared.tsx` and every marketing link use `asset()` /
-  `basePath` so production URLs stay under `/refweir.dev/`.
-- Docs MDX exposes the shared `Kbd` primitive. Frames use `Frame` with
-  `/forge-pr.png`.
-- The theme toggle in the docs sidebar and the marketing `ThemeToggle` write the
-  same preference.
-
-## Accessibility
-
-- Tabs use `role="tablist"`, `aria-selected`, roving `tabIndex`, and full
-  keyboard support.
-- The merge demo exposes `aria-live` state; decorative canvases are
-  `aria-hidden`.
-- Focus rings are visible on both palettes; hover inversions are duplicated
-  with `focus-visible` styles.
-- The terminal's typed surface is decorative; commands remain available to
-  assistive tech and to the claims audit.
-- Contrast: body copy uses `--text-2` on `--canvas`; small mono meta uses
-  `--text-3` only for non-essential captions. Patina fills always pair with
-  `--patina-ink`.
+- Tabs/docs components come from Fumadocs and keep their keyboard behavior.
+- Global `:focus-visible` gives docs a patina ring; the landing module
+  overrides it with oxblood inside `.root`.
+- Contrast: docs body copy uses `--text-2` on `--canvas`; landing pairs are
+  measured above. Both palettes carry text labels for all statuses.
 
 ## Guardrails
 
-- No second palette, no Tailwind default colours in new marketing code.
-- No stale screenshots, fake product UI, stock photos, or invented metrics.
+- No stale screenshots, fake product UI, stock photos, invented metrics, or
+  simulated terminals on the landing.
 - No claim without a `CLAIMS.md` entry; `npm run claims-audit` reads the built
-  HTML and must stay green. The forbidden list includes "primer" and stale
-  counts.
-- No animation library; native CSS keyframes + canvas are enough.
+  HTML and must stay green (10 required needles — headline, install/BASH
+  command, bootstrap command, lease isolation, version, license, ports, MCP
+  sandbox — 19 forbidden phrases). Also enforced in Go via
+  `internal/claims/coherence_test.go` over `site/{content,app,components}`.
+- No animation library; the landing adds none.
 - Every push gate: `site npm run verify`, `web npm test && npm run build`,
   `go test ./...`.
+
+## Legacy notes
+
+- `site/app/global.css` device classes used only by the deleted 2026-11-10
+  marketing widgets (`.window`, `.cmd`, `.gate-item`, `.plate`, `.ruler`,
+  motion keyframes, …) were pruned. The surviving `components/ui/*` wrappers
+  belong to the Fumadocs/docs scope.
+- `og-refweir-os.png` still carries the previous presentation's look; a new
+  social card in the approved identity is pending launch work (owner).

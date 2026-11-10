@@ -23,12 +23,13 @@ const required = [
   ['the self-hosted forge for', 'hero headline'],
   ['coding agents.', 'hero accent'],
   ['install.sh | bash', 'install command'],
-  ['refweird bootstrap --email admin@example.com', 'bootstrap command'],
+  ['refweird bootstrap --email admin@corp.refweir.dev', 'bootstrap command'],
   ['refs/heads/agent/*', 'lease isolation'],
   ['v0.6.0-beta', 'current release'],
   ['apache-2.0', 'license'],
   [':8080', 'single-port web UI / api / mcp'],
   [':2222', 'embedded ssh'],
+  ['mcp/readonly', 'read-only agent sandbox'],
 ];
 
 const forbidden = [
