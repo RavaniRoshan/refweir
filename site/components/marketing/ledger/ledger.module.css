@@ -196,10 +196,6 @@
   white-space: pre;
 }
 
-.footMuted {
-  color: var(--a-ink2);
-}
-
 .nav {
   border-bottom: 1px solid var(--a-rule);
 }
@@ -274,10 +270,6 @@
 .skip:focus {
   left: 12px;
   top: 12px;
-}
-
-.headlineSpans {
-  /* keep the accent phrase inside the display heading */
 }
 
 @media (prefers-reduced-motion: reduce) {

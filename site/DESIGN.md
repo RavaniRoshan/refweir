@@ -45,10 +45,11 @@ grid textures, no glows.
 | `--a-green` | `#003d01` | allowed-state text only (never a fill) |
 | rules | `color-mix(#29211a 26%/12%, transparent)` | hairlines / soft rules |
 
-Contrast was measured (WCAG 2.x, computed OKLCH→sRGB; recorded in the plan
-ledger): ink/canvas 5.50:1 · ink2/canvas 4.77:1 · ox/canvas 7.03:1 ·
-ox/slab 7.23:1 · CTA paper-ink/ox 7.01:1 · green/slab 4.70:1 · green/canvas
-4.57:1. Status meaning is never color-only: every row spells out
+Contrast was measured (WCAG 2.x, computed directly from the shipped hex
+values; script `contrast-hex.mjs` in the plan workspace): ink/canvas 14.59:1 ·
+ink2/canvas 13.26:1 · ox/canvas 11.09:1 · ox/slab 11.84:1 ·
+CTA text/ox fill 11.42:1 · green/slab 12.39:1 · green/canvas 11.60:1. Status
+meaning is never color-only: every row spells out
 granted/accepted/denied/opened/passing/merged/revoked in text.
 
 ## Landing typography

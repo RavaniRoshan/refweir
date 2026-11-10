@@ -47,7 +47,7 @@ export function LedgerLanding() {
         <div className={styles.wrap}>
           <section className={styles.section} aria-labelledby="hero-h1">
             <p className={styles.label}>Self-hosted forge for coding agents · prerelease · Apache-2.0</p>
-            <h1 id="hero-h1" className={`${styles.serif} ${styles.display} ${styles.headlineSpans}`}>
+            <h1 id="hero-h1" className={`${styles.serif} ${styles.display}`}>
               Every push an agent makes is <span className={styles.accent}>recorded, checked,</span>{' '}
               and merge stays yours.
             </h1>
@@ -77,7 +77,7 @@ export function LedgerLanding() {
           </section>
 
           <section className={styles.section} aria-labelledby="proof-h2">
-            <p className={styles.clauseNo}>fig 1 — a real transaction, start to finish</p>
+            <p className={styles.clauseNo}>fig 1 — one transaction, start to finish (illustrative)</p>
             <h2 id="proof-h2" className={`${styles.serif} ${styles.h2}`} style={{ marginTop: '0.7rem' }}>
               The transaction is the argument.
             </h2>
@@ -137,7 +137,7 @@ export function LedgerLanding() {
             <h2 id="install-h2" className={`${styles.serif} ${styles.h2}`} style={{ margin: '0.7rem 0 1.2rem' }}>
               Try it in three lines.
             </h2>
-            <div className={`${styles.mono} ${styles.installBox}`} aria-label="Install commands">
+            <div className={`${styles.mono} ${styles.installBox}`}>
               <span style={{ color: 'var(--a-ink2)' }}>
                 # installs the newest published release, sha-256 verified before unpacking
               </span>
@@ -162,9 +162,9 @@ export function LedgerLanding() {
               className={styles.mono}
               style={{ marginTop: '0.9rem', fontSize: 12.5, color: 'var(--a-ink2)' }}
             >
-              {VERSION_LINE} · release notes:{' '}
+              {VERSION_LINE} ·{' '}
               <a className={styles.ghost} href={RELEASE_URL} rel="noreferrer">
-                github.com/RavaniRoshan/refweir
+                release notes
               </a>
             </p>
           </section>
