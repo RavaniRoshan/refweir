@@ -20,7 +20,7 @@ Set the provider credentials via arguments or environment variables:
 
 ```bash
 export REFWEIR_ENDPOINT="https://git.internal.corp"
-export REFWEIR_TOKEN="refweir_pat_01k..."
+export REFWEIR_TOKEN="<your-pat-token>"
 ```
 
 ## Running with OpenTofu / Terraform

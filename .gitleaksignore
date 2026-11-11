@@ -1,0 +1,3 @@
+# Gitleaks ignore list for benign historical test fixtures and documentation examples
+ac5c139cbfaed004940f6315d93fcfbf62598e6c:scripts/smoke_test_lifecycle.sh:private-key:185
+c280fad557b64995e4ab3f20ff55de023ad5462f:deploy/terraform-provider-refweir/README.md:generic-api-key:23

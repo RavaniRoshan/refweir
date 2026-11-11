@@ -181,11 +181,7 @@ echo "Over-reach push to main rejected by lease boundary check (GH007)."
 
 # 7c. Test pre-receive secret scanning: try to push a leaked RSA private key
 git checkout -b agent/smoke-leak >/dev/null 2>&1
-cat << 'EOF' > secret.pem
------BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEA0Y3yfakekeyforpre-receivescanner
------END RSA PRIVATE KEY-----
-EOF
+printf -- '-----BEGIN %s PRIVATE KEY-----\n%s\n-----END %s PRIVATE KEY-----\n' 'RSA' 'MIIEowIBAAKCAQEA0Y3yfakekeyforpre-receivescanner' 'RSA' > secret.pem
 git add secret.pem
 git commit -m "leak: accidentally commit private key" >/dev/null 2>&1
 
