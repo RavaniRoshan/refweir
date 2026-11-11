@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 
-// Machine gate for the marketing landing: every capability statement on the
+// Machine gate for documentation home: every capability statement on the
 // page must still trace to CLAIMS.md. Needles are matched case-insensitively
 // against markup-stripped text so wording can drift without breaking the gate,
 // but the underlying claims cannot silently vanish or weaken.
 
-const raw = readFileSync(new URL('../out/index.html', import.meta.url), 'utf8');
+const raw = readFileSync(new URL('../out/docs/index.html', import.meta.url), 'utf8');
 const html = raw
   .replace(/<script[\s\S]*?<\/script>/gi, ' ')
   .replace(/<style[\s\S]*?<\/style>/gi, ' ')

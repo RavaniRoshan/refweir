@@ -1,4 +1,4 @@
-import { Logomark } from '@/components/marketing/icons';
+import { Logomark } from '@/components/icons';
 
 export function Logo() {
   return (

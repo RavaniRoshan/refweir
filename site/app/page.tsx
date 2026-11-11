@@ -1,5 +1,5 @@
-import { LedgerLanding } from '@/components/marketing/ledger/landing';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <LedgerLanding />;
+  redirect('/docs/');
 }

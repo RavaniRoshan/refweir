@@ -8,7 +8,7 @@ import {
   composeRenderProps,
   type CheckboxProps,
 } from 'react-aria-components';
-import { IconCheck } from '@/components/marketing/icons';
+import { IconCheck } from '@/components/icons';
 
 function Checkbox({
   className,

@@ -30,7 +30,26 @@ for (const file of walk(docsDir)) {
 
   const rel = relative(docsDir, dirname(file)).split(/[\\/]/).join('/');
   if (rel === '') {
-    skipped += 1; // docs home — the marketing page owns / now
+    // docs home — root redirects directly to /docs/
+    const target = `${baseUrl}/docs/`;
+    writeFileSync(
+      join(outDir, 'index.html'),
+      [
+        '<!doctype html>',
+        '<html lang="en">',
+        '<head>',
+        '<meta charset="utf-8">',
+        '<title>refweir.dev docs</title>',
+        `<link rel="canonical" href="${target}">`,
+        '<meta http-equiv="refresh" content="0; url=/refweir/docs/">',
+        "<script>window.location.replace('/refweir/docs/');</script>",
+        '</head>',
+        '<body><p>Redirecting to <a href="/refweir/docs/">Refweir Documentation</a>...</p></body>',
+        '</html>',
+        '',
+      ].join('\n')
+    );
+    emitted += 1;
     continue;
   }
 

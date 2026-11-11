@@ -5,13 +5,13 @@ export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: <Logo />,
-      url: '/',
+      url: '/docs/',
     },
     githubUrl: 'https://github.com/RavaniRoshan/refweir',
     links: [
       {
-        text: 'refweir.dev site',
-        url: '/',
+        text: 'Documentation',
+        url: '/docs/',
       },
       {
         text: 'Releases',
