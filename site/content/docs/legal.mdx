@@ -1,0 +1,63 @@
+---
+title: Privacy, Terms & Legal Notice
+description: Privacy disclosures, cookie notice, and open-source licensing terms for Refweir and its documentation.
+---
+
+## Overview
+
+Refweir is an open-source, self-hosted Git forge distributed under the **Apache-2.0** license. This document provides clear, transparent disclosures regarding privacy, cookies, data storage, and terms of use for both the public documentation site and the self-hosted daemon.
+
+---
+
+## 1. Documentation Site Privacy
+
+The public documentation site (`https://ravaniroshan.github.io/refweir/`) is a static site hosted on GitHub Pages.
+
+- **Data Collection:** The Refweir project does not collect, sell, or process personal data, email addresses, or form submissions through this site.
+- **Analytics & Tracking:** The documentation site runs zero third-party analytics (no Google Analytics, no Segment, no PostHog, no tracking pixels) and zero session replay tools.
+- **Cookies:** The documentation site sets **zero cookies** and does not use local storage for tracking. Theme preferences are handled client-side without transmitting data over the network.
+- **Hosting Provider:** GitHub may collect standard HTTP server logs (such as visitor IP addresses) for security and operational purposes pursuant to the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement).
+
+---
+
+## 2. Self-Hosted Forge Privacy & Data Ownership
+
+When you deploy and run the `refweird` forge daemon on your own infrastructure:
+
+- **100% Data Sovereignty:** All Git repositories, commits, branch heads, pull requests, issues, comments, user accounts, and cryptographic keys reside entirely on your own server or storage volume.
+- **Zero Telemetry / Zero Phone-Home:** Refweir contains **no remote telemetry**, no heartbeat pings, and no phone-home mechanisms. Your server does not transmit usage statistics, codebase contents, or symbol indices to external servers.
+- **Session Cookies:** The embedded Web UI uses a single, strictly necessary session cookie (`refweir_session`) configured with `HttpOnly`, `SameSite=Lax`, and `Secure` flags. This cookie is used exclusively to maintain your active login session and is exempt from prior-consent requirements under Article 5(3) of the EU ePrivacy Directive.
+- **Browser Storage:** The Web UI stores non-sensitive UI state locally in `localStorage` (`refweir_onboarding_tour_completed`, `refweir_sandbox_demo_mode`). This data never leaves your browser.
+
+---
+
+## 3. Terms of Use & Licensing
+
+Refweir is free and open-source software licensed under the **Apache License, Version 2.0**:
+
+- **Permitted Use:** You may freely run, inspect, modify, package, distribute, and self-host Refweir for personal, academic, or commercial purposes, subject to the conditions of the Apache-2.0 license.
+- **Warranty Disclaimer:** Refweir is provided on an *"AS IS"* basis, without warranties or conditions of any kind, either express or implied, including, without limitation, any warranties or conditions of title, non-infringement, merchantability, or fitness for a particular purpose.
+- **Limitation of Liability:** In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from the use of the software.
+
+The complete license text is available in the project repository at [`LICENSE`](https://github.com/RavaniRoshan/refweir/blob/main/LICENSE).
+
+---
+
+## 4. Third-Party Open Source Components
+
+Refweir utilizes open-source libraries and fonts with compatible licenses:
+
+| Component | License | Purpose |
+|---|---|---|
+| **Mona Sans** | SIL Open Font License 1.1 | Variable typography |
+| **Lucide Icons** | ISC License | System interface icons |
+| **go-git** | Apache-2.0 | Pure-Go Git transport and repository storage |
+| **modernc.org/sqlite** | BSD-3-Clause | Pure-Go embedded SQLite driver |
+| **React Aria** | Adobe Open Source (Apache-2.0) | Accessible UI primitives and focus management |
+| **Fumadocs** | MIT License | Static documentation engine |
+
+---
+
+## 5. Contact & Security Inquiries
+
+For security vulnerabilities or privacy inquiries, please open a private security advisory on GitHub or contact the maintainer at `shivamkumar10958@gmail.com`.

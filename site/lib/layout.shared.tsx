@@ -14,6 +14,10 @@ export function baseOptions(): BaseLayoutProps {
         url: '/docs/',
       },
       {
+        text: 'Privacy & Terms',
+        url: '/docs/legal',
+      },
+      {
         text: 'Releases',
         url: 'https://github.com/RavaniRoshan/refweir/releases',
         external: true,
