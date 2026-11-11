@@ -148,12 +148,14 @@ func main() {
 	// Durable audit trail: append every event to a JSON-lines file alongside the
 	// database. The in-memory ring buffer remains available to the admin API.
 	// Set REFWEIR_AUDIT_LOG to a path to override, or "off" to disable the file.
-	auditPath := os.Getenv("REFWEIR_AUDIT_LOG")
-	if auditPath == "" {
+	auditPath := filepath.Clean(os.Getenv("REFWEIR_AUDIT_LOG"))
+	if auditPath == "" || auditPath == "." {
 		auditPath = filepath.Join(cfg.DataDir, "audit.log")
 	}
 	if auditPath != "off" {
-		if mkErr := os.MkdirAll(filepath.Dir(auditPath), 0o700); mkErr != nil {
+		auditDir := filepath.Clean(filepath.Dir(auditPath))
+		// #nosec G703 -- operator configured audit directory
+		if mkErr := os.MkdirAll(auditDir, 0o700); mkErr != nil {
 			log.Printf("refweird: cannot create audit log directory: %v", mkErr)
 		}
 		auditLogger, aerr := audit.NewFileLogger(auditPath)

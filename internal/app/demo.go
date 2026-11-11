@@ -351,10 +351,10 @@ data, and it does not touch %s.
 		return nil, fmt.Errorf("create agent branch: %s", sanitizeGitOutput(out, token))
 	}
 	fullPath := filepath.Join(repoDir, filepath.FromSlash(file))
-	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0o750); err != nil {
 		return nil, fmt.Errorf("create agent file directory: %w", err)
 	}
-	if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(fullPath, []byte(content), 0o600); err != nil {
 		return nil, fmt.Errorf("write agent file: %w", err)
 	}
 	if out, err := runGit(repoDir, "add", file); err != nil {
