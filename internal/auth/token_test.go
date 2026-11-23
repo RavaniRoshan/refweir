@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -93,6 +95,51 @@ func TestParseAppTokenErrors(t *testing.T) {
 		if _, err := ParseAppToken(raw); err == nil {
 			t.Errorf("ParseAppToken(%q) succeeded, want error", raw)
 		}
+	}
+}
+
+func TestVerifyAppTokenSignature(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+
+	payload, _ := json.Marshal(map[string]any{
+		"sub":   "app_valid",
+		"scope": "repo:read",
+		"exp":   time.Now().Add(10 * time.Minute).Unix(),
+	})
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"EdDSA"}`))
+	payloadEnc := base64.RawURLEncoding.EncodeToString(payload)
+	signedContent := header + "." + payloadEnc
+
+	sig := ed25519.Sign(priv, []byte(signedContent))
+	validJWT := signedContent + "." + base64.RawURLEncoding.EncodeToString(sig)
+
+	// Valid signature
+	if err := VerifyAppTokenSignature(validJWT, pub); err != nil {
+		t.Fatalf("VerifyAppTokenSignature with valid key failed: %v", err)
+	}
+
+	// Forged signature
+	_, roguePriv, _ := ed25519.GenerateKey(rand.Reader)
+	rogueSig := ed25519.Sign(roguePriv, []byte(signedContent))
+	forgedJWT := signedContent + "." + base64.RawURLEncoding.EncodeToString(rogueSig)
+	if err := VerifyAppTokenSignature(forgedJWT, pub); err == nil {
+		t.Fatalf("VerifyAppTokenSignature with forged key succeeded, want error")
+	}
+
+	// Expired JWT
+	expPayload, _ := json.Marshal(map[string]any{
+		"sub":   "app_valid",
+		"scope": "repo:read",
+		"exp":   time.Now().Add(-10 * time.Minute).Unix(),
+	})
+	expSignedContent := header + "." + base64.RawURLEncoding.EncodeToString(expPayload)
+	expSig := ed25519.Sign(priv, []byte(expSignedContent))
+	expJWT := expSignedContent + "." + base64.RawURLEncoding.EncodeToString(expSig)
+	if _, err := ParseAppToken(expJWT); err == nil {
+		t.Fatalf("ParseAppToken with expired JWT succeeded, want error")
 	}
 }
 

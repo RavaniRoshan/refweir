@@ -56,6 +56,38 @@ func NewDatabaseResolver(db *store.DB) Resolver {
 
 		// App token: Ed25519 compact JWT
 		if appTok, err := ParseAppToken(raw); err == nil && strings.HasPrefix(appTok.Subject(), "app_") {
+			// Cryptographically verify app token signature against registered app signing keys
+			app, err := db.GetApp(r.Context(), appTok.Subject())
+			if err != nil {
+				return nil, errors.New("auth: app not found")
+			}
+			keys, _ := db.ListAppSigningKeys(r.Context(), app.ID)
+			var candidateKeyStrings []string
+			if app.SigningKey != "" {
+				candidateKeyStrings = append(candidateKeyStrings, app.SigningKey)
+			}
+			for _, k := range keys {
+				if k.PublicKey != "" {
+					candidateKeyStrings = append(candidateKeyStrings, k.PublicKey)
+				}
+			}
+			if len(candidateKeyStrings) == 0 {
+				return nil, errors.New("auth: app has no registered signing key")
+			}
+			var verified bool
+			for _, keyStr := range candidateKeyStrings {
+				pubKey, err := ParseEd25519PublicKey(keyStr)
+				if err != nil {
+					continue
+				}
+				if err := VerifyAppTokenSignature(raw, pubKey); err == nil {
+					verified = true
+					break
+				}
+			}
+			if !verified {
+				return nil, errors.New("auth: invalid app token signature")
+			}
 			return appTok, nil
 		}
 

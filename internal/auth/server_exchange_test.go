@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"crypto/ed25519"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -152,5 +155,93 @@ func TestExchangeRevokedAndExpiredKeys(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("revoked key status = %d, want 401", rec.Code)
+	}
+}
+
+func TestDatabaseResolverAppTokenVerification(t *testing.T) {
+	db, _ := setupTestStore(t)
+	ctx := t.Context()
+
+	// 1. Generate app keypair
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+	pubKeyB64 := base64.RawURLEncoding.EncodeToString(pub)
+
+	// 2. Register namespace and app in database with the public signing key
+	_ = db.CreateNamespace(ctx, store.Namespace{
+		ID:   "ns_default",
+		Slug: "default",
+		Type: "team",
+		Name: "Default Namespace",
+	})
+	app := store.App{
+		ID:          "app_sec_audit",
+		NamespaceID: "ns_default",
+		DisplayName: "Security Auditor App",
+		SigningKey:  pubKeyB64,
+	}
+	if _, err := db.CreateApp(ctx, app); err != nil {
+		t.Fatalf("CreateApp: %v", err)
+	}
+
+	resolver := NewDatabaseResolver(db)
+
+	// 3. Create valid, authentically signed App JWT
+	payload, _ := json.Marshal(map[string]any{
+		"sub":   app.ID,
+		"scope": "app:metadata:read repo:read",
+		"exp":   time.Now().Add(15 * time.Minute).Unix(),
+	})
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"EdDSA"}`))
+	payloadEnc := base64.RawURLEncoding.EncodeToString(payload)
+	signedContent := header + "." + payloadEnc
+
+	sig := ed25519.Sign(priv, []byte(signedContent))
+	validJWT := signedContent + "." + base64.RawURLEncoding.EncodeToString(sig)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/repos", nil)
+	req.Header.Set("Authorization", "Bearer "+validJWT)
+
+	tok, err := resolver(req)
+	if err != nil {
+		t.Fatalf("resolver failed on authentically signed App JWT: %v", err)
+	}
+	if tok.Type() != TypeApp {
+		t.Errorf("tok.Type() = %q, want %q", tok.Type(), TypeApp)
+	}
+	if tok.Subject() != app.ID {
+		t.Errorf("tok.Subject() = %q, want %q", tok.Subject(), app.ID)
+	}
+
+	// 4. Test forged App JWT (signed with an attacker's rogue key)
+	_, roguePriv, _ := ed25519.GenerateKey(rand.Reader)
+	rogueSig := ed25519.Sign(roguePriv, []byte(signedContent))
+	forgedJWT := signedContent + "." + base64.RawURLEncoding.EncodeToString(rogueSig)
+
+	forgedReq := httptest.NewRequest(http.MethodGet, "/api/v1/repos", nil)
+	forgedReq.Header.Set("Authorization", "Bearer "+forgedJWT)
+
+	_, err = resolver(forgedReq)
+	if err == nil {
+		t.Fatalf("resolver accepted forged App JWT, expected error")
+	}
+
+	// 5. Test App JWT for non-existent app
+	nonExistentPayload, _ := json.Marshal(map[string]any{
+		"sub":   "app_does_not_exist_999",
+		"scope": "repo:read",
+	})
+	nonExistentContent := header + "." + base64.RawURLEncoding.EncodeToString(nonExistentPayload)
+	nonExistentSig := ed25519.Sign(priv, []byte(nonExistentContent))
+	nonExistentJWT := nonExistentContent + "." + base64.RawURLEncoding.EncodeToString(nonExistentSig)
+
+	nonExistentReq := httptest.NewRequest(http.MethodGet, "/api/v1/repos", nil)
+	nonExistentReq.Header.Set("Authorization", "Bearer "+nonExistentJWT)
+
+	_, err = resolver(nonExistentReq)
+	if err == nil {
+		t.Fatalf("resolver accepted JWT for non-existent app, expected error")
 	}
 }

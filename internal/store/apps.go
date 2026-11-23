@@ -220,6 +220,29 @@ func (db *DB) RevokeAppSigningKey(ctx context.Context, appID, kid string) error 
 	return nil
 }
 
+func (db *DB) ListAppSigningKeys(ctx context.Context, appID string) ([]AppSigningKey, error) {
+	rows, err := db.sql.QueryContext(ctx, `
+		SELECT id, app_id, kid, public_key, created_at
+		FROM app_signing_keys
+		WHERE app_id = ?
+		ORDER BY created_at ASC
+	`, appID)
+	if err != nil {
+		return nil, fmt.Errorf("list app signing keys: %w", err)
+	}
+	defer rows.Close()
+
+	var list []AppSigningKey
+	for rows.Next() {
+		var k AppSigningKey
+		if err := rows.Scan(&k.ID, &k.AppID, &k.KID, &k.PublicKey, &k.CreatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, k)
+	}
+	return list, rows.Err()
+}
+
 func (db *DB) CreateInstallation(ctx context.Context, inst Installation) (Installation, error) {
 	if inst.ID == "" {
 		inst.ID = idgen.NewInstallation()

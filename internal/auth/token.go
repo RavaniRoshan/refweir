@@ -10,7 +10,9 @@
 package auth
 
 import (
+	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,8 +51,8 @@ type AppToken struct {
 	subject string
 }
 
-// ParseAppToken parses a compact JWT's payload claims. The signature is not
-// verified here; signature validation happens at the request boundary.
+// ParseAppToken parses a compact JWT's payload claims. Signature validation
+// must be performed against the app's enrolled public key via VerifyAppTokenSignature.
 func ParseAppToken(raw string) (AppToken, error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
@@ -58,16 +60,70 @@ func ParseAppToken(raw string) (AppToken, error) {
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return AppToken{}, fmt.Errorf("auth: app token payload: %w", err)
+		payload, err = base64.StdEncoding.DecodeString(parts[1])
+		if err != nil {
+			return AppToken{}, fmt.Errorf("auth: app token payload: %w", err)
+		}
 	}
 	var claims struct {
 		Sub   string `json:"sub"`
 		Scope string `json:"scope"`
+		Exp   int64  `json:"exp,omitempty"`
 	}
 	if err := json.Unmarshal(payload, &claims); err != nil {
 		return AppToken{}, fmt.Errorf("auth: app token claims: %w", err)
 	}
+	if claims.Exp != 0 && time.Now().Unix() > claims.Exp {
+		return AppToken{}, errors.New("auth: app token has expired")
+	}
 	return AppToken{raw: raw, scopes: strings.Fields(claims.Scope), subject: claims.Sub}, nil
+}
+
+// VerifyAppTokenSignature checks that raw is a compact JWT signed by pubKey.
+func VerifyAppTokenSignature(raw string, pubKey ed25519.PublicKey) error {
+	parts := strings.Split(raw, ".")
+	if len(parts) != 3 {
+		return errors.New("auth: not a compact JWT")
+	}
+	signedContent := parts[0] + "." + parts[1]
+	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
+	if err != nil {
+		sig, err = base64.StdEncoding.DecodeString(parts[2])
+		if err != nil {
+			return fmt.Errorf("auth: invalid signature encoding: %w", err)
+		}
+	}
+	if len(pubKey) != ed25519.PublicKeySize {
+		return errors.New("auth: invalid ed25519 public key size")
+	}
+	if !ed25519.Verify(pubKey, []byte(signedContent), sig) {
+		return errors.New("auth: invalid app token signature")
+	}
+	return nil
+}
+
+// ParseEd25519PublicKey attempts to parse a raw string representation of an Ed25519 public key
+// (raw bytes, hex-encoded 64 chars, base64url/base64).
+func ParseEd25519PublicKey(raw string) (ed25519.PublicKey, error) {
+	trimmed := strings.TrimSpace(raw)
+	if len(trimmed) == ed25519.PublicKeySize {
+		return ed25519.PublicKey([]byte(trimmed)), nil
+	}
+	// Try Hex (64 chars)
+	if len(trimmed) == ed25519.PublicKeySize*2 {
+		if b, err := hex.DecodeString(trimmed); err == nil && len(b) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(b), nil
+		}
+	}
+	// Try Base64 RawURL
+	if b, err := base64.RawURLEncoding.DecodeString(trimmed); err == nil && len(b) == ed25519.PublicKeySize {
+		return ed25519.PublicKey(b), nil
+	}
+	// Try Base64 Std
+	if b, err := base64.StdEncoding.DecodeString(trimmed); err == nil && len(b) == ed25519.PublicKeySize {
+		return ed25519.PublicKey(b), nil
+	}
+	return nil, fmt.Errorf("auth: unsupported ed25519 public key format (length %d)", len(trimmed))
 }
 
 func (t AppToken) Type() string     { return TypeApp }
