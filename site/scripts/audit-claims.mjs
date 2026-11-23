@@ -1,23 +1,30 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Machine gate for documentation home: every capability statement on the
 // page must still trace to CLAIMS.md. Needles are matched case-insensitively
 // against markup-stripped text so wording can drift without breaking the gate,
 // but the underlying claims cannot silently vanish or weaken.
 
-const raw = readFileSync(new URL('../out/docs/index.html', import.meta.url), 'utf8');
-const html = raw
-  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-  .replace(/<[^>]+>/g, ' ')
-  .replace(/&nbsp;|&#160;|&amp;nbsp;/g, ' ')
-  .replace(/&amp;/g, '&')
-  .replace(/&#x27;|&#39;|&apos;|’/g, "'")
-  .replace(/&quot;|&#34;/g, '"')
-  .replace(/&lt;/g, '<')
-  .replace(/&gt;/g, '>')
-  .replace(/\s+/g, ' ')
-  .toLowerCase();
+function cleanHtml(raw) {
+  return raw
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;|&amp;nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&#x27;|&#39;|&apos;|’/g, "'")
+    .replace(/&quot;|&#34;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+const outDir = fileURLToPath(new URL('../out/docs', import.meta.url));
+const indexPath = join(outDir, 'index.html');
+const indexHtml = cleanHtml(readFileSync(indexPath, 'utf8'));
 
 const required = [
   ['the self-hosted forge for', 'hero headline'],
@@ -56,16 +63,44 @@ const forbidden = [
 
 let failed = false;
 
+// 1. Verify required claims on index
 for (const [needle, label] of required) {
-  if (!html.includes(needle)) {
+  if (!indexHtml.includes(needle)) {
     console.error(`MISSING (${label}): "${needle}"`);
     failed = true;
   }
 }
-for (const [needle, label] of forbidden) {
-  if (html.includes(needle)) {
-    console.error(`FORBIDDEN (${label}): "${needle}"`);
-    failed = true;
+
+// 2. Scan all HTML files in out/docs for forbidden claims
+function getHtmlFiles(dir) {
+  const files = [];
+  try {
+    for (const entry of readdirSync(dir)) {
+      const fullPath = join(dir, entry);
+      const stat = statSync(fullPath);
+      if (stat.isDirectory()) {
+        files.push(...getHtmlFiles(fullPath));
+      } else if (entry.endsWith('.html')) {
+        files.push(fullPath);
+      }
+    }
+  } catch (err) {
+    // If directory doesn't exist yet, return empty
+  }
+  return files;
+}
+
+const htmlFiles = getHtmlFiles(outDir);
+let checkedCount = 0;
+
+for (const file of htmlFiles) {
+  const content = cleanHtml(readFileSync(file, 'utf8'));
+  checkedCount++;
+  for (const [needle, label] of forbidden) {
+    if (content.includes(needle)) {
+      console.error(`FORBIDDEN (${label}) in ${file}: "${needle}"`);
+      failed = true;
+    }
   }
 }
 
@@ -73,4 +108,4 @@ if (failed) {
   console.error('\nclaims audit FAILED');
   process.exit(1);
 }
-console.log('claims audit passed —', required.length, 'claims verified,', forbidden.length, 'forbidden phrases absent');
+console.log(`claims audit passed — ${required.length} claims verified on index, ${forbidden.length} forbidden phrases absent across ${checkedCount} HTML pages`);

@@ -25,7 +25,7 @@ flowchart LR
     P3["Phase 3 (v0.2)<br/>Space UI Dashboard<br/><b>COMPLETED</b>"]
     P4["Phase 4 (v0.3)<br/>Autonomous Agent Review & Leases<br/><b>COMPLETED</b>"]
     P5["Phase 5 (v0.4)<br/>GitHub Primer UI & Developer Parity<br/><b>COMPLETED</b>"]
-    P6["Phase 6 (v0.5)<br/>Active-Active Raft Replication<br/><b>COMPLETED</b>"]
+    P6["Phase 6 (v0.5)<br/>Active-Active Raft Replication<br/><b>EXPERIMENTAL</b>"]
     P7["Phase 7 (v0.6)<br/>Review Pipeline, Notifications & Migration<br/><b>COMPLETED</b>"]
 
     P1 --> P2
@@ -109,7 +109,7 @@ Achieving pixel-accurate developer ergonomics and end-user workflow parity with 
 
 ---
 
-## Phase 6: High Availability & Active-Active Consensus (v0.5.0+) — COMPLETED
+## Phase 6: High Availability & Active-Active Consensus (v0.5.0+) — EXPERIMENTAL / PROTOTYPE
 
 Scaling Refweir for massive enterprise footprints:
 

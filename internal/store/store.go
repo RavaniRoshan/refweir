@@ -22,9 +22,9 @@ type DB struct {
 // pragmas, and runs migrations. Use ":memory:" for an ephemeral database.
 func Open(path string) (*DB, error) {
 	// modernc's driver expects a file: DSN with pragmas for durability, performance in WAL mode, and connection-scoped foreign keys.
-	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-16000)&_pragma=foreign_keys(1)"
+	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-16000)&_pragma=foreign_keys(1)&_txlock=immediate"
 	if path == ":memory:" {
-		dsn = "file::memory:?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
+		dsn = "file::memory:?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_txlock=immediate"
 	}
 
 	sqlDB, err := sql.Open("sqlite", dsn)

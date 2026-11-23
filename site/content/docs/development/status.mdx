@@ -23,7 +23,7 @@ All components below are backed by automated unit, contract, and integration tes
 - Origin-compatible REST routes mounted under `/v1/origin`.
 - Conformance is checked with `refweir conformance` against a running daemon.
 - Full CRUD for namespaces, repositories, branches, commits, trees, blobs, diffs, and tags.
-- Pull request lifecycle: creation, updates, state transitions (`open`, `closed`, `merged`), auto-merge queues.
+- Pull request lifecycle: creation, updates, state transitions (`open`, `closed`, `merged`), auto-merge engine.
 - Collaboration features: line-level review threads, general comments, emoji reactions, and label management.
 - Dynamic OpenAPI 3.1 specification publication at `/v1/origin/openapi.yaml`.
 
@@ -75,7 +75,7 @@ All components below are backed by automated unit, contract, and integration tes
 - Interactive diff viewer with line commenting, side-aware comment placement, and conversation thread resolution.
 - 1-click suggestion application committing code changes directly to PR branches.
 - Event-driven auto-merge engine (`AutoMergeEngine`) with PR mutex locking.
-- In-app notification center and pure-Go SMTP delivery queue with Primer HTML email templates.
+- In-app notification center and pure-Go SMTP delivery queue with styled HTML email templates.
 - Multi-platform repository migration wizard cloning Git repositories and importing issues, PRs, and comments.
 
 ---

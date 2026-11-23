@@ -8,14 +8,15 @@ In this tutorial, you will follow an autonomous AI coding agent as it inspects a
 ## What you will learn
 
 - How AI agents discover files and navigate commit trees on refweir.dev.
+- How capability leases protect protected branches during agent pushes.
 - How agents construct and submit pull requests programmatically.
-- How the merge engine validates changes before allowing merges.
+- How status checks and rulesets gate pull request merges.
 
 ## Prerequisites
 
 - `refweird` running locally on port 8080 (`refweird` or `./bin/refweird`).
 - A repository initialized in your namespace (e.g., `acme/service`).
-- An active administrative token (`token_...`).
+- An active administrative token (`token_...`) or an ephemeral capability lease (`lease_...`).
 
 ---
 
@@ -40,8 +41,8 @@ The agent needs to know what files exist in the repository. It calls `repo_tree`
   "params": {
     "name": "repo_tree",
     "arguments": {
-      "owner": "acme",
-      "repo": "service",
+      "ownerSlug": "acme",
+      "repoName": "service",
       "ref": "main"
     }
   }
@@ -79,8 +80,8 @@ To understand how to add the endpoint, the agent inspects `main.go` using `file_
   "params": {
     "name": "file_read",
     "arguments": {
-      "owner": "acme",
-      "repo": "service",
+      "ownerSlug": "acme",
+      "repoName": "service",
       "path": "main.go",
       "ref": "main"
     }
@@ -94,14 +95,18 @@ The agent reads the existing HTTP handlers and decides to add `http.HandleFunc("
 
 ## Step 3: Pushing the feature branch
 
-The agent makes the code edit in its local workspace and pushes a new branch `feature/health-check` to refweir.dev using standard Git Smart-HTTP:
+Under refweir.dev's capability lease model, agent credentials are strictly confined to `refs/heads/agent/*`. Attempts to push directly to `main` or arbitrary branches are blocked by the pre-receive hook (`refweir: lease scope denies ref`).
+
+The agent checks out a branch matching its allowed ref prefix:
 
 ```bash
-git checkout -b feature/health-check
+git checkout -b agent/health-check
 git add main.go
 git commit -m "feat: add /healthz endpoint"
-git push origin feature/health-check
+git push origin agent/health-check
 ```
+
+The push is verified by the pre-receive hook, scanned for leaked secrets, and accepted into `refs/heads/agent/health-check`.
 
 ---
 
@@ -117,11 +122,11 @@ Now the agent opens a formal pull request on refweir.dev using `pull_request_cre
   "params": {
     "name": "pull_request_create",
     "arguments": {
-      "owner": "acme",
-      "repo": "service",
+      "ownerSlug": "acme",
+      "repoName": "service",
       "title": "feat: add /healthz health check endpoint",
-      "head": "feature/health-check",
-      "base": "main",
+      "headRef": "agent/health-check",
+      "baseRef": "main",
       "body": "This PR adds a lightweight /healthz HTTP liveness probe."
     }
   }
@@ -144,9 +149,9 @@ Now the agent opens a formal pull request on refweir.dev using `pull_request_cre
 
 ---
 
-## Step 5: Checking policy & merge blockers
+## Step 5: Checking policy & status checks
 
-Before attempting to merge, the agent queries active merge blockers using `merge_blockers_list`:
+Before attempting to merge, the agent queries the commit status checks and review suites using `checks_read`:
 
 ```json
 {
@@ -154,17 +159,17 @@ Before attempting to merge, the agent queries active merge blockers using `merge
   "id": 4,
   "method": "tools/call",
   "params": {
-    "name": "merge_blockers_list",
+    "name": "checks_read",
     "arguments": {
-      "owner": "acme",
-      "repo": "service",
-      "pull_number": 1
+      "ownerSlug": "acme",
+      "repoName": "service",
+      "sha": "9f83a42..."
     }
   }
 }
 ```
 
-If rulesets require code review approvals or passing status checks, the agent receives a structured blocker list and posts a comment explaining what reviews are needed.
+If rulesets require passing status checks or peer reviews, the agent inspects the check run states. Once requirements are fulfilled, the PR can be merged via `pull_request_merge`.
 
 ---
 
@@ -172,8 +177,8 @@ If rulesets require code review approvals or passing status checks, the agent re
 
 You have seen how an autonomous AI coding agent interacts with refweir.dev:
 1. Discovers files via `repo_tree` and reads source code via `file_read`.
-2. Pushes commits through authenticated Git Smart-HTTP.
+2. Pushes commits safely within `refs/heads/agent/*` under an ephemeral capability lease.
 3. Opens a pull request via `pull_request_create`.
-4. Inspects policy compliance via `merge_blockers_list`.
+4. Inspects status checks and review gates via `checks_read`.
 
 Next, explore [How to configure rulesets](/how-to/rulesets) or inspect the full [MCP tool catalog](/reference/mcp-tools).

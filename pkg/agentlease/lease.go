@@ -41,7 +41,7 @@ func Issue(secret []byte, agentID, repoID string, allowedRefs, disallowedRefs []
 		return "", nil, errors.New("agentId and repoId are required")
 	}
 	if ttl == 0 {
-		ttl = 15 * time.Minute
+		ttl = 60 * time.Minute
 	}
 
 	now := time.Now().UTC()

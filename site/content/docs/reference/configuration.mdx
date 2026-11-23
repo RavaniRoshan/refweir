@@ -1,26 +1,29 @@
 ---
 title: Configuration and environment reference
-description: Full reference for server flags, environment variables, storage layout, and enterprise protocol settings.
+description: Full reference for daemon environment variables, bootstrap flags, storage layout, and SQLite pragmas.
 ---
 
-The `refweird` server daemon and `refweir` CLI are configured through environment variables or command-line flags. Flags take precedence over environment variables.
+The `refweird` server daemon is configured primarily through environment variables (`REFWEIR_*`), while offline administrative tasks utilize CLI subcommands (`refweird bootstrap`).
 
 ## Server Daemon (`refweird`)
 
-### Environment Variables & Network Flags
+### Environment Variables
 
-| Variable | CLI Flag | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `REFWEIR_LISTEN_ADDR` | `--addr` | `127.0.0.1:8080` | Network address and port to bind the HTTP REST, MCP, and Web server |
-| `REFWEIR_SSH_ADDR` | `--ssh-addr` | `127.0.0.1:2222` | Network address and port for the embedded pure-Go SSH server |
-| `REFWEIR_SSH_HOST_KEY` | `--ssh-host-key` | `<data-dir>/ssh_host_key` | Path to the SSH host key PEM file for the embedded server |
-| `REFWEIR_DATA_DIR` | `--data-dir` | `data` | Directory where SQLite metadata, Git repos, and LFS objects are stored |
-| `REFWEIR_AUDIT_LOG` | — | `<data-dir>/audit.log` | Append-only JSONL audit log path. Set to `off` to disable the file; events then stay on stderr and in memory. |
-| `REFWEIR_PUBLIC_URL` | `--public-url` | `http://127.0.0.1:8080` | Publicly reachable base URL used for webhook callbacks and SSO redirects |
-| `REFWEIR_GIT_URL` | `--git-url` | `127.0.0.1:8080` | Public host string returned in clone URLs |
-| `REFWEIR_LFS_ENABLED` | `--lfs` | `true` | Enable or disable the Git Large File Storage (LFS) v1 Batch engine |
-| `REFWEIR_LFS_STORAGE_DIR` | `--lfs-dir` | `<data-dir>/lfs` | Path to store Content-Addressable (CAS) binary objects |
-| `REFWEIR_LOG_LEVEL` | `--log-level` | `info` | Minimum log verbosity level (`debug`, `info`, `warn`, `error`) |
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `REFWEIR_LISTEN_ADDR` | `127.0.0.1:8080` | Network address and port to bind the HTTP REST, MCP, and Web server |
+| `REFWEIR_PUBLIC_URL` | `http://127.0.0.1:8080` | Publicly reachable base URL used for webhook callbacks and clone URLs |
+| `REFWEIR_GIT_URL` | `127.0.0.1:8080` | Public host string returned in clone URLs |
+| `REFWEIR_DATA_DIR` | `data` | Directory where SQLite metadata, Git repos, and audit logs are stored |
+| `REFWEIR_SSH_ADDR` | `127.0.0.1:2222` | Network address and port for the embedded pure-Go SSH server (set to `none` to disable) |
+| `REFWEIR_SSH_HOST_KEY` | `<data-dir>/ssh_host_key` | Path to the SSH host key PEM file for the embedded server |
+| `REFWEIR_JWT_SECRET` | *(auto-generated)* | HMAC-SHA256 signing secret for capability leases and JWT sessions (min 32 bytes) |
+| `REFWEIR_AUDIT_LOG` | `<data-dir>/audit.log` | Append-only JSONL audit log path. Set to `off` to disable the file; events stay on stderr and in memory. |
+| `REFWEIR_DEMO_MODE` | `0` | Set to `1` to enable the hosted-demo surface and rate-limited demo run endpoint |
+| `REFWEIR_DEMO_REPO` | `demo/agent-lab` | Target repository for hosted demo runs |
+| `REFWEIR_TELEMETRY_OPT_IN` | `0` | Anonymous activation telemetry opt-in flag |
+
+---
 
 ### Subcommand: `bootstrap`
 
@@ -43,7 +46,7 @@ refweird bootstrap \
 
 ## On-Disk Storage Layout
 
-When `--data-dir` is configured (for example, `./data`), `refweird` organizes files in the following structure:
+When `REFWEIR_DATA_DIR` is configured (for example, `./data`), `refweird` organizes files in the following structure:
 
 ```text
 data/
@@ -52,29 +55,23 @@ data/
 ├── meta.db-shm      # SQLite shared memory file
 ├── audit.log        # Append-only JSONL audit trail
 ├── ssh_host_key     # Auto-generated SSH host private key
-├── lfs/             # Git LFS Content-Addressable Storage (CAS)
-│   └── objects/
-│       └── 4a/
-│           └── f3/
-│               └── 4af3a8... (SHA-256 payload)
-└── git/             # Bare Git repositories (go-git engine)
+└── git/             # Bare Git repositories managed via host git backend
     └── acme/
         ├── demo-app.git/
         └── backend.git/
 ```
 
-- **`meta.db`**: Stores users, password hashes, web sessions, tokens, namespaces, repository records, permissions, pull requests, review comments, status checks, rulesets, CIDR allowlists, SSH CAs, and SSO configurations.
-- **`audit.log`**: Append-only JSON Lines file written by the daemon and the pre-receive hook. Records actor, actor type, action, resource, client IP, severity, details, and lease metadata. It is operator-controlled and not cryptographically sealed or remotely replicated.
-- **`lfs/objects/{oid[0:2]}/{oid[2:4]}/{oid}`**: Sharded directory storing raw binary payloads indexed by their cryptographic SHA-256 hash.
-- **`git/{owner}/{repo}.git`**: Standard bare Git repositories storing commits, trees, blobs, refs, and packfiles managed via `go-git/v6`.
+- **`meta.db`**: Stores users, password hashes, web sessions, tokens, namespaces, repository records, permissions, pull requests, review comments, status checks, rulesets, and notifications.
+- **`audit.log`**: Append-only JSON Lines file written by the daemon and pre-receive hook. Records actor, action, resource, severity, and capability lease metadata.
+- **`git/{owner}/{repo}.git`**: Bare Git repositories storing Git objects and refs.
 
 ---
 
-## SQLite Pragmas
+## SQLite Pragmas & Concurrency
 
 `refweird` automatically applies the following database pragmas upon connection:
 
-- `PRAGMA journal_mode = WAL`: Write-Ahead Logging lets readers proceed during a write; writers are still serialized.
+- `PRAGMA journal_mode = WAL`: Write-Ahead Logging allows concurrent readers alongside active writers.
 - `PRAGMA busy_timeout = 5000`: 5-second wait on lock contention before returning busy error.
 - `PRAGMA foreign_keys = ON`: Strict relational integrity for cascading deletes and reference checks.
-- Connection limit: A single writer connection serializes writes while readers run concurrently under WAL. This bounds write throughput; size deployments for small-to-medium teams.
+- `_txlock=immediate`: Write transactions execute `BEGIN IMMEDIATE` to prevent lock escalation deadlocks under concurrent multi-agent traffic.

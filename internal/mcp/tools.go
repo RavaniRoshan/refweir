@@ -1588,7 +1588,7 @@ func BuiltinTools() []ToolDef {
 				}
 				ttlSec := getInt(args, "ttlSeconds")
 				if ttlSec <= 0 {
-					ttlSec = 900
+					ttlSec = 3600
 				}
 				token, lease, err := agentlease.Issue(secret, agentID, repoID, allowed, disallowed, time.Duration(ttlSec)*time.Second)
 				if err != nil {

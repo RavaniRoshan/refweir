@@ -56,7 +56,7 @@ func HandlerWithObserver(signingSecret []byte, onIssued func(*http.Request, *Lea
 			req.AllowedRefPrefixes = []string{"refs/heads/agent/", "refs/heads/feat/"}
 		}
 
-		ttl := 15 * time.Minute
+		ttl := 60 * time.Minute
 		if req.TTLSeconds > 0 {
 			ttl = time.Duration(req.TTLSeconds) * time.Second
 		}

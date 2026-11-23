@@ -30,11 +30,11 @@
 **Refweir** is a vendor-neutral, self-hosted Git forge engineered from first principles for **autonomous AI coding agents** (Claude Code, Codex, Cline, Cursor) alongside human engineering teams.
 
 Traditional Git platforms were built 15+ years ago for human developers clicking buttons in web browsers. Refweir bridges this generational shift by treating autonomous coding agents as first-class citizens:
-- **Dual Transports:** Pure-Go Smart-HTTP (`:8080`) and embedded standalone pure-Go SSH server (`:2222`, zero cgo, zero host OpenSSH dependency).
+- **Dual Transports:** Smart-HTTP (`:8080`) with lease verification and embedded pure-Go SSH server (`:2222`, zero cgo, zero host OpenSSH dependency; Git packfile operations powered by host `git`).
 - **Ephemeral Capability Leases (`pkg/agentlease`):** HMAC-SHA256 capability tokens with automatic 1-hour expiration and strict ref isolation (`refs/heads/agent/*`), preventing agents from touching production branches.
 - **Native Model Context Protocol (MCP):** Built-in JSON-RPC 2.0 endpoints at `/mcp` (full tool set) and `/mcp/readonly` (read-only sandbox).
 - **Autonomous PR Review Agent (`internal/agentreviewer`):** Static AST analysis, leaked secret detection, coverage inspection, and policy-gated 3-way merges.
-- **Single Hermetic Binary:** Embedded React 19 product UI, SQLite WAL engine (`modernc.org/sqlite`), and bare Git object store compiled with `CGO_ENABLED=0`.
+- **Single Hermetic Binary:** Embedded React 19 product UI, SQLite WAL engine (`modernc.org/sqlite`), and bare Git object store compiled with `CGO_ENABLED=0` (requires host `git` on PATH).
 
 > *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary cloud infrastructure, Refweir is 100% vendor-neutral, open-source, and self-hosted on your own hardware for any agent.*
 

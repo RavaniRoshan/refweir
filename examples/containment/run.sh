@@ -4,7 +4,7 @@
 # Boots a throwaway self-hosted instance, issues scoped capability leases, and
 # demonstrates the containment boundary:
 #   1. Agent A with a lease for refs/heads/agent/* pushes successfully.
-#   2. Agent B with a lease attempts refs/heads/main and is rejected (GH007).
+#   2. Agent B with a lease attempts refs/heads/main and is rejected (lease scope denies ref).
 #   3. An expired lease is rejected at authentication.
 #   4. A revoked lease is rejected at authentication.
 #   5. The durable audit log shows every decision.
@@ -213,11 +213,11 @@ if git push "$(push_url agent-b "$LEASE_B")" HEAD:refs/heads/main >"$WORK/push-b
     cat "$WORK/push-b.log" >&2
     fail "Agent B was allowed to push refs/heads/main; containment failed"
 fi
-if ! grep -q 'GH007' "$WORK/push-b.log"; then
+if ! grep -q 'refweir: lease scope denies ref' "$WORK/push-b.log"; then
     cat "$WORK/push-b.log" >&2
-    fail "expected GH007 lease rejection for refs/heads/main"
+    fail "expected lease rejection for refs/heads/main"
 fi
-echo "   result:  REJECTED (GH007) — protected ref untouched"
+echo "   result:  REJECTED (lease scope denies ref) — protected ref untouched"
 audit_contains '"action":"agent.lease_rejected"'
 audit_contains '"refs/heads/main"'
 

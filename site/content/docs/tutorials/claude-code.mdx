@@ -83,7 +83,7 @@ Claude Code will:
 
 ## 4. Common Errors & Troubleshooting
 
-### `GH007: Agent capability lease ref violation`
+### `refweir: lease scope denies ref`
 - **Cause:** Claude attempted to push to a branch outside `refs/heads/agent/*` (e.g., directly to `main`).
 - **Fix:** Instruct Claude to use branches starting with `agent/` (e.g., `git checkout -b agent/my-fix`).
 

@@ -1,89 +1,121 @@
 ---
 title: Model Context Protocol (MCP) tool catalog
-description: Technical reference for the MCP tools exposed by refweir.dev for AI coding agents.
+description: Technical reference for the 46 MCP tools exposed by refweir.dev for AI coding agents.
 ---
 
-refweir.dev exposes the Model Context Protocol (MCP) over [JSON-RPC 2.0](https://modelcontextprotocol.io) at `/mcp` (read-write) and `/mcp/readonly` (sandboxed read-only). Run the standard `tools/list` method against `/mcp` for the authoritative tool set in your build.
+refweir.dev natively exposes the Model Context Protocol (MCP) over [JSON-RPC 2.0](https://modelcontextprotocol.io) at `/mcp` (read-write, 46 tools) and `/mcp/readonly` (sandboxed read-only, 22 tools). Run the standard `tools/list` method against `/mcp` for the authoritative tool set in your build.
 
 Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 
 ---
 
-## 1. Repository & Git Navigation (11 tools)
+## 1. Repository & Git Navigation
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
-| `repo_get` | Read | `owner` (string), `repo` (string) | Retrieve repository details, default branch, and visibility. |
-| `repo_list` | Read | `owner` (string), `limit` (int, opt) | List repositories within a namespace. |
-| `repo_tree` | Read | `owner` (string), `repo` (string), `ref` (string, opt), `recursive` (bool, opt) | Recursively inspect file trees at a specified commit, branch, or tag. |
-| `file_read` | Read | `owner` (string), `repo` (string), `path` (string), `ref` (string, opt) | Read the content, encoding, and byte size of a file blob. |
-| `search_symbols` | Read | `ownerSlug`, `repoName`, `query`, `ref` (opt), `kind` (opt), `limit` (opt) | Pure-Go AST semantic symbol search (functions, structs, classes, interfaces). |
-| `commit_get` | Read | `owner` (string), `repo` (string), `sha` (string) | Get commit metadata, author, committer, and parent hashes. |
-| `commit_list` | Read | `owner` (string), `repo` (string), `ref` (string, opt), `limit` (int, opt) | List commits reachable from a reference. |
-| `branch_list` | Read | `owner` (string), `repo` (string) | List all branches in the repository with target commit SHAs. |
-| `diff_compare`| Read | `owner` (string), `repo` (string), `base` (string), `head` (string) | Compute two-way and three-way diffs between two refs or commits. |
-| `tag_list` | Read | `owner` (string), `repo` (string) | List all tags in the repository. |
-| `ref_resolve` | Read | `owner` (string), `repo` (string), `ref` (string) | Resolve symbolic ref (such as `HEAD` or branch name) to an exact SHA. |
+| `get_repository` | Read | `ownerSlug` (string), `repoName` (string) | Get metadata, default branch, and visibility for a repository. |
+| `list_repositories` | Read | `ownerSlug` (string, opt) | List repositories accessible to the account across namespaces. |
+| `create_repository` | Write | `ownerSlug` (string), `name` (string), `defaultBranch` (string, opt) | Create a new repository in an organization namespace. |
+| `get_file_contents` | Read | `ownerSlug` (string), `repoName` (string), `path` (string), `ref` (string, opt) | Read the content of a file blob at a given Git ref (default: `HEAD`). |
+| `get_git_tree` | Read | `ownerSlug` (string), `repoName` (string), `ref` (string, opt), `path` (string, opt), `recursive` (bool, opt) | Get the directory tree of a repository at a specified ref. |
+| `list_branches` | Read | `ownerSlug` (string), `repoName` (string) | List all branches in the repository with target commit SHAs. |
+| `list_commits` | Read | `ownerSlug` (string), `repoName` (string), `ref` (string, opt), `limit` (int, opt) | List commits reachable from a reference. |
+| `compare_commits` | Read | `ownerSlug` (string), `repoName` (string), `base` (string), `head` (string) | Compare differences between two commit SHAs or branch refs. |
+| `sync_mirror` | Write | `ownerSlug` (string), `repoName` (string) | Trigger an immediate sync of a mirrored repository from upstream. |
 
 ---
 
-## 2. Pull Request Management (8 tools)
+## 2. Search & Symbols
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
-| `pull_request_create` | Write | `owner`, `repo`, `title`, `base`, `head`, `body` (opt) | Open a new pull request between `head` and `base` branches. |
-| `pull_request_get` | Read | `owner`, `repo`, `number` (int) | Retrieve pull request details, state, and mergeability verdict. |
-| `pull_request_list` | Read | `owner`, `repo`, `state` (string, opt: `open`\|`closed`\|`all`) | List pull requests for a repository. |
-| `pull_request_update` | Write | `owner`, `repo`, `number`, `title` (opt), `body` (opt) | Update pull request title or description. |
-| `pull_request_merge` | Write | `owner`, `repo`, `number`, `method` (string: `merge`\|`squash`), `commit_message` (opt) | Merge a pull request through policy rulesets. |
-| `pull_request_close` | Write | `owner`, `repo`, `number` | Close an open pull request without merging. |
-| `pull_request_files` | Read | `owner`, `repo`, `number` | List all modified, added, and deleted files in a pull request. |
-| `pull_request_diff` | Read | `owner`, `repo`, `number` | Retrieve the unified diff patch for a pull request. |
+| `grep_contents` | Read | `ownerSlug` (string), `repoName` (string), `pattern` (string), `ref` (string, opt), `path` (string, opt) | Search file contents in a repository matching a pattern. |
+| `search_symbols` | Read | `ownerSlug` (string), `repoName` (string), `query` (string), `ref` (string, opt), `kind` (string, opt), `limit` (int, opt) | Pure-Go AST semantic symbol search (functions, structs, classes, types, interfaces). |
+| `list_namespaces` | Read | `limit` (int, opt) | List all organization namespaces in the forge. |
 
 ---
 
-## 3. Reviews, Threads & Collaboration (8 tools)
+## 3. Pull Request Management
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
-| `thread_create` | Write | `owner`, `repo`, `pull_number`, `body`, `path` (opt), `line` (opt) | Start a line-level review thread or top-level PR discussion. |
-| `thread_reply` | Write | `owner`, `repo`, `pull_number`, `thread_id`, `body` | Reply to an existing review thread. |
-| `thread_list` | Read | `owner`, `repo`, `pull_number` | List all review threads and comments on a pull request. |
-| `thread_resolve` | Write | `owner`, `repo`, `pull_number`, `thread_id`, `resolved` (bool) | Mark a review thread as resolved or reopen it. |
-| `reaction_add` | Write | `owner`, `repo`, `comment_id`, `content` (string: `+1`, `-1`, `heart`, etc.) | Add an emoji reaction to a comment. |
-| `reaction_list` | Read | `owner`, `repo`, `comment_id` | List all emoji reactions on a comment. |
-| `label_list` | Read | `owner`, `repo` | List all labels defined in the repository. |
-| `label_apply` | Write | `owner`, `repo`, `pull_number`, `labels` (array of strings) | Apply labels to a pull request. |
+| `list_pull_requests` | Read | `ownerSlug`, `repoName`, `status` (opt: `open`\|`closed`\|`all`), `limit` (opt) | List pull requests in a repository with state and cursor pagination. |
+| `search_pull_requests`| Read | `ownerSlug`, `repoName`, `query`, `status` (opt), `limit` (opt) | Search pull requests by title, description, or author query. |
+| `pull_request_read` | Read | `ownerSlug`, `repoName`, `pullNumber` (int) | Get full details of a pull request by number including mergeability. |
+| `create_pull_request` | Write | `ownerSlug`, `repoName`, `title`, `headRef`, `baseRef`, `description` (opt) | Open a new pull request between `headRef` and `baseRef`. |
+| `update_pull_request` | Write | `ownerSlug`, `repoName`, `pullNumber`, `title` (opt), `description` (opt), `status` (opt) | Update pull request title, description, or open/closed status. |
+| `update_pull_request_base` | Write | `ownerSlug`, `repoName`, `pullNumber`, `baseRef` | Retarget the base branch of an open pull request. |
+| `merge_pull_request` | Write | `ownerSlug`, `repoName`, `pullNumber`, `method` (opt: `merge`\|`squash`), `commitMessage` (opt) | Merge a pull request through policy rulesets and status checks. |
+| `create_pull_request_review` | Write | `ownerSlug`, `repoName`, `pullNumber`, `verdict` (`approved`\|`changes_requested`\|`commented`), `body` (opt) | Submit a review verdict on a pull request. |
+| `update_pull_request_review` | Write | `ownerSlug`, `repoName`, `pullNumber`, `reviewId`, `verdict`, `body` (opt) | Update an existing pull request review verdict and message. |
+| `dismiss_pull_request_review`| Write | `ownerSlug`, `repoName`, `pullNumber`, `reviewId`, `message` | Dismiss an existing review with an explanation. |
+| `create_pull_request_comment` | Write | `ownerSlug`, `repoName`, `pullNumber`, `body` | Add a top-level discussion comment to a pull request. |
+| `create_pull_request_inline_comment` | Write | `ownerSlug`, `repoName`, `pullNumber`, `path`, `line`, `body` | Start a review thread on a specific file line in a pull request. |
+| `reply_pull_request_review_thread` | Write | `ownerSlug`, `repoName`, `pullNumber`, `threadId`, `body` | Reply to an existing inline review thread. |
+| `update_pull_request_review_thread` | Write | `ownerSlug`, `repoName`, `pullNumber`, `threadId`, `resolved` (bool) | Resolve or reopen an inline review thread. |
+| `update_pull_request_comment` | Write | `ownerSlug`, `repoName`, `commentId`, `body` | Edit the markdown body of an existing pull request comment. |
+| `update_pull_request_labels` | Write | `ownerSlug`, `repoName`, `pullNumber`, `add` (array, opt), `remove` (array, opt) | Add or remove label names on a pull request. |
+| `request_pull_request_reviewers` | Write | `ownerSlug`, `repoName`, `pullNumber`, `reviewers` (array of user IDs) | Request code reviews from users on a pull request. |
+| `remove_pull_request_reviewers` | Write | `ownerSlug`, `repoName`, `pullNumber`, `reviewers` (array of user IDs) | Remove requested reviewers from a pull request. |
 
 ---
 
-## 4. Status Checks & Rulesets (8 tools)
+## 4. Checks, Rulesets & Metadata
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
-| `check_suite_create` | Write | `owner`, `repo`, `head_sha` | Create a new check suite for a commit. |
-| `check_run_create` | Write | `owner`, `repo`, `head_sha`, `name`, `status` (string), `conclusion` (opt) | Register a check run (e.g. `test/unit`, `lint/vet`). |
-| `check_run_update` | Write | `owner`, `repo`, `check_run_id`, `status`, `conclusion`, `output` (opt) | Update check run state and output. |
-| `status_check_report` | Write | `owner`, `repo`, `head_sha`, `context`, `state` (string: `pending`\|`success`\|`failure`) | Convenience tool to report a status check outcome. |
-| `ruleset_list` | Read | `owner`, `repo` | List all active rulesets applicable to a repository. |
-| `ruleset_get` | Read | `owner`, `repo`, `ruleset_id` | Get details and conditions for a specific ruleset. |
-| `ruleset_evaluate` | Read | `owner`, `repo`, `ref` | Test ruleset policy rules against a specific branch ref. |
-| `merge_blockers_list` | Read | `owner`, `repo`, `pull_number` | Inspect active blockers (missing approvals, failing checks) preventing a PR from merging. |
+| `checks_read` | Read | `ownerSlug`, `repoName`, `sha` | Get status checks and check suites for a commit SHA. |
+| `status_check_report` | Write | `ownerSlug`, `repoName`, `sha`, `name`, `status`, `conclusion` (opt), `summary` (opt) | Create or update a status check run (e.g., CI tests or security lints). |
+| `list_rulesets` | Read | `ownerSlug`, `repoName` | List rulesets and branch protection policies configured on a repository. |
+| `get_ruleset` | Read | `ownerSlug`, `repoName`, `rulesetId` | Get full details and policy conditions for a specific ruleset. |
+| `get_repository_access` | Read | `ownerSlug`, `repoName` | Get access grants and collaborators on a repository. |
+| `create_label` | Write | `ownerSlug`, `repoName`, `name`, `color` (opt), `description` (opt) | Create a custom label in a repository namespace. |
+
+---
+
+## 5. Capability Leases
+
+| Tool Name | Scope | Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| `lease_request` | Write | `repoId`, `agentId` (opt), `allowedRefs` (opt), `disallowedRefs` (opt), `ttlSeconds` (opt) | Request an ephemeral HMAC-SHA256 capability lease scoped to `refs/heads/agent/*`. |
+| `lease_inspect` | Read | `token` (string) | Verify and inspect an ephemeral capability lease token's claims and expiry. |
+| `lease_revoke` | Write | `leaseId` (string) | Revoke an active capability lease by ID, preventing further pushes. |
+
+---
+
+## 6. Canonical Ergonomic Aliases
+
+To accommodate varied agent prompting conventions, refweir.dev registers 7 canonical alias tool pairs:
+
+| Alias Name | Target Tool | Scope | Description |
+| :--- | :--- | :--- | :--- |
+| `repo_tree` | `get_git_tree` | Read | Inspect directory trees at a commit or branch ref. |
+| `file_read` | `get_file_contents` | Read | Read the content of a file in a repository. |
+| `diff_compare` | `compare_commits` | Read | Compare differences between two commit SHAs or branches. |
+| `symbol_search` | `search_symbols` | Read | Search code symbols across repository source files. |
+| `pull_request_create` | `create_pull_request` | Write | Open a new pull request in a repository. |
+| `thread_comment` | `create_pull_request_comment` | Write | Post a top-level or inline review comment on a pull request. |
+| `pull_request_merge` | `merge_pull_request` | Write | Merge a pull request with ruleset and status check enforcement. |
 
 ---
 
 ## Read-Only Sandbox Policy
 
 When connecting to `http://<host>:<port>/mcp/readonly`:
-- All **Read** tools operate normally.
-- All **Write** tools immediately return error code `-32001` (Unauthorized) with message:
+- All **22 Read** tools operate normally and are listed by `tools/list`.
+- All **24 Write** tools are filtered out of discovery. Any direct invocation of a write tool immediately returns `isError: true`:
   ```json
   {
     "jsonrpc": "2.0",
     "id": 1,
-    "error": {
-      "code": -32001,
-      "message": "Tool '<tool_name>' is not permitted on read-only MCP endpoint"
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Tool 'pull_request_create' is a write operation not permitted on /mcp/readonly"
+        }
+      ],
+      "isError": true
     }
   }
   ```
