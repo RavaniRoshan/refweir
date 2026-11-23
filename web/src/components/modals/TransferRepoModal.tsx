@@ -198,7 +198,7 @@ export const TransferRepoModal: React.FC<TransferRepoModalProps> = ({
             size="sm"
             data-testid="transfer-submit-btn"
             disabled={!isFormValid || submitting}
-            className="gap-1.5 bg-warn hover:bg-warn text-white border-warn"
+            className="gap-1.5 bg-warn hover:bg-warn/90 text-zinc-950 font-medium border-warn"
           >
             {submitting ? (
               <>

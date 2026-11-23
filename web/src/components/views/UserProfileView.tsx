@@ -261,27 +261,21 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
     }
 
     setIsSubmittingKey(true)
-    const result = await addUserSSHKey(keyTitle.trim(), trimmedKey)
-    setIsSubmittingKey(false)
-
-    if (result.ok && result.key) {
-      setSshKeys((prev) => [result.key!, ...prev])
-      setIsAddKeyModalOpen(false)
-      setKeyTitle('')
-      setKeyMaterial('')
-    } else {
-      // Create local fallback
-      const mockKey: UserSSHKey = {
-        id: `key_${Date.now()}`,
-        name: keyTitle.trim(),
-        fingerprint: 'SHA256:' + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-        key_type: trimmedKey.split(' ')[0] || 'ssh-ed25519',
-        created_at: new Date().toISOString(),
+    setKeyError(null)
+    try {
+      const result = await addUserSSHKey(keyTitle.trim(), trimmedKey)
+      if (result.ok && result.key) {
+        setSshKeys((prev) => [result.key!, ...prev])
+        setIsAddKeyModalOpen(false)
+        setKeyTitle('')
+        setKeyMaterial('')
+      } else {
+        setKeyError(result.error || 'Failed to add SSH key to server.')
       }
-      setSshKeys((prev) => [mockKey, ...prev])
-      setIsAddKeyModalOpen(false)
-      setKeyTitle('')
-      setKeyMaterial('')
+    } catch (err: any) {
+      setKeyError(err.message || 'Network error while adding SSH key.')
+    } finally {
+      setIsSubmittingKey(false)
     }
   }
 

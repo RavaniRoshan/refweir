@@ -174,7 +174,7 @@ export const ChangeVisibilityModal: React.FC<ChangeVisibilityModalProps> = ({
             disabled={submitting || !isFormValid}
             className={
               isCurrentlyPrivate
-                ? 'bg-warn hover:bg-warn text-white'
+                ? 'bg-warn hover:bg-warn/90 text-zinc-950 font-medium'
                 : 'bg-primary hover:bg-primary/90 text-primary-foreground'
             }
           >

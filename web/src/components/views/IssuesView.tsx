@@ -95,14 +95,18 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
     if (!newTitle.trim()) return
 
     setIsSubmittingNew(true)
-    const created = await createIssue(owner, repoName, newTitle.trim(), newBody.trim(), newLabels)
-    setIsSubmittingNew(false)
-
-    setIssues((prev) => [created, ...prev])
-    setIsNewIssueModalOpen(false)
-    setNewTitle('')
-    setNewBody('')
-    setSelectedIssue(created)
+    try {
+      const created = await createIssue(owner, repoName, newTitle.trim(), newBody.trim(), newLabels)
+      setIssues((prev) => [created, ...prev])
+      setIsNewIssueModalOpen(false)
+      setNewTitle('')
+      setNewBody('')
+      setSelectedIssue(created)
+    } catch (err: any) {
+      console.error('Failed to create issue', err)
+    } finally {
+      setIsSubmittingNew(false)
+    }
   }
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -110,43 +114,55 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
     if (!selectedIssue || !newCommentBody.trim()) return
 
     setIsSubmittingComment(true)
-    const comment = await addIssueComment(owner, repoName, selectedIssue.number, newCommentBody.trim())
-    setIsSubmittingComment(false)
-
-    const updatedIssue = {
-      ...selectedIssue,
-      comments: [...(selectedIssue.comments || []), comment],
+    try {
+      const comment = await addIssueComment(owner, repoName, selectedIssue.number, newCommentBody.trim())
+      const updatedIssue = {
+        ...selectedIssue,
+        comments: [...(selectedIssue.comments || []), comment],
+      }
+      setSelectedIssue(updatedIssue)
+      setIssues((prev) => prev.map((i) => (i.id === updatedIssue.id ? updatedIssue : i)))
+      setNewCommentBody('')
+    } catch (err: any) {
+      console.error('Failed to add comment', err)
+    } finally {
+      setIsSubmittingComment(false)
     }
-    setSelectedIssue(updatedIssue)
-    setIssues((prev) => prev.map((i) => (i.id === updatedIssue.id ? updatedIssue : i)))
-    setNewCommentBody('')
   }
 
   const handleToggleState = async () => {
     if (!selectedIssue) return
-    const nextState = await toggleIssueState(owner, repoName, selectedIssue.number, selectedIssue.state)
-    const updated = {
-      ...selectedIssue,
-      state: nextState,
-      closedAt: nextState === 'closed' ? 'Just now' : undefined,
+    try {
+      const nextState = await toggleIssueState(owner, repoName, selectedIssue.number, selectedIssue.state)
+      const updated = {
+        ...selectedIssue,
+        state: nextState,
+        closedAt: nextState === 'closed' ? 'Just now' : undefined,
+      }
+      setSelectedIssue(updated)
+      setIssues((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
+    } catch (err: any) {
+      console.error('Failed to toggle issue state', err)
     }
-    setSelectedIssue(updated)
-    setIssues((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
   }
 
   const handleDelegateToAgent = async () => {
     if (!selectedIssue) return
     setIsDelegating(true)
-    const res = await delegateIssueToAgent(owner, repoName, selectedIssue.number)
-    setIsDelegating(false)
-
-    if (res.ok && res.comment) {
-      const updatedIssue = {
-        ...selectedIssue,
-        comments: [...(selectedIssue.comments || []), res.comment],
+    try {
+      const res = await delegateIssueToAgent(owner, repoName, selectedIssue.number)
+      if (res.ok && res.comment) {
+        const updatedIssue = {
+          ...selectedIssue,
+          comments: [...(selectedIssue.comments || []), res.comment],
+        }
+        setSelectedIssue(updatedIssue)
+        setIssues((prev) => prev.map((i) => (i.id === updatedIssue.id ? updatedIssue : i)))
       }
-      setSelectedIssue(updatedIssue)
-      setIssues((prev) => prev.map((i) => (i.id === updatedIssue.id ? updatedIssue : i)))
+    } catch (err: any) {
+      console.error('Failed to delegate to agent', err)
+    } finally {
+      setIsDelegating(false)
     }
   }
 
