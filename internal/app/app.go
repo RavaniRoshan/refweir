@@ -306,16 +306,16 @@ func Open(cfg config.Config) (*App, error) {
 	mux.HandleFunc("GET /api/v1/admin/audit-logs", func(w http.ResponseWriter, r *http.Request) {
 		// A fresh install has no users yet; once initialized, require an admin.
 		if count, err := db.CountUsers(r.Context()); err != nil {
-			http.Error(w, "Failed to verify administrator", http.StatusInternalServerError)
+			writeAPIError(w, http.StatusInternalServerError, "Failed to verify administrator")
 			return
 		} else if count > 0 {
 			caller, err := auth.ResolveUser(r.Context(), db, r)
 			if err != nil {
-				http.Error(w, "Unauthorized: Administrator authentication required", http.StatusUnauthorized)
+				writeAPIError(w, http.StatusUnauthorized, "Unauthorized: Administrator authentication required")
 				return
 			}
 			if caller.Role != "admin" {
-				http.Error(w, "Forbidden: Administrator role required", http.StatusForbidden)
+				writeAPIError(w, http.StatusForbidden, "Forbidden: Administrator role required")
 				return
 			}
 		}
@@ -1271,7 +1271,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		count, _ := db.CountUsers(r.Context())
@@ -1362,7 +1362,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		login := r.PathValue("login")
@@ -1424,7 +1424,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		count, _ := db.CountUsers(r.Context())
@@ -1535,7 +1535,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		var req struct {
@@ -1710,7 +1710,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 
@@ -1872,7 +1872,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 
@@ -1987,7 +1987,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -2092,7 +2092,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		count, _ := db.CountUsers(r.Context())
@@ -2160,7 +2160,7 @@ func Open(cfg config.Config) (*App, error) {
 		}
 		rawPRs, _, err := db.ListPullRequests(r.Context(), repo.ID, state, 100, "")
 		if err != nil {
-			http.Error(w, "Failed to list pull requests: "+err.Error(), http.StatusInternalServerError)
+			writeAPIError(w, http.StatusInternalServerError, "Failed to list pull requests: "+err.Error())
 			return
 		}
 
@@ -2381,7 +2381,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		pr, err := db.GetPullRequest(r.Context(), repo.ID, number)
@@ -2462,7 +2462,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		var req struct {
@@ -2609,7 +2609,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		count, _ := db.CountUsers(r.Context())
@@ -2805,7 +2805,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -2973,7 +2973,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -3156,7 +3156,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -3385,7 +3385,7 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		if repo.Archived {
-			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
 			return
 		}
 
