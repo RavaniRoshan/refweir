@@ -17,6 +17,8 @@ export interface DialogProps {
   children: React.ReactNode
   className?: string
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 const widthMap = {
@@ -38,6 +40,8 @@ export const Dialog: React.FC<DialogProps> = ({
   children,
   className,
   maxWidth = 'md',
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }) => {
   const isOpen = propIsOpen !== undefined ? propIsOpen : Boolean(propOpen)
 
@@ -48,6 +52,8 @@ export const Dialog: React.FC<DialogProps> = ({
         onOpenChange?.(next)
         if (!next) onClose?.()
       }}
+      aria-label={ariaLabel || (typeof title === 'string' ? title : undefined)}
+      aria-labelledby={ariaLabelledBy}
       className={cn('gap-0 p-0 border border-hairline', widthMap[maxWidth], className)}
     >
       {title && (
@@ -70,11 +76,11 @@ export const DialogHeader: React.FC<{ children: React.ReactNode; className?: str
 )
 
 export const DialogTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
-  <h3 className={cn('text-title-3 text-text-1', className)}>{children}</h3>
+  <PrimitiveDialogTitle className={cn('text-title-3 text-text-1 font-semibold', className)}>{children}</PrimitiveDialogTitle>
 )
 
 export const DialogDescription: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
-  <p className={cn('text-caption text-text-2', className)}>{children}</p>
+  <PrimitiveDialogDescription className={cn('text-caption text-text-2', className)}>{children}</PrimitiveDialogDescription>
 )
 
 export const DialogFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
