@@ -523,7 +523,7 @@ git push origin feature/agent-capabilities`
                     <Box>
                       <BoxHeader className="bg-secondary/25 py-2">
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <CheckCircle2 className="w-4 h-4 text-success" />
                           <span className="font-semibold text-foreground">
                             All checks have passed ({ (selectedPr.checks || []).length } successful checks)
                           </span>
@@ -533,7 +533,7 @@ git push origin feature/agent-capabilities`
                         {(selectedPr.checks || []).map((chk) => (
                           <div key={chk.id} className="flex items-center justify-between px-4 py-2 text-xs">
                             <div className="flex items-center gap-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              <CheckCircle2 className="w-3.5 h-3.5 text-success" />
                               <span className="font-medium text-foreground">{chk.name}</span>
                               <span className="text-muted-foreground">— Successful in {chk.duration}</span>
                             </div>
@@ -629,7 +629,7 @@ git push origin feature/agent-capabilities`
                   <Box>
                     <BoxHeader className="bg-secondary/35 py-2.5">
                       <div className="flex items-center gap-2">
-                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                        <ShieldCheck className="w-4 h-4 text-success" />
                         <span className="font-semibold text-foreground">CI & Policy Check Runs</span>
                       </div>
                     </BoxHeader>
@@ -637,7 +637,7 @@ git push origin feature/agent-capabilities`
                       {(selectedPr.checks || []).map((chk) => (
                         <div key={chk.id} className="flex items-center justify-between p-3.5 text-xs">
                           <div className="flex items-center gap-3">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                            <CheckCircle2 className="w-4 h-4 text-success" />
                             <div>
                               <div className="font-semibold text-foreground">{chk.name}</div>
                               <div className="text-muted-foreground text-[11px]">
@@ -691,7 +691,7 @@ git push origin feature/agent-capabilities`
                       <div className="p-2.5 rounded-md bg-secondary/50 border border-border text-xs space-y-1">
                         <div className="flex items-center justify-between font-semibold">
                           <span className="text-foreground">AI Reviewer</span>
-                          <span className="text-emerald-500 text-[11px] font-mono">{reviewResult.score}/100</span>
+                          <span className="text-success text-[11px] font-mono">{reviewResult.score}/100</span>
                         </div>
                         <p className="text-[11px] text-muted-foreground">{reviewResult.summary}</p>
                       </div>
@@ -702,7 +702,7 @@ git push origin feature/agent-capabilities`
                         <LivingAvatar name="Refweir Review Bot" isAgent={true} size="sm" />
                         <span className="text-foreground">Refweir Review Bot</span>
                       </div>
-                      <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <CheckCheck className="w-3.5 h-3.5 text-success" />
                     </div>
                   </BoxBody>
                 </Box>
@@ -758,15 +758,15 @@ git push origin feature/agent-capabilities`
                   <BoxBody className="p-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span>Require linear history</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-success" />
                     </div>
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span>Require signed commits</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-success" />
                     </div>
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span>1 approving review</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <Check className="w-3.5 h-3.5 text-success" />
                     </div>
                   </BoxBody>
                 </Box>
@@ -821,7 +821,7 @@ git push origin feature/agent-capabilities`
                       activeFilter === 'open' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <GitPullRequest className="w-4 h-4 text-emerald-500" />
+                    <GitPullRequest className="w-4 h-4 text-success" />
                     <span>{openPrsCount} Open</span>
                   </button>
 
@@ -831,7 +831,7 @@ git push origin feature/agent-capabilities`
                       activeFilter === 'merged' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    <Check className="w-4 h-4 text-purple-500" />
+                    <Check className="w-4 h-4 text-info" />
                     <span>{mergedPrsCount} Closed</span>
                   </button>
                 </div>
@@ -888,7 +888,7 @@ git push origin feature/agent-capabilities`
                           onClick={handleCopyCli}
                           className="hover:text-foreground transition-colors flex items-center gap-1 text-[10px] text-primary"
                         >
-                          {copiedCli ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                          {copiedCli ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
                           <span>{copiedCli ? 'Copied' : 'Copy'}</span>
                         </button>
                       </div>
@@ -919,9 +919,9 @@ git push origin feature/agent-capabilities`
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5 shrink-0">
                           {pr.state === 'merged' ? (
-                            <GitMerge className="w-4 h-4 text-purple-500" />
+                            <GitMerge className="w-4 h-4 text-info" />
                           ) : (
-                            <GitPullRequest className="w-4 h-4 text-emerald-500" />
+                            <GitPullRequest className="w-4 h-4 text-success" />
                           )}
                         </div>
 

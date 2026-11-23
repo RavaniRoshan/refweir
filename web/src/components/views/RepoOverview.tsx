@@ -351,7 +351,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
                     title="Copy URL"
                   >
                     {copiedBlock === 'dropdown-clone' ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <Check className="w-3.5 h-3.5 text-success" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
@@ -470,7 +470,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
               onClick={() => handleCopyCode(fileContent)}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
-              {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              {copiedCode ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
               <span>{copiedCode ? 'Copied' : 'Raw copy'}</span>
             </Button>
           </BoxHeader>
@@ -552,7 +552,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
                       title="Copy URL"
                     >
                       {copiedBlock === 'quick-clone' ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <Check className="w-3.5 h-3.5 text-success" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -581,7 +581,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
                   >
                     {copiedBlock === 'block-create' ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3 h-3 text-success" />
                         <span>Copied</span>
                       </>
                     ) : (
@@ -620,7 +620,7 @@ git push -u origin main`}
                   >
                     {copiedBlock === 'block-push' ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3 h-3 text-success" />
                         <span>Copied</span>
                       </>
                     ) : (
@@ -656,7 +656,7 @@ git push -u origin main`}
                   >
                     {copiedBlock === 'block-agent' ? (
                       <>
-                        <Check className="w-3 h-3 text-emerald-400" />
+                        <Check className="w-3 h-3 text-success" />
                         <span>Copied</span>
                       </>
                     ) : (
@@ -834,10 +834,10 @@ git push -u origin main`}
               </div>
               {latestRelease ? (
                 <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-emerald-400" />
+                  <Tag className="w-4 h-4 text-success" />
                   <div>
                     <span className="font-semibold text-foreground">{latestRelease.tagName}</span>
-                    <span className="ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30">
+                    <span className="ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full bg-success/15 text-success font-semibold border border-success/30">
                       Latest
                     </span>
                   </div>
@@ -864,11 +864,11 @@ git push -u origin main`}
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Capability leases:</span>
-                  <span className="text-emerald-400 font-semibold">Enabled</span>
+                  <span className="text-success font-semibold">Enabled</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>AST Symbol Search:</span>
-                  <span className="text-emerald-400 font-semibold">Active</span>
+                  <span className="text-success font-semibold">Active</span>
                 </div>
               </div>
               <Button

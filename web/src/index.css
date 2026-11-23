@@ -59,6 +59,14 @@ body {
   --color-signal: var(--signal);
   --color-signal-ink: var(--signal-ink);
   --color-ember: var(--ember);
+  --color-success: var(--color-success);
+  --color-success-soft: var(--color-success-soft);
+  --color-warn: var(--color-warn);
+  --color-warn-soft: var(--color-warn-soft);
+  --color-info: var(--color-info);
+  --color-info-soft: var(--color-info-soft);
+  --color-danger: var(--color-danger);
+  --color-danger-soft: var(--color-danger-soft);
 
   /* Legacy aliases keep pre-migration classes on the new palette. */
   --color-slate-950: var(--background);

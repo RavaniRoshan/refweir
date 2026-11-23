@@ -40,7 +40,9 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
   const isDark =
     theme === 'dark' ||
     (theme === 'system' &&
-      (typeof window !== 'undefined'
+      (typeof document !== 'undefined'
+        ? document.documentElement.classList.contains('dark')
+        : typeof window !== 'undefined'
         ? window.matchMedia('(prefers-color-scheme: dark)').matches
         : false));
 
@@ -48,16 +50,20 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = () => {
-      const resolved = theme === 'system'
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : theme;
-      document.documentElement.classList.toggle('dark', resolved === 'dark');
-      try {
-        localStorage.setItem('refweir_theme', theme === 'system' ? '' : resolved);
-      } catch (e) {}
+      if (theme === 'system') {
+        const matches = mediaQuery.matches;
+        document.documentElement.classList.toggle('dark', matches);
+      } else {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        try {
+          localStorage.setItem('refweir_theme', theme);
+        } catch (e) {}
+      }
     };
 
-    applyTheme();
+    if (theme !== 'system') {
+      applyTheme();
+    }
 
     const handler = () => {
       if (theme === 'system') {

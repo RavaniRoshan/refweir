@@ -31,9 +31,9 @@ export const LivingAvatar: React.FC<LivingAvatarProps> = ({
   }
 
   const statusColor = {
-    online: 'bg-emerald-400',
-    busy: 'bg-amber-400',
-    offline: 'bg-slate-500',
+    online: 'bg-success',
+    busy: 'bg-warn',
+    offline: 'bg-muted-foreground',
   }
 
   const initials = name

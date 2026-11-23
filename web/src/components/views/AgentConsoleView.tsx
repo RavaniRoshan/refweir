@@ -297,7 +297,7 @@ export const AgentConsoleView: React.FC = () => {
           </div>
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Avg Latency:</span>
-            <span className="font-semibold text-emerald-500">12ms</span>
+            <span className="font-semibold text-success">12ms</span>
           </div>
         </div>
       </div>
@@ -407,7 +407,7 @@ export const AgentConsoleView: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3 text-xs font-mono">
-                      <span className="text-emerald-500 flex items-center gap-1">
+                      <span className="text-success flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {act.latencyMs}ms
                       </span>
                       <span className="text-muted-foreground text-[11px]">{act.timestamp}</span>
@@ -495,7 +495,7 @@ export const AgentConsoleView: React.FC = () => {
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-foreground">Execution Response</span>
                     {executionTime && (
-                      <span className="text-emerald-500 font-mono">{executionTime}ms</span>
+                      <span className="text-success font-mono">{executionTime}ms</span>
                     )}
                   </div>
                   <pre className="p-2.5 bg-background border border-border rounded-md font-mono text-xs text-foreground overflow-x-auto max-h-60 leading-relaxed">
@@ -608,7 +608,7 @@ export const AgentConsoleView: React.FC = () => {
                         onClick={handleCopyToken}
                         className="hover:text-foreground transition-colors flex items-center gap-1 text-[11px] text-primary cursor-pointer"
                       >
-                        {copiedToken ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                        {copiedToken ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
                         <span>{copiedToken ? 'Copied' : 'Copy Token'}</span>
                       </button>
                     </div>

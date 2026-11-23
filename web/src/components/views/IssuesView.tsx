@@ -182,12 +182,12 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                 >
                   {selectedIssue.state === 'open' ? (
                     <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-info" />
                       <span>Close issue</span>
                     </>
                   ) : (
                     <>
-                      <CircleDot className="w-3.5 h-3.5 text-emerald-400" />
+                      <CircleDot className="w-3.5 h-3.5 text-success" />
                       <span>Reopen issue</span>
                     </>
                   )}
@@ -425,7 +425,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  <CircleDot className="w-4 h-4 text-emerald-400" />
+                  <CircleDot className="w-4 h-4 text-success" />
                   <span>{openIssuesCount} Open</span>
                 </button>
                 <button
@@ -437,7 +437,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                  <CheckCircle2 className="w-4 h-4 text-info" />
                   <span>{closedIssuesCount} Closed</span>
                 </button>
               </div>
@@ -470,9 +470,9 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                     <div className="flex items-start gap-2.5 flex-1 min-w-0">
                       <div className="mt-0.5 shrink-0">
                         {issue.state === 'open' ? (
-                          <CircleDot className="w-4 h-4 text-emerald-400" />
+                          <CircleDot className="w-4 h-4 text-success" />
                         ) : (
-                          <CheckCircle2 className="w-4 h-4 text-purple-400" />
+                          <CheckCircle2 className="w-4 h-4 text-info" />
                         )}
                       </div>
 

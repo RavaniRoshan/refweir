@@ -452,7 +452,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                     )}
                   </div>
                   {repo.archived || (repo as any).isArchived ? (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500/40 text-amber-500">
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-warn/40 text-warn">
                       Archived
                     </Badge>
                   ) : repo.is_private || repo.visibility === 'private' ? (
@@ -460,7 +460,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                       Private
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/30 text-emerald-500">
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-success/30 text-success">
                       Public
                     </Badge>
                   )}
@@ -583,7 +583,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                     : 'text-muted-foreground hover:bg-secondary/40'
                 )}
               >
-                <GitPullRequest className="w-3 h-3 text-emerald-400" />
+                <GitPullRequest className="w-3 h-3 text-success" />
                 <span>Pull Requests</span>
               </button>
               <button
@@ -617,7 +617,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                         </div>
                       )}
                       {evt.type === 'release' && (
-                        <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <div className="w-6 h-6 rounded-md bg-warn/10 border border-warn/30 flex items-center justify-center text-warn">
                           <Tag className="w-3.5 h-3.5" />
                         </div>
                       )}
@@ -632,7 +632,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                         </div>
                       )}
                       {evt.type === 'pr' && (
-                        <div className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <div className="w-6 h-6 rounded-md bg-success/10 border border-success/30 flex items-center justify-center text-success">
                           <GitPullRequest className="w-3.5 h-3.5" />
                         </div>
                       )}
@@ -680,7 +680,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                   <span>Getting Started Checklist</span>
                 </div>
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex items-center gap-2 text-emerald-500">
+                  <div className="flex items-center gap-2 text-success">
                     <Check className="w-4 h-4" />
                     <span className="text-foreground font-medium">Cluster daemon initialized (HTTP :8080 &amp; SSH :2222)</span>
                   </div>
@@ -724,8 +724,8 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
             <BoxBody className="space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">refweird Daemon:</span>
-                <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-success font-medium">
+                  <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
                   <span>Online (8080)</span>
                 </span>
               </div>
@@ -767,7 +767,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                 }}
                 className="shrink-0"
               >
-                {copiedClone ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedClone ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
               </Button>
             </div>
           </div>

@@ -91,8 +91,8 @@ export const TransferRepoModal: React.FC<TransferRepoModalProps> = ({
         )}
 
         {/* Warning Callout Box */}
-        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs space-y-2">
-          <div className="font-semibold text-amber-500 flex items-center gap-2">
+        <div className="p-3.5 bg-warn/10 border border-warn/30 rounded-md text-xs space-y-2">
+          <div className="font-semibold text-warn flex items-center gap-2">
             <ArrowRightLeft className="w-4 h-4 shrink-0" />
             <span>Transferring ownership to another account or organization</span>
           </div>
@@ -198,7 +198,7 @@ export const TransferRepoModal: React.FC<TransferRepoModalProps> = ({
             size="sm"
             data-testid="transfer-submit-btn"
             disabled={!isFormValid || submitting}
-            className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white border-amber-600"
+            className="gap-1.5 bg-warn hover:bg-warn text-white border-warn"
           >
             {submitting ? (
               <>

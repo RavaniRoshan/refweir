@@ -205,8 +205,8 @@ export const Header: React.FC<HeaderProps> = ({
     <>
       {/* Sandbox Demo Mode Top Announcement Banner (Visible ONLY in Demo Mode) */}
       {isDemo && (
-        <div className="bg-amber-950/30 border-b border-amber-500/30 px-4 py-1.5 text-center text-xs text-amber-300 font-medium flex items-center justify-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-amber-400" />
+        <div className="bg-warn/30 border-b border-warn/30 px-4 py-1.5 text-center text-xs text-warn font-medium flex items-center justify-center gap-2">
+          <Layers className="w-3.5 h-3.5 text-warn" />
           <span>Running in Offline Sandbox Demo Mode — Data is simulated for evaluation.</span>
           <button
             onClick={toggleDemoMode}
@@ -241,12 +241,12 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={toggleDemoMode}
                   className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
                     isDemo
-                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                      ? 'bg-warn/10 text-warn border-warn/30 hover:bg-warn/20'
+                      : 'bg-success/10 text-success border-success/30 hover:bg-success/20'
                   }`}
                   title={isDemo ? 'Live demo' : 'Live instance'}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-warn' : 'bg-success'}`} />
                   <span>{isDemo ? 'Live demo' : 'Live instance'}</span>
                 </button>
               </div>
@@ -445,8 +445,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-muted-foreground shrink-0">/</span>
               <span className="text-foreground hover:underline font-bold cursor-pointer text-base truncate">{repo.name}</span>
               {repo.isArchived ? (
-                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-2 border-amber-500/40 text-amber-400 bg-amber-500/10 inline-flex items-center gap-1 font-medium shrink-0">
-                  <Archive className="w-3 h-3 text-amber-400" />
+                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-2 border-warn/40 text-warn bg-warn/10 inline-flex items-center gap-1 font-medium shrink-0">
+                  <Archive className="w-3 h-3 text-warn" />
                   <span>{repo.isPrivate ? 'Private archive' : 'Public archive'}</span>
                 </Badge>
               ) : repo.isPrivate ? (
@@ -454,7 +454,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Private
                 </Badge>
               ) : (
-                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0">
+                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-success/30 text-success bg-success/10 shrink-0">
                   Public
                 </Badge>
               )}
@@ -516,17 +516,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Read-Only Archival Banner */}
       {repo.isArchived && (
-        <div className="w-full bg-amber-500/10 border-b border-amber-500/30 py-2.5 px-4 text-xs text-amber-200">
+        <div className="w-full bg-warn/10 border-b border-warn/30 py-2.5 px-4 text-xs text-warn">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Archive className="w-4 h-4 text-amber-400 shrink-0" />
+              <Archive className="w-4 h-4 text-warn shrink-0" />
               <span>
                 <strong>This repository has been archived.</strong> It is now in read-only mode. All commits, issues, pull requests, and pushes are frozen.
               </span>
             </div>
             <button
               onClick={() => onTabChange('settings')}
-              className="text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer shrink-0"
+              className="text-warn hover:text-warn underline font-medium cursor-pointer shrink-0"
             >
               Repository Settings
             </button>
@@ -579,7 +579,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => copyToClipboard(getCloneCommand())}
               className="shrink-0"
             >
-              {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              {copied ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </Button>
           </div>

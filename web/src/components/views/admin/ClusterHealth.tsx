@@ -133,7 +133,7 @@ export const ClusterHealth: React.FC = () => {
             <span className="flex items-center gap-1.5 font-medium">
               <HardDrive className="w-3.5 h-3.5 text-primary" /> Git Transports
             </span>
-            <span className="text-[10px] text-emerald-500 bg-secondary px-1.5 py-0.5 rounded border border-border font-mono">
+            <span className="text-[10px] text-success bg-secondary px-1.5 py-0.5 rounded border border-border font-mono">
               HTTP & SSH :2222
             </span>
           </div>
@@ -186,7 +186,7 @@ export const ClusterHealth: React.FC = () => {
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Git LFS CAS:</span>
-                <span className="text-emerald-500">SHA-256 Batch API</span>
+                <span className="text-success">SHA-256 Batch API</span>
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Cert Auth:</span>
@@ -216,7 +216,7 @@ export const ClusterHealth: React.FC = () => {
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Review Threading:</span>
-                <span className="text-emerald-500">Inline Check Runs</span>
+                <span className="text-success">Inline Check Runs</span>
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Tool Scope Auth:</span>
@@ -248,7 +248,7 @@ export const ClusterHealth: React.FC = () => {
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Git Backend:</span>
-                <span className="text-emerald-500">go-git/v6 Bare Repos</span>
+                <span className="text-success">go-git/v6 Bare Repos</span>
               </div>
               <div className="flex justify-between p-1.5 rounded bg-secondary/40 border border-border">
                 <span className="text-muted-foreground">Sync Target:</span>
@@ -263,7 +263,7 @@ export const ClusterHealth: React.FC = () => {
       <Box>
         <BoxHeader className="bg-secondary/35 py-2.5">
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-500" />
+            <Activity className="w-4 h-4 text-success" />
             <span className="text-xs font-semibold text-foreground">Enterprise Observability & Scrape Endpoints</span>
           </div>
           <Badge variant="outline" className="text-[10px] font-mono">
@@ -296,7 +296,7 @@ export const ClusterHealth: React.FC = () => {
                 title="Copy Prometheus URL"
               >
                 {copiedAction === 'prom-url' ? (
-                  <Check className="w-4 h-4 text-emerald-500" />
+                  <Check className="w-4 h-4 text-success" />
                 ) : (
                   <Copy className="w-4 h-4" />
                 )}

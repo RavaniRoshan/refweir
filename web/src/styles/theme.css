@@ -17,6 +17,14 @@
   --accent-foreground: var(--text-1);
   --destructive: var(--danger);
   --destructive-foreground: var(--signal-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --border: var(--hairline);
   --input: var(--hairline);
   --ring: var(--signal);

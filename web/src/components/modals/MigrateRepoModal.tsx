@@ -357,7 +357,7 @@ export const MigrateRepoModal: React.FC<MigrateRepoModalProps> = ({
                     : 'border-border bg-secondary/30 text-muted-foreground hover:bg-secondary/60'
                 }`}
               >
-                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                <Lock className="w-4 h-4 text-warn shrink-0" />
                 <div>
                   <div className="font-medium">Private</div>
                   <div className="text-[10px] text-muted-foreground">Authorized only</div>

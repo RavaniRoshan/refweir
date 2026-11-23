@@ -94,12 +94,12 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'pr.merged':
-        return <GitMerge className="w-3.5 h-3.5 text-purple-400" />
+        return <GitMerge className="w-3.5 h-3.5 text-info" />
       case 'pr.opened':
       case 'pr.reviewed':
-        return <GitPullRequest className="w-3.5 h-3.5 text-emerald-400" />
+        return <GitPullRequest className="w-3.5 h-3.5 text-success" />
       case 'issue.assigned':
-        return <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+        return <AlertCircle className="w-3.5 h-3.5 text-warn" />
       default:
         return <Bell className="w-3.5 h-3.5 text-primary" />
     }

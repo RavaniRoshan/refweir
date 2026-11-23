@@ -158,7 +158,7 @@ export const CreatePullRequestModal: React.FC<CreatePullRequestModalProps> = ({
 
             {/* Mergeability badge */}
             {headBranch && headBranch !== baseBranch && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-medium ml-auto">
+              <span className="inline-flex items-center gap-1 text-[11px] text-success font-medium ml-auto">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Able to merge automatically</span>
               </span>

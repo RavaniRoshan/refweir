@@ -456,7 +456,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                   <div
                     className={`p-3 rounded-md text-xs flex items-center gap-2 ${
                       generalFeedback.includes('successfully')
-                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-500'
+                        ? 'bg-success/10 border border-success/30 text-success'
                         : 'bg-destructive/10 border border-destructive/30 text-destructive'
                     }`}
                   >
@@ -736,7 +736,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                               className={`text-[10px] py-0 px-1.5 ${
                                 k.read_only
                                   ? 'border-border text-muted-foreground'
-                                  : 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                                  : 'border-success/40 text-success bg-success/10'
                               }`}
                             >
                               {k.read_only ? 'Read-only' : 'Read/write'}
@@ -798,7 +798,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
             </div>
 
             {webhookFeedback && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-md text-xs text-emerald-400 flex items-center gap-2">
+              <div className="p-3 bg-success/10 border border-success/30 rounded-md text-xs text-success flex items-center gap-2">
                 <Check className="w-4 h-4 shrink-0" />
                 <span>{webhookFeedback}</span>
               </div>
@@ -836,7 +836,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                         <div className="mt-1">
                           <span
                             className={`inline-block w-2.5 h-2.5 rounded-full ${
-                              w.active ? 'bg-emerald-400' : 'bg-muted-foreground'
+                              w.active ? 'bg-success' : 'bg-muted-foreground'
                             }`}
                             title={w.active ? 'Webhook active' : 'Webhook disabled'}
                           />
@@ -936,7 +936,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                             variant="outline"
                             className={`text-[10px] font-mono py-0 px-1.5 ${
                               del.response_status_code >= 200 && del.response_status_code < 300
-                                ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
+                                ? 'border-success/40 text-success bg-success/10'
                                 : 'border-destructive/40 text-destructive bg-destructive/10'
                             }`}
                           >
@@ -986,7 +986,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    {isPrivate ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Globe className="w-3.5 h-3.5 text-emerald-500" />}
+                    {isPrivate ? <Lock className="w-3.5 h-3.5 text-warn" /> : <Globe className="w-3.5 h-3.5 text-success" />}
                     <span>Change repository visibility</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -1008,7 +1008,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <Archive className="w-3.5 h-3.5 text-amber-500" />
+                    <Archive className="w-3.5 h-3.5 text-warn" />
                     <span>{isArchived ? 'Unarchive this repository' : 'Archive this repository'}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -1022,7 +1022,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                   size="sm"
                   data-testid="repo-archive-btn"
                   onClick={() => setArchiveModalOpen(true)}
-                  className="shrink-0 text-xs text-amber-500 hover:bg-amber-500/10 border-amber-500/30"
+                  className="shrink-0 text-xs text-warn hover:bg-warn/10 border-warn/30"
                 >
                   {isArchived ? 'Unarchive this repository' : 'Archive this repository'}
                 </Button>
@@ -1032,7 +1032,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <ArrowRightLeft className="w-3.5 h-3.5 text-amber-500" />
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-warn" />
                     <span>Transfer ownership</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -1044,7 +1044,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                   size="sm"
                   data-testid="repo-transfer-btn"
                   onClick={() => setTransferModalOpen(true)}
-                  className="shrink-0 text-xs text-amber-500 hover:bg-amber-500/10 border-amber-500/30"
+                  className="shrink-0 text-xs text-warn hover:bg-warn/10 border-warn/30"
                 >
                   Transfer ownership
                 </Button>

@@ -277,10 +277,10 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                       value="approve"
                       checked={reviewVerdict === 'approve'}
                       onChange={() => setReviewVerdict('approve')}
-                      className="mt-0.5 text-emerald-500"
+                      className="mt-0.5 text-success"
                     />
                     <div>
-                      <span className="font-medium text-emerald-500 block">Approve</span>
+                      <span className="font-medium text-success block">Approve</span>
                       <span className="text-[11px] text-muted-foreground">
                         Submit feedback and approve merging these changes.
                       </span>
@@ -294,10 +294,10 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                       value="request_changes"
                       checked={reviewVerdict === 'request_changes'}
                       onChange={() => setReviewVerdict('request_changes')}
-                      className="mt-0.5 text-rose-500"
+                      className="mt-0.5 text-danger"
                     />
                     <div>
-                      <span className="font-medium text-rose-500 block">Request changes</span>
+                      <span className="font-medium text-danger block">Request changes</span>
                       <span className="text-[11px] text-muted-foreground">
                         Submit feedback that must be addressed before merging.
                       </span>
@@ -330,7 +330,7 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
         <div
           className={`p-3 rounded-md text-xs border flex items-center justify-between gap-2 ${
             actionMessage.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+              ? 'bg-success/10 border-success/30 text-success'
               : 'bg-destructive/10 border-destructive/30 text-destructive'
           }`}
         >
@@ -353,8 +353,8 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
             <BoxHeader className="bg-secondary/40 py-2 font-mono text-xs flex items-center justify-between">
               <span className="font-semibold text-foreground">{diff.newPath}</span>
               <div className="flex items-center gap-2">
-                <span className="text-emerald-500 font-semibold font-mono">+{diff.additions}</span>
-                <span className="text-rose-500 font-semibold font-mono">-{diff.deletions}</span>
+                <span className="text-success font-semibold font-mono">+{diff.additions}</span>
+                <span className="text-danger font-semibold font-mono">-{diff.deletions}</span>
               </div>
             </BoxHeader>
 
@@ -396,9 +396,9 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                     <div
                       className={`group flex items-stretch leading-relaxed ${
                         isAdd
-                          ? 'bg-emerald-500/10 text-emerald-400'
+                          ? 'bg-success/10 text-success'
                           : isDel
-                          ? 'bg-rose-500/10 text-rose-400'
+                          ? 'bg-danger/10 text-danger'
                           : isHeader
                           ? 'bg-secondary/60 text-muted-foreground font-semibold py-1'
                           : 'text-foreground/90 hover:bg-secondary/20'
@@ -510,7 +510,7 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                                         {applyingSuggestionId === comment.id ? (
                                           <Loader2 className="w-3 h-3 animate-spin" />
                                         ) : isApplied ? (
-                                          <Check className="w-3 h-3 text-emerald-500" />
+                                          <Check className="w-3 h-3 text-success" />
                                         ) : (
                                           <Check className="w-3 h-3" />
                                         )}
@@ -520,10 +520,10 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                                   </div>
 
                                   <div className="p-2 space-y-0.5">
-                                    <div className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-400">
+                                    <div className="px-2 py-0.5 rounded bg-danger/15 text-danger">
                                       - {line.substring(1) || 'original'}
                                     </div>
-                                    <div className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">
+                                    <div className="px-2 py-0.5 rounded bg-success/15 text-success">
                                       + {suggestion}
                                     </div>
                                   </div>

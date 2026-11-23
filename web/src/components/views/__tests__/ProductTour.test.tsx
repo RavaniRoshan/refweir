@@ -8,15 +8,13 @@ describe('ProductTour Component', () => {
     localStorage.clear()
   })
 
-  it('renders step 1 (Sovereign Cluster Architecture) when open', () => {
+  it('renders step 1 (Autonomous AI Agent Bridge) when open', () => {
     const onClose = vi.fn()
     render(<ProductTour isOpen={true} onClose={onClose} />)
 
-    expect(screen.getByText('Sovereign Cluster Architecture')).toBeInTheDocument()
-    expect(screen.getByText(/core engine/i)).toBeInTheDocument()
-    expect(screen.getByText(':8080')).toBeInTheDocument()
-    expect(screen.getByText(':2222')).toBeInTheDocument()
-    expect(screen.getByText('SQLite WAL')).toBeInTheDocument()
+    expect(screen.getByText('Autonomous AI Agent Bridge (MCP)')).toBeInTheDocument()
+    expect(screen.getByText(/agent gateway/i)).toBeInTheDocument()
+    expect(screen.getByText('JSON-RPC 2.0')).toBeInTheDocument()
   })
 
   it('navigates through steps when clicking Next and Back', () => {
@@ -32,7 +30,7 @@ describe('ProductTour Component', () => {
 
     // Step 2 -> Step 3
     fireEvent.click(screen.getByRole('button', { name: /next/i }))
-    expect(screen.getByText('Autonomous AI Agent Bridge (MCP)')).toBeInTheDocument()
+    expect(screen.getByText('Rulesets & Cryptographic Enforcement')).toBeInTheDocument()
 
     // Step 3 -> Back to Step 2
     const backBtn = screen.getByRole('button', { name: /back/i })

@@ -126,11 +126,11 @@ export const SsoConfig: React.FC = () => {
         <div
           className={`p-3 rounded-md border text-xs flex items-center gap-2 ${
             statusMsg.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+              ? 'bg-success/10 border-success/30 text-success'
               : 'bg-destructive/10 border-destructive/30 text-destructive'
           }`}
         >
-          {statusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-destructive" />}
+          {statusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-success" /> : <AlertCircle className="w-4 h-4 text-destructive" />}
           <span>{statusMsg.text}</span>
         </div>
       )}
@@ -278,7 +278,7 @@ export const SsoConfig: React.FC = () => {
       <Box>
         <BoxHeader className="bg-secondary/35 py-2.5">
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" />
+            <Zap className="w-4 h-4 text-warn" />
             <span className="text-xs font-semibold text-foreground">SCIM 2.0 Automatic User Provisioning</span>
           </div>
           <Badge variant="outline" className="text-[10px]">
@@ -300,7 +300,7 @@ export const SsoConfig: React.FC = () => {
                 className="text-xs font-mono text-muted-foreground bg-secondary/30"
               />
               <Button variant="outline" size="sm" onClick={handleCopySCIM} className="shrink-0 gap-1.5 text-xs">
-                {copiedSCIM ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedSCIM ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedSCIM ? 'Copied' : 'Copy'}</span>
               </Button>
             </div>

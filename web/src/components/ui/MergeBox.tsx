@@ -55,8 +55,8 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
 
   if (isMerged) {
     return (
-      <div className={cn('rounded-md border border-purple-500/40 bg-purple-950/15 p-4 flex items-center gap-3', className)}>
-        <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+      <div className={cn('rounded-md border border-info/40 bg-info/15 p-4 flex items-center gap-3', className)}>
+        <div className="w-8 h-8 rounded-full bg-info text-white flex items-center justify-center shrink-0">
           <GitMerge className="w-4 h-4" />
         </div>
         <div className="space-y-0.5 text-xs">
@@ -71,7 +71,7 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
     <div className={cn('rounded-md border border-border bg-card overflow-hidden text-xs', className)}>
       {/* Status Header */}
       <div className="px-4 py-3 bg-secondary/30 border-b border-border flex items-start gap-3">
-        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', checksPassed ? 'text-emerald-500 bg-emerald-500/10' : 'text-amber-500 bg-amber-500/10')}>
+        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', checksPassed ? 'text-success bg-success/10' : 'text-warn bg-warn/10')}>
           <CheckCircle2 className="w-5 h-5" />
         </div>
         <div className="space-y-0.5 flex-1">
@@ -192,7 +192,7 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
               <span
                 className={cn(
                   'w-2 h-2 rounded-full shrink-0',
-                  autoMergeEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'
+                  autoMergeEnabled ? 'bg-success animate-pulse' : 'bg-muted-foreground'
                 )}
               />
               <span className="text-muted-foreground">

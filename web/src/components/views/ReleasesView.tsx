@@ -171,12 +171,12 @@ export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
                       {rel.tagName}
                     </span>
                     {idx === 0 && (
-                      <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 text-[10px] font-semibold">
+                      <Badge variant="outline" className="border-success/40 text-success bg-success/10 text-[10px] font-semibold">
                         Latest
                       </Badge>
                     )}
                     {rel.isPrerelease && (
-                      <Badge variant="outline" className="border-amber-500/40 text-amber-400 bg-amber-500/10 text-[10px]">
+                      <Badge variant="outline" className="border-warn/40 text-warn bg-warn/10 text-[10px]">
                         Pre-release
                       </Badge>
                     )}
@@ -231,7 +231,7 @@ export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
                                 className="px-1.5 py-0.5 rounded bg-secondary border border-border text-[10px] font-mono text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
                                 title={`SHA256: ${asset.sha256}`}
                               >
-                                {copiedSha === asset.name ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+                                {copiedSha === asset.name ? <Check className="w-2.5 h-2.5 text-success" /> : <Copy className="w-2.5 h-2.5" />}
                                 <span>checksum</span>
                               </button>
                             )}
@@ -296,7 +296,7 @@ export const ReleasesView: React.FC<ReleasesViewProps> = ({ repo }) => {
                     <div className="space-y-0.5 font-mono text-xs">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-foreground">{rel.tagName}</span>
-                        <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 text-[10px] font-sans flex items-center gap-1">
+                        <Badge variant="outline" className="border-success/40 text-success bg-success/10 text-[10px] font-sans flex items-center gap-1">
                           <ShieldCheck className="w-3 h-3" />
                           <span>Verified</span>
                         </Badge>

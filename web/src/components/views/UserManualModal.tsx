@@ -139,7 +139,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                     onClick={() => handleCopy('ssh-keygen -t ed25519 -C "developer@refweir.dev"', 'ssh-keygen')}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {copiedSection === 'ssh-keygen' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedSection === 'ssh-keygen' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
                 <p className="text-muted-foreground text-[11px]">
@@ -166,7 +166,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                     onClick={() => handleCopy('git remote add origin http://localhost:8080/shiva/my-repo.git\ngit branch -M main\ngit push -u origin main', 'git-push')}
                     className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {copiedSection === 'git-push' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedSection === 'git-push' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                     onClick={() => handleCopy('claude mcp add refweir http://localhost:8080/mcp', 'mcp-cmd')}
                     className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    {copiedSection === 'mcp-cmd' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedSection === 'mcp-cmd' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>

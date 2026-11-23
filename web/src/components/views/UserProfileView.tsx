@@ -646,7 +646,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
                     </BoxRow>
                     <BoxRow className="flex items-center justify-between text-xs py-3">
                       <div className="flex items-center gap-3">
-                        <GitPullRequest className="w-4 h-4 text-emerald-400" />
+                        <GitPullRequest className="w-4 h-4 text-success" />
                         <span>Opened 4 pull requests in <strong className="text-foreground">shiva/refweir.dev</strong></span>
                       </div>
                       <span className="text-muted-foreground font-mono">Oct 14</span>
@@ -890,8 +890,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
 
               {/* Token Secret Flash Notice */}
               {newlyCreatedToken && (
-                <div className="p-4 rounded-md bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                <div className="p-4 rounded-md bg-success/10 border border-success/30 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-success">
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Make sure to copy your personal access token now. You won’t be able to see it again!</span>
                   </div>
@@ -912,7 +912,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
                       }}
                       className="gap-1.5 shrink-0"
                     >
-                      {copiedToken ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedToken ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedToken ? 'Copied' : 'Copy'}</span>
                     </Button>
                   </div>

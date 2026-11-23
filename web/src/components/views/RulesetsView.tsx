@@ -232,7 +232,7 @@ export const RulesetsView: React.FC<RulesetsViewProps> = ({ repo = defaultRepo }
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {actionMsg && (
-            <Badge variant="outline" className="text-xs font-mono text-emerald-500 border-emerald-500/40 gap-1">
+            <Badge variant="outline" className="text-xs font-mono text-success border-success/40 gap-1">
               <Check className="w-3 h-3" />
               <span>{actionMsg}</span>
             </Badge>
@@ -334,19 +334,19 @@ export const RulesetsView: React.FC<RulesetsViewProps> = ({ repo = defaultRepo }
                       {/* Enforced Rules List */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
                         <div className="flex items-center gap-2 p-1.5 rounded bg-background border border-border text-[11px] text-foreground">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
                           <span>Require Signed Commits</span>
                         </div>
                         <div className="flex items-center gap-2 p-1.5 rounded bg-background border border-border text-[11px] text-foreground">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
                           <span>Require 1 PR Approval</span>
                         </div>
                         <div className="flex items-center gap-2 p-1.5 rounded bg-background border border-border text-[11px] text-foreground">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
                           <span>Require CI Check Runs</span>
                         </div>
                         <div className="flex items-center gap-2 p-1.5 rounded bg-background border border-border text-[11px] text-foreground">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
                           <span>Block Force Pushes</span>
                         </div>
                       </div>
@@ -548,7 +548,7 @@ export const RulesetsView: React.FC<RulesetsViewProps> = ({ repo = defaultRepo }
                 )}
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 border border-border p-2 rounded-md">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-warn shrink-0" />
                   <span>Certificates signed by registered CAs automatically inherit namespace role permissions on push/clone.</span>
                 </div>
               </div>

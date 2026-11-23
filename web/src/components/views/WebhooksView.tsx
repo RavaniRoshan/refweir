@@ -102,7 +102,7 @@ export const WebhooksView: React.FC = () => {
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {feedbackMsg && (
-            <Badge variant="outline" className="text-xs font-mono text-emerald-500 border-emerald-500/40 gap-1">
+            <Badge variant="outline" className="text-xs font-mono text-success border-success/40 gap-1">
               <Check className="w-3 h-3" />
               <span>{feedbackMsg}</span>
             </Badge>
@@ -192,7 +192,7 @@ export const WebhooksView: React.FC = () => {
 
                     <div className="flex items-center gap-3">
                       <Badge variant={isOk ? 'success' : 'closed'} className="text-[10px] font-mono py-0 gap-1">
-                        {isOk ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <AlertCircle className="w-3 h-3 text-destructive" />}
+                        {isOk ? <CheckCircle2 className="w-3 h-3 text-success" /> : <AlertCircle className="w-3 h-3 text-destructive" />}
                         <span>HTTP {status}</span>
                       </Badge>
 
@@ -227,7 +227,7 @@ export const WebhooksView: React.FC = () => {
                           className="flex items-center gap-1 text-primary hover:underline transition-colors"
                         >
                           {copiedId === del.id ? (
-                            <Check className="w-3 h-3 text-emerald-500" />
+                            <Check className="w-3 h-3 text-success" />
                           ) : (
                             <Copy className="w-3 h-3" />
                           )}

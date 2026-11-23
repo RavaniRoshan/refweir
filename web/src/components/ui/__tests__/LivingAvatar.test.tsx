@@ -27,16 +27,16 @@ describe('LivingAvatar Component', () => {
     const { container: onlineContainer } = render(
       <LivingAvatar name="alex" status="online" />
     )
-    expect(onlineContainer.querySelector('span.bg-emerald-400')).toBeInTheDocument()
+    expect(onlineContainer.querySelector('span.bg-success')).toBeInTheDocument()
 
     const { container: busyContainer } = render(
       <LivingAvatar name="alex" status="busy" />
     )
-    expect(busyContainer.querySelector('span.bg-amber-400')).toBeInTheDocument()
+    expect(busyContainer.querySelector('span.bg-warn')).toBeInTheDocument()
 
     const { container: offlineContainer } = render(
       <LivingAvatar name="alex" status="offline" />
     )
-    expect(offlineContainer.querySelector('span.bg-slate-500')).toBeInTheDocument()
+    expect(offlineContainer.querySelector('span.bg-muted-foreground')).toBeInTheDocument()
   })
 })

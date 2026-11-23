@@ -178,7 +178,7 @@ export const CreateFileModal: React.FC<CreateFileModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2 text-muted-foreground pt-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="w-2 h-2 rounded-full bg-success" />
               <span>
                 Commit directly to the <strong className="text-foreground font-mono">{branch}</strong> branch
               </span>

@@ -78,7 +78,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
                 onClick={() => handleCopy('http://localhost:8080/mcp')}
                 className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                {copiedText === 'http://localhost:8080/mcp' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedText === 'http://localhost:8080/mcp' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
@@ -118,7 +118,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
                   onClick={() => handleCopy('git remote add origin http://localhost:8080/shiva/refweir.dev.git')}
                   className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
-                  {copiedText?.includes('http://localhost:8080') ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedText?.includes('http://localhost:8080') ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -131,7 +131,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
                   onClick={() => handleCopy('git remote add origin ssh://git@localhost:2222/shiva/refweir.dev.git')}
                   className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
                 >
-                  {copiedText?.includes('ssh://git@localhost:2222') ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedText?.includes('ssh://git@localhost:2222') ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -197,7 +197,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
             <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-foreground uppercase">Smart-HTTP</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
               </div>
               <div className="font-mono text-xs text-primary font-bold">:8080</div>
               <p className="text-[10px] text-muted-foreground">Standard Git push/pull & REST API</p>
@@ -206,7 +206,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
             <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-foreground uppercase">Pure-Go SSH</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
               </div>
               <div className="font-mono text-xs text-primary font-bold">:2222</div>
               <p className="text-[10px] text-muted-foreground">Embedded SSH transport (zero-OpenSSH)</p>
@@ -215,7 +215,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
             <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-foreground uppercase">Storage Engine</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
               </div>
               <div className="font-mono text-xs text-primary font-bold">SQLite WAL</div>
               <p className="text-[10px] text-muted-foreground">ACID metadata & Litestream replicas</p>
@@ -224,49 +224,12 @@ export const ProductTour: React.FC<ProductTourProps> = ({
 
           <div className="p-3 rounded-md bg-secondary/20 border border-border text-xs space-y-1.5">
             <div className="font-semibold text-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-success" />
               <span>How Everything Connects</span>
             </div>
             <p className="text-[11px] text-muted-foreground">
               All Git refs, pull request reviews, and security policies are coordinated directly through the SQLite write-ahead log (<code className="font-mono text-foreground">data/meta.db</code>). Bare Git repositories are stored in <code className="font-mono text-foreground">data/git/</code> with zero CGO dependencies.
             </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'enterprise-rulesets',
-      title: 'Rulesets & Cryptographic Enforcement',
-      subtitle: 'Strict branch protection, Ed25519 commit signing verification, and automated merge queues',
-      icon: <ShieldCheck className="w-5 h-5" />,
-      badge: 'Enterprise Security',
-      color: 'text-primary',
-      content: (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Protect your production mainline branches with cryptographic verification and enterprise-grade policy enforcement directly in SQLite WAL transactions.
-          </p>
-
-          <div className="space-y-2">
-            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground">Cryptographic Commit Signing</span>
-                <p className="text-[11px] text-muted-foreground">
-                  Reject unsigned commits or unverified keys before they ever hit the repository refs.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
-              <GitBranch className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground">Linear History & Merge Queues</span>
-                <p className="text-[11px] text-muted-foreground">
-                  Prevent merge skew by running tests against queued branches before atomic fast-forward commits.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       ),

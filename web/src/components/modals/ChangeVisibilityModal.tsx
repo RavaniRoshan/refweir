@@ -83,8 +83,8 @@ export const ChangeVisibilityModal: React.FC<ChangeVisibilityModalProps> = ({
         )}
 
         {/* Warning Callout Box */}
-        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs space-y-2">
-          <div className="font-semibold text-amber-500 flex items-center gap-2">
+        <div className="p-3.5 bg-warn/10 border border-warn/30 rounded-md text-xs space-y-2">
+          <div className="font-semibold text-warn flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             <span>Caution: High-impact security and visibility change</span>
           </div>
@@ -174,7 +174,7 @@ export const ChangeVisibilityModal: React.FC<ChangeVisibilityModalProps> = ({
             disabled={submitting || !isFormValid}
             className={
               isCurrentlyPrivate
-                ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                ? 'bg-warn hover:bg-warn text-white'
                 : 'bg-primary hover:bg-primary/90 text-primary-foreground'
             }
           >

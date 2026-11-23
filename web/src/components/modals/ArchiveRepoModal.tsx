@@ -74,8 +74,8 @@ export const ArchiveRepoModal: React.FC<ArchiveRepoModalProps> = ({
           </div>
         )}
 
-        <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs space-y-2">
-          <div className="font-semibold text-amber-500 flex items-center gap-2">
+        <div className="p-3.5 bg-warn/10 border border-warn/30 rounded-md text-xs space-y-2">
+          <div className="font-semibold text-warn flex items-center gap-2">
             <Archive className="w-4 h-4 shrink-0" />
             <span>
               {isCurrentlyArchived
@@ -106,7 +106,7 @@ export const ArchiveRepoModal: React.FC<ArchiveRepoModalProps> = ({
             value={confirmInput}
             onChange={(e) => setConfirmInput(e.target.value)}
             placeholder={fullRepoName}
-            className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground font-mono outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+            className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground font-mono outline-none focus:border-warn focus:ring-1 focus:ring-warn"
           />
         </div>
 
@@ -120,7 +120,7 @@ export const ArchiveRepoModal: React.FC<ArchiveRepoModalProps> = ({
             size="sm"
             data-testid="archive-submit-btn"
             disabled={submitting || !isMatched}
-            className="border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+            className="border-warn/40 text-warn hover:bg-warn/10"
           >
             {submitting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
