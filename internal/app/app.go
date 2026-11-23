@@ -487,6 +487,8 @@ func Open(cfg config.Config) (*App, error) {
 			_ = db.CreateNamespace(r.Context(), ns)
 		}
 
+		caller, _ := auth.ResolveUser(r.Context(), db, r)
+
 		fullName := req.Owner + "/" + req.Name
 		cloneHTTP := fmt.Sprintf("%s/%s/%s.git", strings.TrimRight(cfg.PublicURL, "/"), req.Owner, req.Name)
 		webURL := fmt.Sprintf("%s/%s/%s", strings.TrimRight(cfg.PublicURL, "/"), req.Owner, req.Name)
@@ -509,6 +511,10 @@ func Open(cfg config.Config) (*App, error) {
 		if err := db.CreateRepo(r.Context(), repoRecord); err != nil {
 			http.Error(w, "Failed to create repo: "+err.Error(), http.StatusInternalServerError)
 			return
+		}
+
+		if caller != nil && caller.ID != "" {
+			_ = db.EnsureNamespaceAdminGrant(r.Context(), ns.ID, caller.ID)
 		}
 
 		// Initialize bare repo on disk

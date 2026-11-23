@@ -42,6 +42,9 @@ func (db *DB) CreateNamespace(ctx context.Context, ns Namespace) error {
 		}
 		return err
 	}
+	if ns.OwnerUserID != "" {
+		_ = db.EnsureNamespaceAdminGrant(ctx, ns.ID, ns.OwnerUserID)
+	}
 	return nil
 }
 

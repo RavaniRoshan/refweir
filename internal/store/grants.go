@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"refweir.dev/pkg/idgen"
 )
 
 // Grant is one access grant on a namespace or repository. Exactly one of
@@ -265,7 +267,26 @@ func (db *DB) CheckRepoAccess(ctx context.Context, repo Repo, userID string, wri
 		}
 	}
 
+	// Access Precedence Order:
+	//   1. Owner: Namespace owner always has full read/write access.
+	//   2. Repository grant: Explicit grant on the specific repository.
+	//   3. Namespace grant: Inherited grant across the entire namespace.
+	//   4. Deny: If no matching grant satisfies the requested permission, access is denied.
 	return false, nil
+}
+
+// EnsureNamespaceAdminGrant inserts a namespace-scope grant of permission_admin for that user
+// if they do not already have one.
+func (db *DB) EnsureNamespaceAdminGrant(ctx context.Context, namespaceID, userID string) error {
+	if namespaceID == "" || userID == "" {
+		return nil
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	_, err := db.sql.ExecContext(ctx, `
+		INSERT OR IGNORE INTO grants (id, scope, namespace_id, principal_kind, user_id, permission, created_at, updated_at)
+		VALUES (?, 'namespace', ?, 'user', ?, 'permission_admin', ?, ?)`,
+		idgen.NewGrant(), namespaceID, userID, now, now)
+	return err
 }
 
 func hasPerm(perm string, write bool) bool {
