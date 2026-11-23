@@ -61,7 +61,7 @@ Refweir enforces a strict containment model: agents never receive root credentia
 curl -fsSL https://raw.githubusercontent.com/RavaniRoshan/refweir/main/scripts/install.sh | bash
 ```
 
-#### Option B: Build from Source (Go 1.22+)
+#### Option B: Build from Source (Go 1.26+)
 ```bash
 # Build the forge daemon (single binary with embedded Web UI, zero cgo)
 go build -o bin/refweird ./cmd/refweird
