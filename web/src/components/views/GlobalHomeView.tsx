@@ -29,7 +29,7 @@ import {
   isDemoModeActive,
   type RepositoryRecord,
 } from '@/lib/api'
-import { useRepositoriesQuery, useSafeQueryClient, queryKeys } from '@/lib/queries'
+import { useRepositoriesQuery, useSafeQueryClient, queryKeys, useClusterInfoQuery } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 export interface GlobalHomeViewProps {
@@ -179,6 +179,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   // Real or sandbox repositories
   const queryClient = useSafeQueryClient()
   const { data: queryRepos } = useRepositoriesQuery()
+  const { data: clusterInfo } = useClusterInfoQuery()
   const [repos, setRepos] = useState<RepositoryRecord[]>(() => (isDemoModeActive() ? defaultDemoRepos : []))
 
   useEffect(() => {
@@ -716,7 +717,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Mounted MCP Tools:</span>
-                <span className="text-foreground font-mono font-bold">{mcpTools ?? '—'}</span>
+                <span className="text-foreground font-mono font-bold">{clusterInfo?.mcpMountedToolsCount ?? mcpTools ?? '—'}</span>
               </div>
             </BoxBody>
           </Box>

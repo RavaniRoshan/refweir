@@ -28,8 +28,10 @@ import {
   type AgentLease,
 } from '@/lib/api'
 import { subscribeAgentActivity } from '@/lib/events'
+import { useClusterInfoQuery } from '@/lib/queries'
 
 export const AgentConsoleView: React.FC = () => {
+  const { data: clusterInfo } = useClusterInfoQuery()
   const [activities, setActivities] = useState<AgentActivityItem[]>([])
   const [loadingActivities, setLoadingActivities] = useState(true)
   const [availableTools, setAvailableTools] = useState<any[]>([])
@@ -283,7 +285,7 @@ export const AgentConsoleView: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with 35 active tools.
+            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with {clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 46)} active tools.
           </p>
         </div>
 
@@ -291,7 +293,7 @@ export const AgentConsoleView: React.FC = () => {
         <div className="flex items-center gap-3 text-xs font-mono">
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Tools:</span>
-            <span className="font-semibold text-foreground">{availableTools.length || 35}</span>
+            <span className="font-semibold text-foreground">{clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 46)}</span>
           </div>
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Avg Latency:</span>

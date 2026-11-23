@@ -350,6 +350,7 @@ export interface ClusterSystemInfo {
   mcpUrl: string
   walStatus: string
   engine: string
+  mcpMountedToolsCount?: number
 }
 
 export interface DeployKeyItem {
