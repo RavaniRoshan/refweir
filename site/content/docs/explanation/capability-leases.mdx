@@ -1,0 +1,54 @@
+---
+title: Capability leases and agent sandboxing
+description: How refweir.dev uses cryptographic capability leases to sandbox autonomous AI agents to short-lived, prefix-bounded ref namespaces.
+---
+
+Traditional developer platforms grant broad, long-lived access tokens (PATs or SSH deploy keys) with account-wide read and write permissions. When autonomous AI coding agents use such credentials, any hallucination, prompt injection, or logic error can compromise production branches or delete remote tags.
+
+Refweir replaces static keys with **Capability Leases**—cryptographically signed, short-lived tokens that restrict agents strictly to ephemeral ref namespaces.
+
+## Lease Lifecycle
+
+```mermaid
+flowchart TD
+    Agent[AI Agent / Orchestrator] -->|1. Request Lease (POST /api/v1/agent/leases)| Forge[Refweir Forge]
+    Forge -->|2. Mint HMAC-SHA256 Token with 1h TTL| Token[Capability Lease Token]
+    Token -->|3. Smart-HTTP or SSH Push| GitTransport[Git Transport Layer]
+    GitTransport --> PreReceive[Pre-Receive Security Hook]
+    PreReceive --> VerifyRef{Ref in refs/heads/agent/* ?}
+    VerifyRef -->|No / Path Traversal| RejectPush[403 Rejected: Ref Boundary Violation]
+    VerifyRef -->|Yes| VerifyTime{Current Time < ExpiresAt ?}
+    VerifyTime -->|No| RejectExpired[401 Rejected: Lease Expired]
+    VerifyTime -->|Yes| AcceptPush[Ref Updated & Agent Review Triggered]
+```
+
+## 1. Cryptographic Structure & Claims
+
+A capability lease token encapsulates immutable constraints evaluated during Git transport negotiation and pre-receive hooks:
+
+- **Agent Identity (`agent_id`):** Identifies the autonomous actor (e.g., `agent:claude-3-7-sonnet`, `agent:cline`).
+- **Target Repository (`repo_id`):** Pins the token to a single repository within a specific namespace.
+- **Allowed Ref Patterns (`allowed_refs`):** Explicit globs or prefixes, standardly `refs/heads/agent/<agent-id>/*`. Leases cannot target `refs/heads/main` or protected release branches.
+- **Permitted Operations (`ops`):** Granular flags such as `push`, `create_branch`, `delete_branch`. Force pushes (`+ref`) are forbidden by default.
+- **Temporal Bounds (`issued_at`, `expires_at`):** Strict TTL with a maximum default lifetime of 60 minutes. Once expired, the lease is rejected at the transport level.
+
+Tokens are signed using HMAC-SHA256 with the forge server's secret master key (`LEASES_SECRET`), preventing tampering or claim elevation.
+
+## 2. Enforcement at Transport and Hook Boundaries
+
+Capability leases are verified at multiple defensive layers:
+
+### A. Git Smart-HTTP & SSH Authentication
+- Agents supply the lease token as the password for Smart-HTTP requests (`http://localhost:8080/<owner>/<repo>.git`) or as the session token via SSH (`ssh://git@localhost:2222`).
+- The transport layer decrypts and validates the signature, ensuring the token is currently active and belongs to the requested repository.
+
+### B. Pre-Receive Hook Sandboxing
+- Before Git updates any reference in the bare repository, the pre-receive hook (`internal/security/hook.go`) inspects the ref mutation list `(old-sha, new-sha, refname)`.
+- It performs strict directory boundary checking to prevent ref directory traversal attacks (such as `refs/heads/agent/../main`).
+- Any attempt to push outside the agent's leased ref hierarchy results in an immediate abort with an informative error message.
+
+## 3. Automated Expiration and Review Gate
+
+Because capability leases expire automatically:
+1. Forgotten or crashed agents leave zero lingering attack surface.
+2. Changes pushed to `refs/heads/agent/*` trigger the automated Review Agent (`internal/agentreviewer`), ensuring code quality, security checks, and secret scanning are verified before human maintainers approve the merge into `main`.
