@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -98,25 +99,46 @@ func Verify(secret []byte, token string) (*Lease, error) {
 }
 
 // CanPushRef checks whether the lease grants permission to modify the target ref.
+// It strictly validates against ref path traversal and enforces ref directory boundary isolation.
 func (l *Lease) CanPushRef(refName string) bool {
-	// 1. Explicitly disallowed ref prefixes always take precedence (e.g. main, master, production)
+	// 0. Path traversal and formatting validation
+	if strings.Contains(refName, "..") || strings.Contains(refName, `\`) || strings.Contains(refName, "//") {
+		return false
+	}
+	cleanRef := path.Clean(refName)
+	if cleanRef != refName {
+		return false
+	}
+
+	// 1. Explicitly disallowed ref prefixes always take precedence (e.g. main, master, production, tags)
 	for _, dis := range l.DisallowedRefPrefixes {
-		if dis != "" && strings.HasPrefix(refName, dis) {
+		if dis != "" && matchRefPrefix(refName, dis) {
 			return false
 		}
 	}
 
 	// 2. If allowed prefixes are specified, ref must match at least one
-	if len(l.AllowedRefPrefixes) > 0 {
-		for _, allow := range l.AllowedRefPrefixes {
-			if allow != "" && strings.HasPrefix(refName, allow) {
-				return true
-			}
+	allowed := l.AllowedRefPrefixes
+	if len(allowed) == 0 {
+		allowed = []string{"refs/heads/agent/", "refs/heads/feat/"}
+	}
+	for _, allow := range allowed {
+		if allow != "" && matchRefPrefix(refName, allow) {
+			return true
 		}
-		return false
 	}
 
-	return true
+	return false
+}
+
+func matchRefPrefix(refName, prefix string) bool {
+	if refName == prefix {
+		return true
+	}
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+	return strings.HasPrefix(refName, prefix)
 }
 
 func sign(secret []byte, data string) string {

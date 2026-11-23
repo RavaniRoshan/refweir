@@ -71,3 +71,39 @@ func TestAgentLease_Lifecycle(t *testing.T) {
 		t.Fatalf("expected ErrExpiredLease, got %v", err)
 	}
 }
+
+func TestAgentLease_RefTraversalAndIsolation(t *testing.T) {
+	secret := []byte("cluster-signing-key-456")
+	allowedRefs := []string{"refs/heads/agent/"}
+	disallowedRefs := []string{"refs/heads/main"}
+
+	_, lease, err := Issue(secret, "agent_1", "repo_1", allowedRefs, disallowedRefs, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("Issue: %v", err)
+	}
+
+	// Traversal attacks must be rejected
+	traversals := []string{
+		"refs/heads/agent/../../heads/main",
+		"refs/heads/agent/../main",
+		"refs/heads/agent/../heads/main",
+		"refs/heads/agent//main",
+		"refs/heads/agent/..",
+		"refs/heads/agent\\main",
+	}
+	for _, target := range traversals {
+		if lease.CanPushRef(target) {
+			t.Errorf("expected CanPushRef(%q) = false, got true (path traversal bypass!)", target)
+		}
+	}
+
+	// Sibling branch without trailing slash must not match
+	if lease.CanPushRef("refs/heads/agent-production") {
+		t.Errorf("expected CanPushRef(refs/heads/agent-production) = false, got true (sibling branch bypass!)")
+	}
+
+	// Legitimate child branch must succeed
+	if !lease.CanPushRef("refs/heads/agent/task-123") {
+		t.Errorf("expected CanPushRef(refs/heads/agent/task-123) = true, got false")
+	}
+}

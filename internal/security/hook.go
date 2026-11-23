@@ -78,11 +78,18 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 				}
 			}
 
+			// Path traversal check
+			if strings.Contains(refName, "..") || strings.Contains(refName, `\`) || strings.Contains(refName, "//") {
+				auditRejection("agent.lease_rejected", refName, "Ref contains path traversal characters")
+				fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
+				return fmt.Errorf("agent capability lease ref path traversal prohibited: %s", refName)
+			}
+
 			// Disallowed ref prefixes (e.g. main, master)
 			if disallowedStr := os.Getenv("REFWEIR_LEASE_DISALLOWED_REFS"); disallowedStr != "" {
 				disallowed := strings.Split(disallowedStr, ",")
 				for _, dis := range disallowed {
-					if dis != "" && strings.HasPrefix(refName, dis) {
+					if dis != "" && matchRefPrefix(refName, dis) {
 						auditRejection("agent.lease_rejected", refName, "Lease prohibited modification of disallowed ref prefix "+dis)
 						fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
 						return fmt.Errorf("agent capability lease ref prohibited: %s", refName)
@@ -98,7 +105,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			allowed := strings.Split(allowedStr, ",")
 			permitted := false
 			for _, allow := range allowed {
-				if allow != "" && strings.HasPrefix(refName, allow) {
+				if allow != "" && matchRefPrefix(refName, allow) {
 					permitted = true
 					break
 				}
@@ -179,4 +186,14 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 	}
 
 	return nil
+}
+
+func matchRefPrefix(refName, prefix string) bool {
+	if refName == prefix {
+		return true
+	}
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+	return strings.HasPrefix(refName, prefix)
 }

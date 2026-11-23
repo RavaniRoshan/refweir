@@ -109,13 +109,14 @@ func (db *DB) CreateSCIMToken(ctx context.Context, t SCIMToken) error {
 	return nil
 }
 
-// ValidateSCIMToken validates a token hash.
+// ValidateSCIMToken validates a token hash and verifies it has not expired.
 func (db *DB) ValidateSCIMToken(ctx context.Context, hash string) (bool, error) {
 	var count int
+	now := time.Now().UTC().Format(time.RFC3339)
 	err := db.sql.QueryRowContext(ctx, `
 		SELECT COUNT(*) FROM scim_tokens
-		WHERE token_hash = ?
-	`, hash).Scan(&count)
+		WHERE token_hash = ? AND (expires_at IS NULL OR expires_at = '' OR expires_at > ?)
+	`, hash, now).Scan(&count)
 	if err != nil {
 		return false, fmt.Errorf("validate scim token: %w", err)
 	}

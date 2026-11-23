@@ -175,7 +175,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
 		return
 	}
-	allowed, err := s.store.CheckRepoAccess(ctx, repo, userID, needsWrite)
+	var allowed bool
+	if activeLease != nil {
+		allowed = true // cryptographically validated for repo in validateLease
+	} else {
+		allowed, err = s.store.CheckRepoAccess(ctx, repo, userID, needsWrite)
+	}
 	if err != nil || !allowed {
 		http.Error(w, "Access denied", http.StatusForbidden)
 		return
@@ -242,9 +247,15 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 			}
 		}
 		if id, err := s.checkCredential(ctx, pass); err == nil {
+			if s.isUserSuspended(ctx, id) {
+				return "", nil, "", errors.New("user account is suspended")
+			}
 			return id, nil, "", nil
 		}
 		if id, err := s.checkCredential(ctx, user); err == nil {
+			if s.isUserSuspended(ctx, id) {
+				return "", nil, "", errors.New("user account is suspended")
+			}
 			return id, nil, "", nil
 		}
 		u, err := s.store.GetUserByLogin(ctx, user)
@@ -252,6 +263,9 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 			u, err = s.store.GetUserByEmail(ctx, user)
 		}
 		if err == nil && u.PasswordHash != "" && auth.CheckPassword(u.PasswordHash, pass) {
+			if u.Status == "suspended" {
+				return "", nil, "", errors.New("user account is suspended")
+			}
 			return u.ID, nil, "", nil
 		}
 	}
@@ -273,11 +287,17 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 			}
 		}
 		if id, err := s.checkCredential(ctx, tok); err == nil {
+			if s.isUserSuspended(ctx, id) {
+				return "", nil, "", errors.New("user account is suspended")
+			}
 			return id, nil, "", nil
 		}
 		if sess, _, err := s.store.GetSessionByHash(ctx, auth.HashCredential(tok)); err == nil {
 			exp, err := time.Parse(time.RFC3339, sess.ExpiresAt)
 			if err == nil && time.Now().Before(exp) {
+				if s.isUserSuspended(ctx, sess.UserID) {
+					return "", nil, "", errors.New("user account is suspended")
+				}
 				return sess.UserID, nil, "", nil
 			}
 		}
@@ -288,12 +308,23 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 		if sess, _, err := s.store.GetSessionByHash(ctx, auth.HashCredential(cookie.Value)); err == nil {
 			exp, err := time.Parse(time.RFC3339, sess.ExpiresAt)
 			if err == nil && time.Now().Before(exp) {
+				if s.isUserSuspended(ctx, sess.UserID) {
+					return "", nil, "", errors.New("user account is suspended")
+				}
 				return sess.UserID, nil, "", nil
 			}
 		}
 	}
 
 	return "", nil, "", errors.New("unauthenticated")
+}
+
+func (s *Server) isUserSuspended(ctx context.Context, userID string) bool {
+	if s.store == nil || userID == "" || strings.HasPrefix(userID, "agent:") {
+		return false
+	}
+	u, err := s.store.GetUser(ctx, userID)
+	return err == nil && u.Status == "suspended"
 }
 
 func (s *Server) validateLease(ctx context.Context, repo *store.Repo, lease *agentlease.Lease) error {
