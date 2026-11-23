@@ -13,7 +13,7 @@ const variantStyles = {
   closed: 'bg-destructive/15 text-destructive border-destructive/30',
   success: 'bg-signal/15 text-signal border-signal/30',
   running: 'bg-signal/15 text-signal border-signal/30',
-  warning: 'bg-ember/15 text-ember border-ember/30',
+  warning: 'bg-ember/15 text-text-1 border-ember/30',
   agent: 'bg-signal/10 text-signal border-signal/40 font-mono',
   outline: 'bg-transparent text-text-3 border-hairline',
 }
