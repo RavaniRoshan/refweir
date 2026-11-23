@@ -4,6 +4,7 @@
 package sshserver
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -90,17 +91,31 @@ func New(addr string, db *store.DB, git *gitstore.Store, hostKeyPath string) (*S
 			}
 
 			// 2. Check trusted SSH Certificate Authorities
-			// If key is an OpenSSH certificate, check against enrolled CAs
+			// If key is an OpenSSH certificate, check against enrolled CAs with cryptographic verification
 			cert, ok := key.(*ssh.Certificate)
 			if ok && cert != nil {
+				if cert.CertType != ssh.UserCert {
+					return nil, fmt.Errorf("ssh: certificate is not a user cert (type %d)", cert.CertType)
+				}
 				caFingerprint := ssh.FingerprintSHA256(cert.SignatureKey)
 				caList, caErr := s.store.ListAllSSHCAs(ctx)
 				if caErr == nil {
 					for _, ca := range caList {
 						if strings.TrimSpace(ca.Fingerprint) == caFingerprint {
+							checker := &ssh.CertChecker{
+								IsUserAuthority: func(auth ssh.PublicKey) bool {
+									return bytes.Equal(auth.Marshal(), cert.SignatureKey.Marshal())
+								},
+							}
 							principal := conn.User()
 							if len(cert.ValidPrincipals) > 0 {
-								principal = cert.ValidPrincipals[0]
+								// If connecting as standard 'git' transport user, select the certificate's principal
+								if principal == "git" || principal == "" {
+									principal = cert.ValidPrincipals[0]
+								}
+							}
+							if err := checker.CheckCert(principal, cert); err != nil {
+								return nil, fmt.Errorf("ssh: certificate verification failed: %w", err)
 							}
 							return &ssh.Permissions{
 								Extensions: map[string]string{
@@ -203,6 +218,11 @@ func (s *Server) acceptLoop() {
 func (s *Server) handleConn(netConn net.Conn) {
 	defer netConn.Close()
 
+	if tc, ok := netConn.(*net.TCPConn); ok {
+		_ = tc.SetKeepAlive(true)
+		_ = tc.SetKeepAlivePeriod(30 * time.Second)
+	}
+
 	// Enforce 30s handshake deadline to prevent unauthenticated resource exhaustion
 	_ = netConn.SetDeadline(time.Now().Add(30 * time.Second))
 	sshConn, chans, reqs, err := ssh.NewServerConn(netConn, s.sshConfig)
@@ -233,8 +253,22 @@ func (s *Server) handleConn(netConn net.Conn) {
 func (s *Server) handleSession(conn *ssh.ServerConn, channel ssh.Channel, requests <-chan *ssh.Request) {
 	defer channel.Close()
 
+	var gitProtocol string
 	for req := range requests {
 		switch req.Type {
+		case "env":
+			var envReq struct {
+				Name  string
+				Value string
+			}
+			if err := ssh.Unmarshal(req.Payload, &envReq); err == nil {
+				if envReq.Name == "GIT_PROTOCOL" {
+					gitProtocol = envReq.Value
+				}
+				_ = req.Reply(true, nil)
+			} else {
+				_ = req.Reply(false, nil)
+			}
 		case "exec":
 			var payload struct {
 				Command string
@@ -244,7 +278,7 @@ func (s *Server) handleSession(conn *ssh.ServerConn, channel ssh.Channel, reques
 				return
 			}
 			_ = req.Reply(true, nil)
-			s.executeGitCommand(conn, channel, payload.Command)
+			s.executeGitCommand(conn, channel, payload.Command, gitProtocol)
 			return
 
 		default:
@@ -253,7 +287,10 @@ func (s *Server) handleSession(conn *ssh.ServerConn, channel ssh.Channel, reques
 	}
 }
 
-func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, rawCmd string) {
+func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, rawCmd string, gitProtocol string) {
+	sessionCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	parts := strings.Fields(rawCmd)
 	if len(parts) < 2 {
 		fmt.Fprintf(channel.Stderr(), "refweir.dev: invalid git command %q\n", rawCmd)
@@ -352,13 +389,17 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 		return
 	}
 
-	cmd := exec.Command(subCmd, targetDir) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+	cmd := exec.CommandContext(sessionCtx, subCmd, targetDir) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 	cmd.Dir = targetDir
-	cmd.Env = append(os.Environ(),
+	env := append(os.Environ(),
 		"GIT_PROJECT_ROOT="+s.git.Root(),
 		"REMOTE_USER="+userID,
 		"SSH_CONNECTION="+conn.RemoteAddr().String(),
 	)
+	if gitProtocol != "" {
+		env = append(env, "GIT_PROTOCOL="+gitProtocol)
+	}
+	cmd.Env = env
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -368,6 +409,7 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		_ = stdin.Close()
 		fmt.Fprintf(channel.Stderr(), "refweir.dev: stdout error: %v\n", err)
 		sendExitStatus(channel, 1)
 		return
@@ -375,17 +417,24 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	cmd.Stderr = channel.Stderr()
 
 	if err := cmd.Start(); err != nil {
+		_ = stdin.Close()
+		_ = stdout.Close()
 		fmt.Fprintf(channel.Stderr(), "refweir.dev: failed to start %s: %v\n", subCmd, err)
 		sendExitStatus(channel, 1)
 		return
 	}
 
+	copyDone := make(chan struct{})
 	go func() {
+		defer close(copyDone)
 		_, _ = io.Copy(stdin, channel)
 		_ = stdin.Close()
 	}()
 
 	_, _ = io.Copy(channel, stdout)
+	_ = stdout.Close()
+	<-copyDone
+
 	waitErr := cmd.Wait()
 
 	exitCode := 0
