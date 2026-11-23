@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   BookOpen,
   GitCommit,
@@ -29,7 +29,7 @@ import {
   isDemoModeActive,
   type RepositoryRecord,
 } from '@/lib/api'
-import { useRepositoriesQuery, useSafeQueryClient, queryKeys, useClusterInfoQuery } from '@/lib/queries'
+import { useRepositoriesQuery, useSafeQueryClient, queryKeys, useClusterInfoQuery, useAgentActivitiesQuery } from '@/lib/queries'
 import { cn } from '@/lib/utils'
 
 export interface GlobalHomeViewProps {
@@ -180,7 +180,25 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
   const queryClient = useSafeQueryClient()
   const { data: queryRepos } = useRepositoriesQuery()
   const { data: clusterInfo } = useClusterInfoQuery()
+  const { data: rawActivities } = useAgentActivitiesQuery()
   const [repos, setRepos] = useState<RepositoryRecord[]>(() => (isDemoModeActive() ? defaultDemoRepos : []))
+
+  const activeAgentsCount = useMemo(() => {
+    const list = rawActivities ?? []
+    if (!list.length) return 0
+    const now = Date.now()
+    const cutoff = now - 15 * 60 * 1000
+    const distinct = new Set<string>()
+
+    for (const a of list) {
+      if (!a.agentName) continue
+      const t = a.timestamp ? new Date(a.timestamp).getTime() : 0
+      if (!isNaN(t) && t >= cutoff) {
+        distinct.add(a.agentName)
+      }
+    }
+    return distinct.size
+  }, [rawActivities])
 
   useEffect(() => {
     if (!isDemoModeActive()) {
@@ -651,6 +669,10 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                   )}
                 </div>
               ))
+            ) : filterType === 'agent' ? (
+              <div className="p-8 rounded-lg border border-dashed border-border text-center space-y-2">
+                <p className="text-xs text-muted-foreground">No agent activity in the last 15 minutes.</p>
+              </div>
             ) : (
               <div className="p-6 rounded-lg border border-border bg-card space-y-4">
                 <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
@@ -674,6 +696,9 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                     <span className="w-4 h-4 rounded-full border border-border flex items-center justify-center text-[10px]">4</span>
                     <span>Connect your AI coding agent over MCP protocol at <code className="font-mono text-foreground">:8080/mcp</code></span>
                   </div>
+                </div>
+                <div className="pt-2 text-xs text-muted-foreground border-t border-border">
+                  No agent activity in the last 15 minutes.
                 </div>
                 {onOpenManual && (
                   <Button variant="secondary" size="xs" onClick={onOpenManual} className="gap-1 text-xs">
@@ -780,7 +805,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                 <span>Autonomous Agents</span>
               </div>
               <Badge variant="outline" className="text-[10px] border-primary/40 text-primary bg-primary/10">
-                3 Active
+                {activeAgentsCount} Active
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">

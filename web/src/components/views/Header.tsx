@@ -48,7 +48,6 @@ import {
 } from '@/lib/api'
 import { AuthModal } from '@/components/views/AuthModal'
 import { NotificationsDropdown } from '@/components/views/NotificationsDropdown'
-import { cn } from '@/lib/utils'
 
 export interface HeaderProps {
   repo: RepoInfo
@@ -80,8 +79,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [isDemo, setIsDemo] = useState(isDemoModeActive())
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [starred, setStarred] = useState(false)
-  const [starCount, setStarCount] = useState(repo?.starsCount ?? (isDemoModeActive() ? 14 : 0))
   const [liveIssueCount, setLiveIssueCount] = useState<number | undefined>(() => isDemoModeActive() ? 2 : undefined)
   const [livePrCount, setLivePrCount] = useState<number | undefined>(() => isDemoModeActive() ? (openPrCount ?? 1) : undefined)
   const [liveReleaseCount, setLiveReleaseCount] = useState<number | undefined>(() => isDemoModeActive() ? 2 : undefined)
@@ -98,9 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    setStarCount(repo?.starsCount ?? (isDemoModeActive() ? 14 : 0))
-  }, [repo?.starsCount])
+
 
   useEffect(() => {
     if (isDemoModeActive()) {
@@ -471,27 +466,25 @@ export const Header: React.FC<HeaderProps> = ({
                 <Button variant="secondary" size="sm" className="gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>Watch</span>
-                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo?.watchersCount ?? 0}</span>
+                  {typeof repo?.watchersCount === 'number' && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo.watchersCount}</span>
+                  )}
                 </Button>
 
                 <Button variant="secondary" size="sm" className="gap-1.5">
                   <GitFork className="w-3.5 h-3.5 text-muted-foreground" />
                   <span>Fork</span>
-                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo?.forksCount ?? 0}</span>
+                  {typeof repo?.forksCount === 'number' && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo.forksCount}</span>
+                  )}
                 </Button>
 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setStarred(!starred)
-                    setStarCount(starred ? starCount - 1 : starCount + 1)
-                  }}
-                  className="gap-1.5"
-                >
-                  <Star className={cn('w-3.5 h-3.5', starred ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground')} />
-                  <span>{starred ? 'Starred' : 'Star'}</span>
-                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{starCount}</span>
+                <Button variant="secondary" size="sm" className="gap-1.5">
+                  <Star className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Star</span>
+                  {typeof repo?.starsCount === 'number' && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo.starsCount}</span>
+                  )}
                 </Button>
               </div>
 
