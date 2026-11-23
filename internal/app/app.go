@@ -165,6 +165,19 @@ func Open(cfg config.Config) (*App, error) {
 		notifWorker.Start()
 	}
 
+	// writeAPIError writes a structured JSON error response while preserving the
+	// error string message for callers and tests that inspect the error message.
+	writeAPIError := func(w http.ResponseWriter, status int, message string) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error":   message,
+			"message": message,
+			"code":    http.StatusText(status),
+			"status":  status,
+		})
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -666,7 +679,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Visibility == "private" {
@@ -716,7 +729,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Visibility == "private" {
@@ -807,7 +820,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Visibility == "private" {
@@ -1060,7 +1073,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 
@@ -1240,7 +1253,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1331,7 +1344,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1367,7 +1380,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		keys, err := db.ListDeployKeys(r.Context(), repo.ID)
@@ -1393,7 +1406,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1478,7 +1491,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		hooks, err := db.ListRepoWebhooks(r.Context(), repo.ID)
@@ -1504,7 +1517,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1677,7 +1690,7 @@ func Open(cfg config.Config) (*App, error) {
 
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1839,7 +1852,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -1913,7 +1926,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -1954,7 +1967,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2059,7 +2072,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2152,6 +2165,7 @@ func Open(cfg config.Config) (*App, error) {
 			Mergeable string `json:"mergeable"`
 		}
 
+		diffCache := make(map[string][]any)
 		out := make([]prItem, 0, len(rawPRs))
 		for _, pr := range rawPRs {
 			author := pr.AuthorUserID
@@ -2174,17 +2188,24 @@ func Open(cfg config.Config) (*App, error) {
 				})
 			}
 
-			// Calculate diff hunks
-			diffHunks := make([]any, 0)
-			if diffStats, err := git.DiffCommits(owner, name, pr.BaseSHA, pr.HeadSHA); err == nil && diffStats != nil {
-				for _, f := range diffStats.Files {
-					diffHunks = append(diffHunks, map[string]any{
-						"newPath":   f.Filename,
-						"additions": f.Additions,
-						"deletions": f.Deletions,
-						"hunk":      f.Patch,
-					})
+			// Calculate diff hunks (with memoized caching to prevent redundant git diff calls)
+			diffKey := pr.BaseSHA + ":" + pr.HeadSHA
+			diffHunks, exists := diffCache[diffKey]
+			if !exists {
+				diffHunks = make([]any, 0)
+				if pr.BaseSHA != "" && pr.HeadSHA != "" {
+					if diffStats, err := git.DiffCommits(owner, name, pr.BaseSHA, pr.HeadSHA); err == nil && diffStats != nil {
+						for _, f := range diffStats.Files {
+							diffHunks = append(diffHunks, map[string]any{
+								"newPath":   f.Filename,
+								"additions": f.Additions,
+								"deletions": f.Deletions,
+								"hunk":      f.Patch,
+							})
+						}
+					}
 				}
+				diffCache[diffKey] = diffHunks
 			}
 
 			// Default check runs
@@ -2245,17 +2266,17 @@ func Open(cfg config.Config) (*App, error) {
 		numStr := r.PathValue("number")
 		number, err := strconv.Atoi(numStr)
 		if err != nil {
-			http.Error(w, "Invalid pull request number", http.StatusBadRequest)
+			writeAPIError(w, http.StatusBadRequest, "Invalid pull request number")
 			return
 		}
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		pr, err := db.GetPullRequest(r.Context(), repo.ID, number)
 		if err != nil {
-			http.Error(w, "Pull request not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Pull request not found")
 			return
 		}
 
@@ -2284,6 +2305,20 @@ func Open(cfg config.Config) (*App, error) {
 			st = "merged"
 		}
 
+		diffHunks := make([]any, 0)
+		if pr.BaseSHA != "" && pr.HeadSHA != "" {
+			if diffStats, err := git.DiffCommits(owner, name, pr.BaseSHA, pr.HeadSHA); err == nil && diffStats != nil {
+				for _, f := range diffStats.Files {
+					diffHunks = append(diffHunks, map[string]any{
+						"newPath":   f.Filename,
+						"additions": f.Additions,
+						"deletions": f.Deletions,
+						"hunk":      f.Patch,
+					})
+				}
+			}
+		}
+
 		out := map[string]any{
 			"id":        pr.ID,
 			"number":    pr.Number,
@@ -2299,6 +2334,7 @@ func Open(cfg config.Config) (*App, error) {
 			"additions": pr.Additions,
 			"deletions": pr.Deletions,
 			"mergeable": pr.Mergeable,
+			"diffHunks": diffHunks,
 		}
 
 		_ = json.NewEncoder(w).Encode(map[string]any{"pull": out})
@@ -2316,7 +2352,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2444,7 +2480,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2555,7 +2591,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -2640,7 +2676,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2808,7 +2844,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -2952,7 +2988,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -2991,7 +3027,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -3066,7 +3102,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -3102,7 +3138,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		num, err := strconv.Atoi(r.PathValue("number"))
@@ -3135,7 +3171,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 
@@ -3220,7 +3256,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		if repo.Archived {
@@ -3331,7 +3367,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 
@@ -3377,7 +3413,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 
@@ -3442,7 +3478,7 @@ func Open(cfg config.Config) (*App, error) {
 		name := r.PathValue("name")
 		repo, err := db.GetRepo(r.Context(), owner, name)
 		if err != nil {
-			http.Error(w, "Repository not found", http.StatusNotFound)
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
 			return
 		}
 		id := r.PathValue("id")
