@@ -109,4 +109,40 @@ func TestAuditFileLoggerPersistsAndCloses(t *testing.T) {
 	if parsed.ID == "" || parsed.Timestamp.IsZero() {
 		t.Fatalf("expected ID and timestamp, got %+v", parsed)
 	}
+	if !strings.HasPrefix(parsed.ID, "aud_") {
+		t.Errorf("expected ID prefix 'aud_', got: %s", parsed.ID)
+	}
+}
+
+func TestAuditLoggerFilterAndSync(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "audit_filter.log")
+	logger, err := NewFileLogger(path)
+	if err != nil {
+		t.Fatalf("NewFileLogger: %v", err)
+	}
+	defer logger.Close()
+
+	_ = logger.Record(Event{Actor: "agent-1", Action: "git.push", Resource: "repo-a"})
+	_ = logger.Record(Event{Actor: "user-1", Action: "repo.create", Resource: "repo-b"})
+	_ = logger.Record(Event{Actor: "agent-1", Action: "git.receive_pack", Resource: "repo-a"})
+
+	if err := logger.Sync(); err != nil {
+		t.Fatalf("logger.Sync: %v", err)
+	}
+
+	filtered := logger.Filter("agent-1", "", 10)
+	if len(filtered) != 2 {
+		t.Fatalf("expected 2 events for agent-1, got %d", len(filtered))
+	}
+	if filtered[0].Action != "git.receive_pack" {
+		t.Errorf("expected newest first 'git.receive_pack', got %s", filtered[0].Action)
+	}
+
+	actionFiltered := logger.Filter("", "repo.create", 10)
+	if len(actionFiltered) != 1 {
+		t.Fatalf("expected 1 event for repo.create, got %d", len(actionFiltered))
+	}
+	if actionFiltered[0].Actor != "user-1" {
+		t.Errorf("expected actor 'user-1', got %s", actionFiltered[0].Actor)
+	}
 }

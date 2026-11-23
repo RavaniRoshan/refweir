@@ -8,6 +8,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"refweir.dev/pkg/idgen"
 )
 
 // Severity represents the enterprise compliance level of an audit event.
@@ -77,6 +79,17 @@ func Recent(limit int) []Event {
 	return l.Recent(limit)
 }
 
+// Filter returns up to limit matching events from DefaultLogger.
+func Filter(actor, action string, limit int) []Event {
+	defaultLoggerMu.RLock()
+	l := DefaultLogger
+	defaultLoggerMu.RUnlock()
+	if l == nil {
+		return nil
+	}
+	return l.Filter(actor, action, limit)
+}
+
 // NewLogger constructs an audit Logger writing to the specified destination.
 func NewLogger(w io.Writer) *Logger {
 	return &Logger{
@@ -123,7 +136,7 @@ func (l *Logger) Record(ev Event) error {
 		ev.Timestamp = time.Now().UTC()
 	}
 	if ev.ID == "" {
-		ev.ID = fmt.Sprintf("aud-%d", time.Now().UnixNano())
+		ev.ID = idgen.New("aud")
 	}
 
 	if len(l.events) >= l.maxBuf {
@@ -156,6 +169,40 @@ func (l *Logger) Recent(limit int) []Event {
 	result := make([]Event, limit)
 	for i := 0; i < limit; i++ {
 		result[i] = l.events[n-1-i]
+	}
+	return result
+}
+
+// Sync flushes pending buffered writes to persistent storage if writer is an *os.File.
+func (l *Logger) Sync() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if f, ok := l.writer.(*os.File); ok {
+		return f.Sync()
+	}
+	return nil
+}
+
+// Filter returns up to limit latest events matching optional actor and action filters, ordered newest first.
+func (l *Logger) Filter(actor, action string, limit int) []Event {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	n := len(l.events)
+	if limit <= 0 {
+		limit = 100
+	}
+
+	result := make([]Event, 0, min(limit, n))
+	for i := n - 1; i >= 0 && len(result) < limit; i-- {
+		ev := l.events[i]
+		if actor != "" && ev.Actor != actor {
+			continue
+		}
+		if action != "" && ev.Action != action {
+			continue
+		}
+		result = append(result, ev)
 	}
 	return result
 }

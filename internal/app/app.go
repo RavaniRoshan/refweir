@@ -319,7 +319,21 @@ func Open(cfg config.Config) (*App, error) {
 				return
 			}
 		}
-		events := audit.Recent(100)
+		limit := 100
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			if l, err := strconv.Atoi(lStr); err == nil && l > 0 && l <= 1000 {
+				limit = l
+			}
+		}
+		actor := r.URL.Query().Get("actor")
+		action := r.URL.Query().Get("action")
+
+		var events []audit.Event
+		if actor != "" || action != "" {
+			events = audit.Filter(actor, action, limit)
+		} else {
+			events = audit.Recent(limit)
+		}
 		if events == nil {
 			events = []audit.Event{}
 		}
