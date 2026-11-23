@@ -401,6 +401,9 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		"QUERY_STRING="+r.URL.RawQuery,
 		"REQUEST_METHOD="+r.Method,
 	)
+	if proto := r.Header.Get("Git-Protocol"); proto != "" {
+		cmd.Env = append(cmd.Env, "GIT_PROTOCOL="+proto)
+	}
 	if activeLease != nil {
 		cmd.Env = append(cmd.Env,
 			"REFWEIR_LEASE_TOKEN="+activeLeaseToken,
@@ -434,6 +437,7 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 
 	reader := bufio.NewReader(stdout)
 	statusCode := http.StatusOK
+	headersParsed := false
 
 	// Parse and forward CGI headers
 	for {
@@ -443,6 +447,7 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		}
 		line = strings.TrimRight(line, "\r\n")
 		if line == "" {
+			headersParsed = true
 			break
 		}
 
@@ -463,6 +468,16 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		} else {
 			w.Header().Add(k, v)
 		}
+	}
+
+	if !headersParsed {
+		_ = cmd.Wait()
+		errMsg := strings.TrimSpace(stderrBuf.String())
+		if errMsg == "" {
+			errMsg = "git backend terminated unexpectedly before writing headers"
+		}
+		http.Error(w, errMsg, http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(statusCode)

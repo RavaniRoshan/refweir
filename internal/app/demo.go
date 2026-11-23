@@ -467,17 +467,44 @@ func sanitizeGitOutput(out, token string) string {
 	return clean
 }
 
+func isPrivateOrLoopback(host string) bool {
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast()
+}
+
 func clientKey(r *http.Request) string {
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		if first := strings.TrimSpace(strings.Split(forwarded, ",")[0]); first != "" {
-			return first
+	remoteHost, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		remoteHost = r.RemoteAddr
+	}
+
+	// Only trust forwarding headers if the immediate peer is loopback or a private subnet (e.g. reverse proxy).
+	if isPrivateOrLoopback(remoteHost) {
+		if realIP := strings.TrimSpace(r.Header.Get("CF-Connecting-IP")); realIP != "" {
+			if ip := net.ParseIP(realIP); ip != nil {
+				return ip.String()
+			}
+		}
+		if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
+			if ip := net.ParseIP(realIP); ip != nil {
+				return ip.String()
+			}
+		}
+		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+			parts := strings.Split(forwarded, ",")
+			for _, part := range parts {
+				candidate := strings.TrimSpace(part)
+				if ip := net.ParseIP(candidate); ip != nil {
+					return ip.String()
+				}
+			}
 		}
 	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil && host != "" {
-		return host
-	}
-	return r.RemoteAddr
+
+	return remoteHost
 }
 
 func demoAuditTail() []any {

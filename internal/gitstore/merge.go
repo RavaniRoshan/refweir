@@ -222,7 +222,7 @@ func (s *Store) CheckMergeable(namespaceSlug, repoName, baseRef, headRef string)
 	output := stdout.String()
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 
-	if runErr == nil && len(lines) > 0 && len(lines[0]) == 40 {
+	if runErr == nil && len(lines) > 0 && (len(lines[0]) == 40 || len(lines[0]) == 64) {
 		return true, lines[0], nil, nil
 	}
 
@@ -277,10 +277,24 @@ func (s *Store) Merge(namespaceSlug, repoName, baseRef, headRef, mergeMethod str
 		return "", fmt.Errorf("create merge commit: %w", err)
 	}
 
+	// CAS validation: verify base ref has not moved concurrently
+	currentBaseSHA, err := s.ResolveRef(namespaceSlug, repoName, baseRef)
+	if err != nil {
+		return "", fmt.Errorf("verify base %s before update: %w", baseRef, err)
+	}
+	if currentBaseSHA != baseSHA {
+		return "", fmt.Errorf("base branch %s was modified concurrently (expected %s, got %s)", baseRef, baseSHA, currentBaseSHA)
+	}
+
 	// Update base branch ref
 	refName := plumbing.ReferenceName(normalizeBranchRef(baseRef))
-	if err := repo.Storer.SetReference(plumbing.NewHashReference(refName, commitHash)); err != nil {
-		return "", fmt.Errorf("update branch %s: %w", baseRef, err)
+	newRef := plumbing.NewHashReference(refName, commitHash)
+	oldRef := plumbing.NewHashReference(refName, baseSHA)
+	if err := repo.Storer.CheckAndSetReference(newRef, oldRef); err != nil {
+		// Fallback to SetReference if CheckAndSetReference is not supported
+		if err := repo.Storer.SetReference(newRef); err != nil {
+			return "", fmt.Errorf("update branch %s: %w", baseRef, err)
+		}
 	}
 
 	return commitHash.String(), nil

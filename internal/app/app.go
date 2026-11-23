@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -1941,6 +1942,71 @@ func Open(cfg config.Config) (*App, error) {
 		})
 	})
 
+	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/issues/{number}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
+			return
+		}
+		num, err := strconv.Atoi(r.PathValue("number"))
+		if err != nil {
+			http.Error(w, "Invalid issue number", http.StatusBadRequest)
+			return
+		}
+		iss, err := db.GetIssue(r.Context(), repo.ID, num)
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				writeAPIError(w, http.StatusNotFound, "Issue not found")
+				return
+			}
+			http.Error(w, "Failed to get issue: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rawComments, _ := db.ListIssueComments(r.Context(), iss.ID)
+		comments := make([]any, 0, len(rawComments))
+		for _, c := range rawComments {
+			author := c.AuthorUserID
+			if author == "" {
+				author = "shiva"
+			}
+			comments = append(comments, map[string]any{
+				"id":        c.ID,
+				"author":    author,
+				"body":      c.Body,
+				"createdAt": c.CreatedAt,
+			})
+		}
+		author := iss.AuthorUserID
+		if author == "" {
+			author = "shiva"
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"id":        iss.ID,
+			"number":    iss.Number,
+			"title":     iss.Title,
+			"body":      iss.Body,
+			"state":     iss.State,
+			"author":    author,
+			"createdAt": iss.CreatedAt,
+			"closedAt":  iss.ClosedAt,
+			"assignees": []string{author},
+			"labels": []any{
+				map[string]string{"name": "enhancement", "color": "#1d76db"},
+			},
+			"comments": comments,
+		})
+	})
+
 	mux.HandleFunc("PATCH /api/v1/repos/{owner}/{name}/issues/{number}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -2151,6 +2217,67 @@ func Open(cfg config.Config) (*App, error) {
 			"ok":   true,
 			"name": info.Ref,
 			"sha":  info.SHA,
+		})
+	})
+
+	mux.HandleFunc("DELETE /api/v1/repos/{owner}/{name}/branches/{branch...}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+		branch := strings.TrimSpace(r.PathValue("branch"))
+		if branch == "" {
+			writeAPIError(w, http.StatusBadRequest, "Branch name is required")
+			return
+		}
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
+			return
+		}
+		if repo.Archived {
+			writeAPIError(w, http.StatusForbidden, "Repository is archived and read-only")
+			return
+		}
+
+		cleanBranch := strings.TrimPrefix(branch, "refs/heads/")
+		if cleanBranch == repo.DefaultBranch {
+			writeAPIError(w, http.StatusBadRequest, "Cannot delete default branch '"+repo.DefaultBranch+"'")
+			return
+		}
+
+		count, _ := db.CountUsers(r.Context())
+		if count > 0 {
+			caller, err := auth.ResolveUser(r.Context(), db, r)
+			if err != nil {
+				http.Error(w, "Unauthorized: Authentication required", http.StatusUnauthorized)
+				return
+			}
+			allowed, err := db.CheckRepoAccess(r.Context(), repo, caller.ID, true)
+			if err != nil || (!allowed && caller.Role != "admin") {
+				http.Error(w, "Forbidden: Write permission required to delete branches", http.StatusForbidden)
+				return
+			}
+		}
+
+		if err := git.DeleteRef(owner, name, cleanBranch); err != nil {
+			if errors.Is(err, gitstore.ErrRefNotFound) {
+				writeAPIError(w, http.StatusNotFound, "Branch not found")
+				return
+			}
+			writeAPIError(w, http.StatusInternalServerError, "Failed to delete branch: "+err.Error())
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":      true,
+			"deleted": cleanBranch,
 		})
 	})
 

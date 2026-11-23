@@ -352,6 +352,9 @@ func BuiltinTools() []ToolDef {
 				if err != nil {
 					return nil, err
 				}
+				if repo.MirrorSource == "" {
+					return nil, fmt.Errorf("repository %s/%s is not configured as a mirror", owner, name)
+				}
 				return map[string]any{
 					"synced": true,
 					"repoId": repo.ID,
@@ -592,15 +595,24 @@ func BuiltinTools() []ToolDef {
 				}
 
 				// Evaluate merge rulesets and check runs
-				rulesets, _ := s.store.ListRulesets(ctx, repo.ID)
-				reviews, _ := s.store.ListReviews(ctx, pr.ID)
+				rulesets, err := s.store.ListRulesets(ctx, repo.ID)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list rulesets for merge evaluation: %w", err)
+				}
+				reviews, err := s.store.ListReviews(ctx, pr.ID)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list reviews for merge evaluation: %w", err)
+				}
 				approvedCount := 0
 				for _, rev := range reviews {
 					if !rev.Dismissed && (rev.State == "approved" || rev.State == "approve") {
 						approvedCount++
 					}
 				}
-				checkRuns, _ := s.store.ListCheckRunsForCommit(ctx, repo.ID, pr.HeadSHA, "", "", 100, 0)
+				checkRuns, err := s.store.ListCheckRunsForCommit(ctx, repo.ID, pr.HeadSHA, "", "", 100, 0)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list check runs for merge evaluation: %w", err)
+				}
 				evalRes := engine.EvaluateMerge(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns)
 				if !evalRes.Allowed {
 					var msgs []string
@@ -1518,15 +1530,24 @@ func BuiltinTools() []ToolDef {
 				}
 
 				// Evaluate merge rulesets and check runs
-				rulesets, _ := s.store.ListRulesets(ctx, repo.ID)
-				reviews, _ := s.store.ListReviews(ctx, pr.ID)
+				rulesets, err := s.store.ListRulesets(ctx, repo.ID)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list rulesets for merge evaluation: %w", err)
+				}
+				reviews, err := s.store.ListReviews(ctx, pr.ID)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list reviews for merge evaluation: %w", err)
+				}
 				approvedCount := 0
 				for _, rev := range reviews {
 					if !rev.Dismissed && (rev.State == "approved" || rev.State == "approve") {
 						approvedCount++
 					}
 				}
-				checkRuns, _ := s.store.ListCheckRunsForCommit(ctx, repo.ID, pr.HeadSHA, "", "", 100, 0)
+				checkRuns, err := s.store.ListCheckRunsForCommit(ctx, repo.ID, pr.HeadSHA, "", "", 100, 0)
+				if err != nil {
+					return nil, fmt.Errorf("failed to list check runs for merge evaluation: %w", err)
+				}
 				evalRes := engine.EvaluateMerge(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns)
 				if !evalRes.Allowed {
 					var msgs []string
@@ -1641,7 +1662,10 @@ func BuiltinTools() []ToolDef {
 				}
 				revoked := false
 				if s.store != nil {
-					isRev, _ := s.store.IsAgentLeaseRevoked(ctx, lease.ID)
+					isRev, err := s.store.IsAgentLeaseRevoked(ctx, lease.ID)
+					if err != nil {
+						return nil, fmt.Errorf("failed to check lease revocation status: %w", err)
+					}
 					revoked = isRev
 				}
 				return map[string]any{
