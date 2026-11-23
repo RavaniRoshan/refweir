@@ -40,28 +40,37 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
   const isDark =
     theme === 'dark' ||
     (theme === 'system' &&
-      (typeof document !== 'undefined'
-        ? document.documentElement.classList.contains('dark')
+      (typeof window !== 'undefined'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
         : false));
 
   // Sync document root class when theme state updates
   useEffect(() => {
-    if (theme === 'system') return;
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => {
+      const resolved = theme === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : theme;
+      document.documentElement.classList.toggle('dark', resolved === 'dark');
+      try {
+        localStorage.setItem('refweir_theme', theme === 'system' ? '' : resolved);
+      } catch (e) {}
+    };
+
+    applyTheme();
+
+    const handler = () => {
+      if (theme === 'system') {
+        applyTheme();
+      }
+    };
+
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
   }, [theme]);
 
   const toggleTheme = () => {
-    const nextIsDark = !isDark;
-    setTheme(nextIsDark ? 'dark' : 'light');
-    if (nextIsDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    setTheme(isDark ? 'light' : 'dark');
   };
 
   const handleNav = (id: string) => {
