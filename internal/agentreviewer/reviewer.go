@@ -40,14 +40,19 @@ type ReviewResult struct {
 
 // Security secret patterns
 var (
-	rePrivateKey = regexp.MustCompile(`-----BEGIN [A-Z0-9 ]+PRIVATE KEY-----`)
-	reAWSAccess  = regexp.MustCompile(`\bAKIA[0-9A-Z]{16}\b`)
-	reGHToken    = regexp.MustCompile(`\bgh[pousr]_[a-zA-Z0-9]{36}\b`)
-	reGLToken    = regexp.MustCompile(`\bglpat-[a-zA-Z0-9\-]{20,}\b`)
-	reSlackToken = regexp.MustCompile(`\bxox[baprs]-[0-9a-zA-Z]{10,}\b`)
-	reGenericKey = regexp.MustCompile(`(?i)(?:api_key|apikey|secret_key|auth_token|client_secret)\s*[:=]\s*["']([A-Za-z0-9_\-]{24,})["']`)
-	reSQLInject  = regexp.MustCompile(`(?i)(?:fmt\.Sprintf|Sprintf)\s*\(\s*["'](?:SELECT|INSERT|UPDATE|DELETE|DROP)\s+[^"']*%\w`)
-	reTODO       = regexp.MustCompile(`(?i)(?:TODO|FIXME|HACK|BUG):\s*(.+)`)
+	rePrivateKey     = regexp.MustCompile(`-----BEGIN [A-Z0-9 ]+PRIVATE KEY-----`)
+	reAWSAccess      = regexp.MustCompile(`\bAKIA[0-9A-Z]{16}\b`)
+	reGHToken        = regexp.MustCompile(`\bgh[pousr]_[a-zA-Z0-9]{36}\b`)
+	reGLToken        = regexp.MustCompile(`\bglpat-[a-zA-Z0-9\-]{20,}\b`)
+	reSlackToken     = regexp.MustCompile(`\bxox[baprs]-[0-9a-zA-Z]{10,}\b`)
+	reAIKey          = regexp.MustCompile(`\b(?:sk-(?:proj-)?[a-zA-Z0-9_\-]{20,}|sk-ant-[a-zA-Z0-9_\-]{20,})\b`)
+	reJWT            = regexp.MustCompile(`\beyJ[a-zA-Z0-9_\-]{10,}\.eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}\b`)
+	reGenericKey     = regexp.MustCompile(`(?i)(?:api_key|apikey|secret_key|auth_token|client_secret)\s*[:=]\s*["']([A-Za-z0-9_\-]{24,})["']`)
+	reSQLInject      = regexp.MustCompile(`(?i)(?:fmt\.Sprintf|Sprintf)\s*\(\s*["'](?:SELECT|INSERT|UPDATE|DELETE|DROP)\s+[^"']*%\w`)
+	reDangerousEval  = regexp.MustCompile(`\b(?:eval\s*\(|new\s+Function\s*\()`)
+	reDangerousHTML  = regexp.MustCompile(`(?i)(?:dangerouslySetInnerHTML\s*=\s*\{\s*\{\s*__html\s*:|\.innerHTML\s*=)`)
+	rePythonInsecure = regexp.MustCompile(`\b(?:pickle\.loads?|yaml\.load\s*\([^,)]+\))`)
+	reTODO           = regexp.MustCompile(`(?i)(?:TODO|FIXME|HACK|BUG):\s*(.+)`)
 )
 
 // ReviewPullRequest analyzes changes in a pull request, records findings as a PR review
@@ -134,6 +139,32 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 						Snippet:  redact(content),
 					})
 				}
+				if reAIKey.MatchString(content) {
+					match := reAIKey.FindString(content)
+					if !isTestMock(match) {
+						violations = append(violations, Violation{
+							File:     fc.Filename,
+							Line:     lineNum,
+							Severity: "error",
+							Rule:     "security/ai-api-key",
+							Message:  "Exposed OpenAI or Anthropic API key detected in diff.",
+							Snippet:  redact(content),
+						})
+					}
+				}
+				if reJWT.MatchString(content) {
+					match := reJWT.FindString(content)
+					if !isTestMock(match) {
+						violations = append(violations, Violation{
+							File:     fc.Filename,
+							Line:     lineNum,
+							Severity: "error",
+							Rule:     "security/jwt-token",
+							Message:  "Exposed JSON Web Token (JWT) credential detected in diff.",
+							Snippet:  redact(content),
+						})
+					}
+				}
 				if match := reGenericKey.FindStringSubmatch(content); len(match) > 1 {
 					val := match[1]
 					if !isTestMock(val) {
@@ -146,6 +177,38 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 							Snippet:  redact(content),
 						})
 					}
+				}
+
+				// Frontend & scripting security heuristics
+				if (ext == ".js" || ext == ".jsx" || ext == ".ts" || ext == ".tsx" || ext == ".mjs") && reDangerousEval.MatchString(content) {
+					violations = append(violations, Violation{
+						File:     fc.Filename,
+						Line:     lineNum,
+						Severity: "error",
+						Rule:     "security/dynamic-code-eval",
+						Message:  "Unsafe dynamic code execution (eval or new Function) detected in JavaScript/TypeScript.",
+						Snippet:  strings.TrimSpace(content),
+					})
+				}
+				if (ext == ".jsx" || ext == ".tsx" || ext == ".html") && reDangerousHTML.MatchString(content) {
+					violations = append(violations, Violation{
+						File:     fc.Filename,
+						Line:     lineNum,
+						Severity: "warning",
+						Rule:     "security/xss-dangerous-html",
+						Message:  "Direct HTML injection (dangerouslySetInnerHTML or innerHTML) detected. Ensure proper sanitization to prevent XSS.",
+						Snippet:  strings.TrimSpace(content),
+					})
+				}
+				if ext == ".py" && rePythonInsecure.MatchString(content) {
+					violations = append(violations, Violation{
+						File:     fc.Filename,
+						Line:     lineNum,
+						Severity: "warning",
+						Rule:     "security/insecure-deserialization",
+						Message:  "Potentially insecure deserialization (pickle/yaml.load) detected. Use SafeLoader or secure serializers.",
+						Snippet:  strings.TrimSpace(content),
+					})
 				}
 
 				// SQL injection heuristic
@@ -304,7 +367,7 @@ func ReviewPullRequest(ctx context.Context, db *store.DB, gs *gitstore.Store, ow
 
 func isSource(ext string) bool {
 	switch ext {
-	case ".go", ".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ".java", ".c", ".cpp":
+	case ".go", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".rs", ".java", ".c", ".cpp", ".vue", ".svelte":
 		return true
 	default:
 		return false
@@ -335,9 +398,11 @@ func isTestMock(val string) bool {
 		strings.Contains(lower, "test") ||
 		strings.Contains(lower, "dummy") ||
 		strings.Contains(lower, "example") ||
+		strings.Contains(lower, "sample") ||
 		strings.Contains(lower, "mock") ||
 		strings.Contains(lower, "placeholder") ||
-		strings.Contains(lower, "xxxxxxxx")
+		strings.Contains(lower, "xxxxxxxx") ||
+		strings.Contains(lower, "00000000")
 }
 
 func redact(s string) string {

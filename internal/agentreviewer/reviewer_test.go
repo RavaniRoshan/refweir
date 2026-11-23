@@ -201,3 +201,109 @@ func TestAgentReviewer_DetectLeakedSecret(t *testing.T) {
 		t.Fatalf("expected at least 2 violations, got %d", len(res.Violations))
 	}
 }
+
+func TestAgentReviewer_FrontendAndAIKeyDetection(t *testing.T) {
+	ctx := context.Background()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	defer db.Close()
+
+	gs, err := gitstore.New(filepath.Join(t.TempDir(), "git"))
+	if err != nil {
+		t.Fatalf("gitstore.New: %v", err)
+	}
+
+	owner, repoName := "corp", "web-app"
+	if _, err := gs.Init(owner, repoName, "main"); err != nil {
+		t.Fatalf("gs.Init: %v", err)
+	}
+
+	c1, err := gs.WriteFiles(owner, repoName, "main", []gitstore.FileChange{
+		{Path: "README.md", Content: "# Web App"},
+	}, author(), "initial commit")
+	if err != nil {
+		t.Fatalf("commit 1: %v", err)
+	}
+
+	if _, err := gs.CreateBranchRef(owner, repoName, "refs/heads/frontend-feat", c1.String()); err != nil {
+		t.Fatalf("create branch: %v", err)
+	}
+
+	c2, err := gs.WriteFiles(owner, repoName, "frontend-feat", []gitstore.FileChange{
+		{
+			Path:    "client.ts",
+			Content: "const apiKey = 'sk-proj-abc12345678901234567890xyz';\nconst compute = eval('2 + 2');\n",
+		},
+		{
+			Path:    "Component.tsx",
+			Content: "export function View({ data }: { data: string }) { return <div dangerouslySetInnerHTML={{ __html: data }} />; }\n",
+		},
+		{
+			Path:    "backend.py",
+			Content: "import pickle\ndef load(s): return pickle.loads(s)\n",
+		},
+	}, author(), "add risky patterns")
+	if err != nil {
+		t.Fatalf("commit 2: %v", err)
+	}
+
+	ns := store.Namespace{ID: "ns_3", Slug: owner, Type: "organization", Name: owner}
+	if err := db.CreateNamespace(ctx, ns); err != nil {
+		t.Fatalf("CreateNamespace: %v", err)
+	}
+
+	repo := store.Repo{
+		ID:            "repo_3",
+		NamespaceID:   ns.ID,
+		FullName:      owner + "/" + repoName,
+		Name:          repoName,
+		DefaultBranch: "main",
+	}
+	if err := db.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("CreateRepo: %v", err)
+	}
+
+	pr := store.PullRequest{
+		ID:      "pr_3",
+		RepoID:  repo.ID,
+		Number:  3,
+		Title:   "Add UI and Py script",
+		HeadRef: "frontend-feat",
+		HeadSHA: c2.String(),
+		BaseRef: "main",
+		BaseSHA: c1.String(),
+		State:   "open",
+	}
+	if err := db.CreatePullRequest(ctx, &pr); err != nil {
+		t.Fatalf("CreatePullRequest: %v", err)
+	}
+
+	res, err := ReviewPullRequest(ctx, db, gs, owner, repo, pr)
+	if err != nil {
+		t.Fatalf("ReviewPullRequest: %v", err)
+	}
+
+	rulesTriggered := make(map[string]bool)
+	for _, v := range res.Violations {
+		rulesTriggered[v.Rule] = true
+	}
+
+	expectedRules := []string{
+		"security/ai-api-key",
+		"security/dynamic-code-eval",
+		"security/xss-dangerous-html",
+		"security/insecure-deserialization",
+	}
+
+	for _, rule := range expectedRules {
+		if !rulesTriggered[rule] {
+			t.Errorf("expected rule %q to be triggered, but it was not (triggered: %+v)", rule, rulesTriggered)
+		}
+	}
+
+	if res.Verdict != "request_changes" {
+		t.Errorf("expected request_changes, got %q", res.Verdict)
+	}
+}
