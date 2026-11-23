@@ -73,7 +73,7 @@ func Load() (Config, error) {
 	publicURL := getEnvFirst([]string{"REFWEIR_PUBLIC_URL", "REFWEIR_ENDPOINT"}, defaultPublicURL)
 	gitURL := getEnvFirst([]string{"REFWEIR_GIT_URL", "REFWEIR_GIT_HOST"}, defaultGitURL)
 	sshAddr := getEnv("REFWEIR_SSH_ADDR", "127.0.0.1:2222")
-	sshHostKeyPath := getEnv("REFWEIR_SSH_HOST_KEY", dataDir+"/ssh_host_key")
+	sshHostKeyPath := getEnv("REFWEIR_SSH_HOST_KEY", filepath.Join(dataDir, "ssh_host_key"))
 
 	jwtSecret, err := resolveJWTSecret(dataDir)
 	if err != nil {

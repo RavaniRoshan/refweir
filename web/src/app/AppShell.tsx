@@ -55,11 +55,13 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
         document.documentElement.classList.toggle('dark', matches);
         try {
           localStorage.removeItem('refweir_theme');
+          localStorage.removeItem('refweir-theme');
         } catch (e) {}
       } else {
         document.documentElement.classList.toggle('dark', theme === 'dark');
         try {
           localStorage.setItem('refweir_theme', theme);
+          localStorage.setItem('refweir-theme', theme);
         } catch (e) {}
       }
     };
