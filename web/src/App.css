@@ -1,1 +1,13 @@
 /* Custom App Styles */
+html, body, #root {
+  overflow-x: clip;
+  max-width: 100vw;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

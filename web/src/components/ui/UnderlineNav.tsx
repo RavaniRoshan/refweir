@@ -32,47 +32,58 @@ export const UnderlineNav: React.FC<UnderlineNavProps> = ({
   }
 
   return (
-    <div className={cn('flex items-center justify-between border-b border-hairline w-full overflow-x-auto scrollbar-none', className)}>
-      <nav className="flex items-center gap-0.5 -mb-px" role="tablist">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => handleSelect(tab.id)}
-              className={cn(
-                'relative flex items-center gap-1.5 px-3 py-2 text-body-medium transition-colors cursor-pointer select-none whitespace-nowrap outline-none border-b-2',
-                isActive
-                  ? 'text-text-1 border-signal'
-                  : 'text-text-3 border-transparent hover:text-text-1 hover:border-hairline'
-              )}
-            >
-              {tab.icon && (
-                <span className={cn('size-3.5 shrink-0', isActive ? 'text-signal' : 'text-text-3')}>
-                  {tab.icon}
-                </span>
-              )}
-              <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span
-                  className={cn(
-                    'px-1.5 py-0.5 text-micro rounded-full font-mono',
-                    isActive
-                      ? 'bg-signal/15 text-signal border border-signal/30'
-                      : 'bg-raised text-text-3 border border-hairline'
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </nav>
+    <div
+      className={cn(
+        'w-full border-b border-hairline overflow-x-auto scrollbar-none px-4',
+        className
+      )}
+      style={{
+        scrollbarWidth: 'none',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
+      <div className="flex items-center justify-between min-w-max">
+        <nav className="flex items-center gap-0.5 -mb-px" role="tablist">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleSelect(tab.id)}
+                className={cn(
+                  'relative flex items-center gap-1.5 px-3 py-2 text-body-medium transition-colors cursor-pointer select-none whitespace-nowrap outline-none border-b-2 shrink-0 flex-shrink-0',
+                  isActive
+                    ? 'text-text-1 border-signal'
+                    : 'text-text-3 border-transparent hover:text-text-1 hover:border-hairline'
+                )}
+              >
+                {tab.icon && (
+                  <span className={cn('size-3.5 shrink-0', isActive ? 'text-signal' : 'text-text-3')}>
+                    {tab.icon}
+                  </span>
+                )}
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={cn(
+                      'px-1.5 py-0.5 text-micro rounded-full font-mono',
+                      isActive
+                        ? 'bg-signal/15 text-signal border border-signal/30'
+                        : 'bg-raised text-text-3 border border-hairline'
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
 
-      {actions && <div className="flex items-center gap-2 pb-1.5 shrink-0">{actions}</div>}
+        {actions && <div className="flex items-center gap-2 pb-1.5 shrink-0 ml-4">{actions}</div>}
+      </div>
     </div>
   )
 }

@@ -443,68 +443,72 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="w-full bg-card/50 border-b border-border pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
           {/* Top Row: Breadcrumb & Repo Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
             {/* Breadcrumb: owner / repo */}
-            <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-              <span className="text-muted-foreground hover:underline cursor-pointer">{repo.ownerSlug}</span>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground hover:underline font-bold cursor-pointer text-base">{repo.name}</span>
+            <div className="flex items-center gap-2 text-sm font-semibold tracking-tight min-w-0 flex-1 overflow-hidden">
+              <span className="text-muted-foreground hover:underline cursor-pointer truncate">{repo.ownerSlug}</span>
+              <span className="text-muted-foreground shrink-0">/</span>
+              <span className="text-foreground hover:underline font-bold cursor-pointer text-base truncate">{repo.name}</span>
               {repo.isArchived ? (
-                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-2 border-amber-500/40 text-amber-400 bg-amber-500/10 inline-flex items-center gap-1 font-medium">
+                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-2 border-amber-500/40 text-amber-400 bg-amber-500/10 inline-flex items-center gap-1 font-medium shrink-0">
                   <Archive className="w-3 h-3 text-amber-400" />
                   <span>{repo.isPrivate ? 'Private archive' : 'Public archive'}</span>
                 </Badge>
               ) : repo.isPrivate ? (
-                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-border text-muted-foreground">
+                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-border text-muted-foreground shrink-0">
                   Private
                 </Badge>
               ) : (
-                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+                <Badge variant="outline" className="ml-1 text-[11px] py-0 px-1.5 border-emerald-500/30 text-emerald-400 bg-emerald-500/10 shrink-0">
                   Public
                 </Badge>
               )}
             </div>
 
             {/* Action Group: Watch, Fork, Star, Code Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <Button variant="secondary" size="sm" className="gap-1.5">
-                <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>Watch</span>
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">1</span>
-              </Button>
+            <div className="flex items-center gap-1.5 max-[480px]:flex-wrap max-[480px]:w-full">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button variant="secondary" size="sm" className="gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Watch</span>
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo?.watchersCount ?? 0}</span>
+                </Button>
 
-              <Button variant="secondary" size="sm" className="gap-1.5">
-                <GitFork className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>Fork</span>
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo?.forksCount ?? 0}</span>
-              </Button>
+                <Button variant="secondary" size="sm" className="gap-1.5">
+                  <GitFork className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span>Fork</span>
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{repo?.forksCount ?? 0}</span>
+                </Button>
 
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  setStarred(!starred)
-                  setStarCount(starred ? starCount - 1 : starCount + 1)
-                }}
-                className="gap-1.5"
-              >
-                <Star className={cn('w-3.5 h-3.5', starred ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground')} />
-                <span>{starred ? 'Starred' : 'Star'}</span>
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{starCount}</span>
-              </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setStarred(!starred)
+                    setStarCount(starred ? starCount - 1 : starCount + 1)
+                  }}
+                  className="gap-1.5"
+                >
+                  <Star className={cn('w-3.5 h-3.5', starred ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground')} />
+                  <span>{starred ? 'Starred' : 'Star'}</span>
+                  <span className="ml-1 px-1.5 py-0.2 rounded-full bg-background border border-border text-[10px] font-mono">{starCount}</span>
+                </Button>
+              </div>
 
               {/* Code Clone Button */}
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setCloneModalOpen(true)}
-                className="gap-1.5 ml-1"
-                data-testid="repo-clone-btn"
-              >
-                <Terminal className="w-3.5 h-3.5" />
-                <span>Code</span>
-                <ChevronDown className="w-3 h-3 ml-0.5" />
-              </Button>
+              <div className="max-[480px]:w-full max-[480px]:mt-1">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setCloneModalOpen(true)}
+                  className="gap-1.5 ml-1 max-[480px]:ml-0 max-[480px]:w-full justify-center"
+                  data-testid="repo-clone-btn"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                  <span>Code</span>
+                  <ChevronDown className="w-3 h-3 ml-0.5" />
+                </Button>
+              </div>
             </div>
           </div>
 

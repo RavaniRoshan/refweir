@@ -209,7 +209,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
   }
 
   const content = (
-    <div className={cn("bg-background text-foreground flex flex-col font-sans selection:bg-primary/25 selection:text-primary", isShellActive ? "min-h-full" : "min-h-screen")}>
+    <div className={cn("bg-background text-foreground flex flex-col font-sans selection:bg-primary/25 selection:text-primary overflow-x-clip", isShellActive ? "min-h-full" : "min-h-screen")}>
       {/* Hosted demo banner — only when the server reports REFWEIR_DEMO_MODE=1 */}
       {systemInfo.demoMode ? <DemoBanner repo={systemInfo.demoRepo} /> : null}
 

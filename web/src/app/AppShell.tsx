@@ -114,7 +114,7 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
   }, []);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground font-sans">
+    <div className="flex h-screen w-full overflow-hidden overflow-x-clip bg-background text-foreground font-sans">
       {/* Global rail */}
       <aside
         className={cn(

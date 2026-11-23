@@ -9,6 +9,7 @@ export interface RepoInfo {
   isArchived?: boolean
   starsCount: number
   forksCount: number
+  watchersCount?: number
   commitsCount?: number
   branchesCount?: number
   updatedAt: string

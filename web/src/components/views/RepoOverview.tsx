@@ -282,25 +282,25 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
         </div>
 
         {/* Top Right Action Tools */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap max-[480px]:w-full">
           {/* Add file button */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => setCreateFileOpen(true)}
-            className="gap-1.5 text-xs font-semibold"
+            className="gap-1.5 text-xs font-semibold max-[480px]:flex-1"
           >
             <Plus className="w-3.5 h-3.5 text-primary" />
             <span>Add file</span>
           </Button>
 
           {/* Code / Clone Dropdown */}
-          <div className="relative">
+          <div className="relative max-[480px]:flex-1">
             <Button
               variant="primary"
               size="sm"
               onClick={() => setCloneDropdownOpen(!cloneDropdownOpen)}
-              className="gap-1.5 text-xs font-semibold"
+              className="gap-1.5 text-xs font-semibold max-[480px]:w-full justify-center"
             >
               <Code2 className="w-3.5 h-3.5" />
               <span>Code</span>
