@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"runtime"
+	"time"
 
 	_ "modernc.org/sqlite" // pure-Go SQLite driver, registers name "sqlite"
 )
@@ -39,6 +40,8 @@ func Open(path string) (*DB, error) {
 		maxConns := max(4, runtime.NumCPU()*2)
 		sqlDB.SetMaxOpenConns(maxConns)
 		sqlDB.SetMaxIdleConns(max(2, runtime.NumCPU()))
+		sqlDB.SetConnMaxLifetime(30 * time.Minute)
+		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	}
 
 	if _, err := sqlDB.Exec(`PRAGMA foreign_keys = ON`); err != nil {
