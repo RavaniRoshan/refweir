@@ -1,0 +1,37 @@
+[Unit]
+Description=Refweir Hosted Demo Forge Daemon
+Documentation=https://refweir.dev/docs
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=refweir
+Group=refweir
+WorkingDirectory=/var/lib/refweir
+ExecStart=/usr/local/bin/refweird
+Restart=always
+RestartSec=5s
+
+# Core service configuration
+Environment=REFWEIR_LISTEN_ADDR=127.0.0.1:8080
+Environment=REFWEIR_PUBLIC_URL=https://demo.refweir.dev
+Environment=REFWEIR_GIT_URL=demo.refweir.dev
+Environment=REFWEIR_SSH_ADDR=none
+Environment=REFWEIR_DATA_DIR=/var/lib/refweir
+Environment=REFWEIR_DEMO_MODE=1
+Environment=REFWEIR_DEMO_REPO=demo/agent-lab
+Environment=REFWEIR_DEMO_SELF_URL=https://demo.refweir.dev
+Environment=REFWEIR_AUDIT_LOG=/var/lib/refweir/audit.log
+Environment=REFWEIR_TELEMETRY_OPT_IN=0
+
+# Hardening
+LimitNOFILE=65535
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/refweir
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

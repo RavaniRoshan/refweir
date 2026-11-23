@@ -1,0 +1,21 @@
+# Caddyfile for Refweir Hosted Demo (demo.refweir.dev)
+# TLS termination, reverse proxy to refweird HTTP port 8080.
+# SSH (:2222) is not exposed publicly. Telemetry is disabled.
+
+demo.refweir.dev {
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Reverse proxy to local refweird daemon (buffering disabled for SSE and Git streaming)
+    reverse_proxy 127.0.0.1:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto https
+    }
+}

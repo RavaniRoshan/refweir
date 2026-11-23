@@ -1,0 +1,3 @@
+# Refweir hosted demo nightly reset cron entry (02:00 UTC)
+# Wipes the data directory, re-bootstraps fresh instance, and re-runs seed.sh
+0 2 * * * cd /opt/refweir/deploy/demo && RESET_SKIP_BUILD=1 ./reset.sh >> /var/log/refweir-demo-reset.log 2>&1
