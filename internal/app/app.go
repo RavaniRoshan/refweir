@@ -1620,24 +1620,22 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 
-		start := time.Now()
-		guid := idgen.New("guid")
-		pingPayload := fmt.Sprintf(`{"zen":"Mind your words, they become actions.","hook_id":%q,"repository":{"full_name":%q}}`, hook.ID, r.PathValue("owner")+"/"+r.PathValue("name"))
-
-		delivery := &store.RepoWebhookDelivery{
-			WebhookID:          hook.ID,
-			Event:              "ping",
-			GUID:               guid,
-			RequestHeaders:     `{"X-GitHub-Event": "ping", "User-Agent": "refweir.dev-Hookshot"}`,
-			RequestPayload:     pingPayload,
-			ResponseStatusCode: 200,
-			ResponseHeaders:    `{"Content-Type": "application/json"}`,
-			ResponseBody:       `{"status":"pong"}`,
-			DurationMs:         int(time.Since(start).Milliseconds()),
-			Delivered:          true,
+		pingPayload := map[string]any{
+			"zen":        "Mind your words, they become actions.",
+			"hook_id":    hook.ID,
+			"repository": map[string]string{"full_name": r.PathValue("owner") + "/" + r.PathValue("name")},
 		}
-		_ = db.RecordRepoWebhookDelivery(r.Context(), delivery)
-		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "delivery_id": delivery.ID, "status": "dispatched"})
+
+		delivery, _ := DispatchRepoWebhook(r.Context(), db, hook, "ping", pingPayload)
+		status := "dispatched"
+		if delivery != nil && delivery.Delivered {
+			status = "delivered"
+		}
+		delID := ""
+		if delivery != nil {
+			delID = delivery.ID
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "delivery_id": delID, "status": status})
 	})
 
 	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/hooks/{id}/deliveries/{del_id}/redeliver", func(w http.ResponseWriter, r *http.Request) {
@@ -1655,20 +1653,24 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 
-		start := time.Now()
-		newDel := &store.RepoWebhookDelivery{
-			WebhookID:          existingDel.WebhookID,
-			Event:              existingDel.Event,
-			GUID:               idgen.New("guid"),
-			RequestHeaders:     existingDel.RequestHeaders,
-			RequestPayload:     existingDel.RequestPayload,
-			ResponseStatusCode: 200,
-			ResponseHeaders:    existingDel.ResponseHeaders,
-			ResponseBody:       `{"status":"redelivered_ok"}`,
-			DurationMs:         int(time.Since(start).Milliseconds()) + 12,
-			Delivered:          true,
+		hookID := r.PathValue("id")
+		hook, err := db.GetRepoWebhook(r.Context(), hookID)
+		if err != nil {
+			http.Error(w, "Webhook not found", http.StatusNotFound)
+			return
 		}
-		_ = db.RecordRepoWebhookDelivery(r.Context(), newDel)
+
+		var payload any
+		if err := json.Unmarshal([]byte(existingDel.RequestPayload), &payload); err != nil {
+			payload = existingDel.RequestPayload
+		}
+
+		newDel, err := DispatchRepoWebhook(r.Context(), db, hook, existingDel.Event, payload)
+		if err != nil && newDel == nil {
+			http.Error(w, "Redelivery failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "redelivery_id": newDel.ID})
 	})
 
@@ -2434,6 +2436,25 @@ func Open(cfg config.Config) (*App, error) {
 			http.Error(w, "Failed to create pull request: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		DispatchRepoEvent(r.Context(), db, repo.ID, "pull_request", map[string]any{
+			"action": "opened",
+			"number": pr.Number,
+			"pull_request": map[string]any{
+				"id":      pr.ID,
+				"number":  pr.Number,
+				"title":   pr.Title,
+				"body":    pr.Body,
+				"state":   pr.State,
+				"headRef": pr.HeadRef,
+				"baseRef": pr.BaseRef,
+			},
+			"repository": map[string]any{
+				"id":        repo.ID,
+				"name":      repo.Name,
+				"full_name": repo.FullName,
+			},
+		})
 
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]any{
