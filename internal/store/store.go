@@ -5,7 +5,9 @@
 package store
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"runtime"
 	"time"
@@ -63,6 +65,14 @@ func (db *DB) Close() error {
 		return nil
 	}
 	return db.sql.Close()
+}
+
+// Ping verifies database connectivity and responsiveness.
+func (db *DB) Ping(ctx context.Context) error {
+	if db == nil || db.sql == nil {
+		return errors.New("store: database not initialized")
+	}
+	return db.sql.PingContext(ctx)
 }
 
 // SQL exposes the raw database for query code in later phases. Prefer typed

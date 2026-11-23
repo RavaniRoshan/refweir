@@ -181,6 +181,17 @@ func Open(cfg config.Config) (*App, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		if db != nil {
+			if err := db.Ping(r.Context()); err != nil {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				_ = json.NewEncoder(w).Encode(map[string]string{
+					"status":  "error",
+					"error":   "database ping failed: " + err.Error(),
+					"version": cfg.Version,
+				})
+				return
+			}
+		}
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"status":    "ok",
@@ -3937,6 +3948,11 @@ func Open(cfg config.Config) (*App, error) {
 		}
 	}
 
+	metricsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		metrics.DefaultRegistry.IncHTTPRequests()
+		mux.ServeHTTP(w, r)
+	})
+
 	app := &App{
 		Config:        cfg,
 		Store:         db,
@@ -3951,7 +3967,7 @@ func Open(cfg config.Config) (*App, error) {
 		Notifications: notifWorker,
 		Mailer:        mailer,
 		LeaseSecret:   leaseSecret,
-		handler:       mux,
+		handler:       metricsHandler,
 	}
 	app.Telemetry = telemetry.New(telemetry.Config{
 		Enabled:  cfg.TelemetryEnabled,
