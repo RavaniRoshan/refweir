@@ -145,7 +145,7 @@ func (c *CLI) doRequest(method, path string, body any) ([]byte, int, error) {
 // Auth commands
 func (c *CLI) runAuth(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: origin auth <status|token|login|logout>")
+		return errors.New("usage: refweir auth <status|token|login|logout>")
 	}
 	switch args[0] {
 	case "status":
@@ -176,7 +176,7 @@ func (c *CLI) runAuth(args []string) error {
 // Repo commands
 func (c *CLI) runRepo(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: origin repo <list|view|create|delete|mirror>")
+		return errors.New("usage: refweir repo <list|view|get|create|delete|mirror>")
 	}
 	switch args[0] {
 	case "list":
@@ -200,9 +200,9 @@ func (c *CLI) runRepo(args []string) error {
 		fmt.Fprintln(c.Stdout, string(data))
 		return nil
 
-	case "view":
+	case "view", "get":
 		if len(args) < 2 {
-			return errors.New("usage: origin repo view <owner/name>")
+			return errors.New("usage: refweir repo view <owner/name>")
 		}
 		owner, name, err := splitRepo(args[1])
 		if err != nil {
@@ -226,7 +226,7 @@ func (c *CLI) runRepo(args []string) error {
 			return err
 		}
 		if fs.NArg() < 1 {
-			return errors.New("usage: origin repo create <owner/name>")
+			return errors.New("usage: refweir repo create <owner/name>")
 		}
 		owner, name, err := splitRepo(fs.Arg(0))
 		if err != nil {
@@ -250,7 +250,7 @@ func (c *CLI) runRepo(args []string) error {
 
 	case "delete":
 		if len(args) < 2 {
-			return errors.New("usage: origin repo delete <owner/name>")
+			return errors.New("usage: refweir repo delete <owner/name>")
 		}
 		owner, name, err := splitRepo(args[1])
 		if err != nil {
@@ -276,11 +276,11 @@ func (c *CLI) runRepo(args []string) error {
 
 func (c *CLI) runRepoMirror(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: origin repo mirror <status|sync|detach> <owner/name>")
+		return errors.New("usage: refweir repo mirror <status|sync|detach> <owner/name>")
 	}
 	sub := args[0]
 	if len(args) < 2 {
-		return fmt.Errorf("usage: origin repo mirror %s <owner/name>", sub)
+		return fmt.Errorf("usage: refweir repo mirror %s <owner/name>", sub)
 	}
 	owner, name, err := splitRepo(args[1])
 	if err != nil {
@@ -337,7 +337,7 @@ func (c *CLI) runRepoMirror(args []string) error {
 // Pull request commands
 func (c *CLI) runPR(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: origin pr <list|view|create|merge|close>")
+		return errors.New("usage: refweir pr <list|view|create|merge|close>")
 	}
 	switch args[0] {
 	case "list":
@@ -345,7 +345,8 @@ func (c *CLI) runPR(args []string) error {
 		fs.SetOutput(c.Stderr)
 		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
 		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
-		status := fs.String("status", "open", "Filter by status")
+		status := fs.String("status", "", "Filter by status")
+		state := fs.String("state", "", "Filter by state (open, closed, all)")
 		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
 			return err
 		}
@@ -358,7 +359,14 @@ func (c *CLI) runPR(args []string) error {
 			return err
 		}
 
-		path := fmt.Sprintf("/repos/%s/%s/pulls?status=%s", owner, name, *status)
+		filterState := "open"
+		if *state != "" {
+			filterState = *state
+		} else if *status != "" {
+			filterState = *status
+		}
+
+		path := fmt.Sprintf("/repos/%s/%s/pulls?state=%s", owner, name, filterState)
 		data, code, err := c.doRequest(http.MethodGet, path, nil)
 		if err != nil {
 			return err
@@ -378,7 +386,7 @@ func (c *CLI) runPR(args []string) error {
 			return err
 		}
 		if fs.NArg() < 1 {
-			return errors.New("usage: origin pr view <number> [-R owner/name]")
+			return errors.New("usage: refweir pr view <number> [-R owner/name]")
 		}
 		num := fs.Arg(0)
 		repoStr := *repoFlag
@@ -452,7 +460,7 @@ func (c *CLI) runPR(args []string) error {
 			return err
 		}
 		if fs.NArg() < 1 {
-			return errors.New("usage: origin pr merge <number> [-R owner/name]")
+			return errors.New("usage: refweir pr merge <number> [-R owner/name]")
 		}
 		num := fs.Arg(0)
 		repoStr := *repoFlag
@@ -478,6 +486,41 @@ func (c *CLI) runPR(args []string) error {
 		fmt.Fprintln(c.Stdout, string(data))
 		return nil
 
+	case "close":
+		fs := flag.NewFlagSet("pr close", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir pr close <number> [-R owner/name]")
+		}
+		num := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+
+		path := fmt.Sprintf("/repos/%s/%s/pulls/%s", owner, name, num)
+		reqBody := map[string]any{
+			"state": "closed",
+		}
+		data, code, err := c.doRequest(http.MethodPatch, path, reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		fmt.Fprintf(c.Stdout, "Closed pull request #%s\n", num)
+		return nil
+
 	default:
 		return fmt.Errorf("unknown pr subcommand %q", args[0])
 	}
@@ -486,7 +529,7 @@ func (c *CLI) runPR(args []string) error {
 // App commands
 func (c *CLI) runApp(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: origin app <list|create>")
+		return errors.New("usage: refweir app <list|create>")
 	}
 	switch args[0] {
 	case "list":

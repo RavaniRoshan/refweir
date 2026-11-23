@@ -65,12 +65,19 @@ func TestCLI_RepoCommands(t *testing.T) {
 		t.Errorf("expected GET /repos/acme, got %s %s", requestedMethod, requestedPath)
 	}
 
-	// 2. repo view
+	// 2. repo view and repo get alias
 	if err := c.Run([]string{"repo", "view", "acme/rocket"}); err != nil {
 		t.Fatalf("repo view: %v", err)
 	}
 	if requestedPath != "/repos/acme/rocket" || requestedMethod != http.MethodGet {
 		t.Errorf("expected GET /repos/acme/rocket, got %s %s", requestedMethod, requestedPath)
+	}
+
+	if err := c.Run([]string{"repo", "get", "acme/rocket"}); err != nil {
+		t.Fatalf("repo get: %v", err)
+	}
+	if requestedPath != "/repos/acme/rocket" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /repos/acme/rocket for get alias, got %s %s", requestedMethod, requestedPath)
 	}
 
 	// 3. repo create
@@ -140,6 +147,38 @@ func TestCLI_PRCommands(t *testing.T) {
 	_ = json.Unmarshal(requestedBody, &mergeReq)
 	if mergeReq["mergeMethod"] != "squash" {
 		t.Errorf("expected mergeMethod squash, got %+v", mergeReq)
+	}
+
+	// 3. pr close sends PATCH .../pulls/42 with {"state":"closed"}
+	if err := c.Run([]string{"pr", "close", "42"}); err != nil {
+		t.Fatalf("pr close: %v", err)
+	}
+	if requestedPath != "/repos/acme/rocket/pulls/42" || requestedMethod != http.MethodPatch {
+		t.Errorf("expected PATCH /repos/acme/rocket/pulls/42, got %s %s", requestedMethod, requestedPath)
+	}
+	var closeReq map[string]any
+	_ = json.Unmarshal(requestedBody, &closeReq)
+	if closeReq["state"] != "closed" {
+		t.Errorf("expected state closed, got %+v", closeReq)
+	}
+
+	// 4. pr list with --state
+	var requestedRawQuery string
+	tsQuery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedRawQuery = r.URL.RawQuery
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok": true}`))
+	}))
+	defer tsQuery.Close()
+	c.Endpoint = tsQuery.URL
+	c.HTTPClient = tsQuery.Client()
+
+	if err := c.Run([]string{"pr", "list", "--state", "closed"}); err != nil {
+		t.Fatalf("pr list --state: %v", err)
+	}
+	if requestedRawQuery != "state=closed" {
+		t.Errorf("expected query state=closed, got %s", requestedRawQuery)
 	}
 }
 

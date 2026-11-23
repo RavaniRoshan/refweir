@@ -2141,6 +2141,9 @@ func Open(cfg config.Config) (*App, error) {
 			return
 		}
 		state := r.URL.Query().Get("state")
+		if state == "" {
+			state = r.URL.Query().Get("status")
+		}
 		rawPRs, _, err := db.ListPullRequests(r.Context(), repo.ID, state, 100, "")
 		if err != nil {
 			http.Error(w, "Failed to list pull requests: "+err.Error(), http.StatusInternalServerError)
@@ -2340,6 +2343,93 @@ func Open(cfg config.Config) (*App, error) {
 		}
 
 		_ = json.NewEncoder(w).Encode(map[string]any{"pull": out})
+	})
+
+	mux.HandleFunc("PATCH /api/v1/repos/{owner}/{name}/pulls/{number}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+		numStr := r.PathValue("number")
+		number, err := strconv.Atoi(numStr)
+		if err != nil {
+			writeAPIError(w, http.StatusBadRequest, "Invalid pull request number")
+			return
+		}
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
+			return
+		}
+		if repo.Archived {
+			http.Error(w, "Repository is archived and read-only", http.StatusForbidden)
+			return
+		}
+		pr, err := db.GetPullRequest(r.Context(), repo.ID, number)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, "Pull request not found")
+			return
+		}
+
+		var req struct {
+			Title *string `json:"title"`
+			Body  *string `json:"body"`
+			State *string `json:"state"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeAPIError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		u := store.PullRequestUpdate{
+			Title: req.Title,
+			Body:  req.Body,
+			State: req.State,
+		}
+		if err := db.UpdatePullRequest(r.Context(), pr.ID, u); err != nil {
+			http.Error(w, "Failed to update pull request: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if req.State != nil && *req.State != pr.State {
+			action := "edited"
+			if *req.State == "closed" {
+				action = "closed"
+			} else if *req.State == "open" {
+				action = "reopened"
+			}
+			DispatchRepoEvent(r.Context(), db, repo.ID, "pull_request", map[string]any{
+				"action": action,
+				"number": pr.Number,
+				"pull_request": map[string]any{
+					"id":      pr.ID,
+					"number":  pr.Number,
+					"title":   pr.Title,
+					"body":    pr.Body,
+					"state":   *req.State,
+					"headRef": pr.HeadRef,
+					"baseRef": pr.BaseRef,
+				},
+				"repository": map[string]any{
+					"id":        repo.ID,
+					"name":      repo.Name,
+					"full_name": repo.FullName,
+				},
+			})
+		}
+
+		updatedPR, err := db.GetPullRequest(r.Context(), repo.ID, number)
+		if err != nil {
+			http.Error(w, "Failed to reload pull request: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "pull": updatedPR})
 	})
 
 	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/pulls", func(w http.ResponseWriter, r *http.Request) {
