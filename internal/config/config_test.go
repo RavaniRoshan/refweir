@@ -146,3 +146,41 @@ func TestJWTSecret_RejectsShortSecret(t *testing.T) {
 		t.Fatal("Load accepted a secret shorter than 32 bytes")
 	}
 }
+
+func TestConfigTOMLFile(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := filepath.Join(dir, "refweir.toml")
+	tomlContent := `
+# Refweir policy and server configuration
+[transport]
+http = ":8088"
+ssh = ":2224"
+public_url = "https://forge.acme.corp"
+git_url = "forge.acme.corp"
+`
+	if err := os.WriteFile(tomlPath, []byte(tomlContent), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	t.Setenv("REFWEIR_CONFIG", tomlPath)
+	t.Setenv("REFWEIR_DATA_DIR", dir)
+	t.Setenv("REFWEIR_JWT_SECRET", testSecret)
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if cfg.ListenAddr != "127.0.0.1:8088" {
+		t.Errorf("listenAddr = %s, want 127.0.0.1:8088", cfg.ListenAddr)
+	}
+	if cfg.SSHAddr != "127.0.0.1:2224" {
+		t.Errorf("sshAddr = %s, want 127.0.0.1:2224", cfg.SSHAddr)
+	}
+	if cfg.PublicURL != "https://forge.acme.corp" {
+		t.Errorf("publicURL = %s, want https://forge.acme.corp", cfg.PublicURL)
+	}
+	if cfg.GitURL != "forge.acme.corp" {
+		t.Errorf("gitURL = %s, want forge.acme.corp", cfg.GitURL)
+	}
+}

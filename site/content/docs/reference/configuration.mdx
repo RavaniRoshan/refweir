@@ -21,7 +21,38 @@ The `refweird` server daemon is configured primarily through environment variabl
 | `REFWEIR_AUDIT_LOG` | `<data-dir>/audit.log` | Append-only JSONL audit log path. Set to `off` to disable the file; events stay on stderr and in memory. |
 | `REFWEIR_DEMO_MODE` | `0` | Set to `1` to enable the hosted-demo surface and rate-limited demo run endpoint |
 | `REFWEIR_DEMO_REPO` | `demo/agent-lab` | Target repository for hosted demo runs |
+| `REFWEIR_CONFIG` | `refweir.toml` | Path to an optional TOML configuration file |
 | `REFWEIR_TELEMETRY_OPT_IN` | `0` | Anonymous activation telemetry opt-in flag |
+
+---
+
+### Configuration File (`refweir.toml`)
+
+Alternatively, `refweird` can read configuration from a `refweir.toml` file located in the working directory or specified via `REFWEIR_CONFIG`:
+
+```toml
+[transport]
+http = ":8080"
+ssh = ":2222"
+public_url = "http://127.0.0.1:8080"
+git_url = "127.0.0.1:8080"
+
+[agentlease]
+algorithm = "HMAC-SHA256"
+ttl = "1h"
+refs = ["refs/heads/agent/*"]
+
+[mcp]
+endpoint = "/mcp"
+
+[agentreviewer]
+ast_analysis = true
+secret_scan = true
+min_coverage = 0.80
+human_approval = false
+```
+
+Environment variables always take precedence over values in `refweir.toml`.
 
 ---
 

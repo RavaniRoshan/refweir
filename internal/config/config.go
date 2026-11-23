@@ -64,16 +64,50 @@ type Config struct {
 	DemoSelfURL string
 }
 
-// Load reads configuration from environment variables, falling back to safe self-hosted defaults.
+// Load reads configuration from environment variables and optional refweir.toml files,
+// falling back to safe self-hosted defaults.
 // The lease signing key is resolved from REFWEIR_JWT_SECRET or generated once under the data directory.
 func Load() (Config, error) {
-	listenAddr := getEnv("REFWEIR_LISTEN_ADDR", defaultListen)
 	dataDir := getEnv("REFWEIR_DATA_DIR", defaultDataDir)
 
-	publicURL := getEnvFirst([]string{"REFWEIR_PUBLIC_URL", "REFWEIR_ENDPOINT"}, defaultPublicURL)
-	gitURL := getEnvFirst([]string{"REFWEIR_GIT_URL", "REFWEIR_GIT_HOST"}, defaultGitURL)
-	sshAddr := getEnv("REFWEIR_SSH_ADDR", "127.0.0.1:2222")
-	sshHostKeyPath := getEnv("REFWEIR_SSH_HOST_KEY", filepath.Join(dataDir, "ssh_host_key"))
+	var tomlMap map[string]map[string]string
+	cfgPath := getEnv("REFWEIR_CONFIG", "refweir.toml")
+	if data, err := os.ReadFile(cfgPath); err == nil {
+		tomlMap = parseSimpleTOML(string(data))
+	} else if data, err := os.ReadFile(filepath.Join(dataDir, "refweir.toml")); err == nil {
+		tomlMap = parseSimpleTOML(string(data))
+	}
+
+	getVal := func(envKey, tomlSec, tomlKey, def string) string {
+		if v := os.Getenv(envKey); v != "" {
+			return v
+		}
+		if tomlMap != nil && tomlMap[tomlSec] != nil {
+			if v, ok := tomlMap[tomlSec][tomlKey]; ok && v != "" {
+				return v
+			}
+		}
+		return def
+	}
+
+	normalizeAddr := func(raw, def string) string {
+		if raw == "" {
+			return def
+		}
+		if raw == "none" || raw == "disabled" {
+			return "none"
+		}
+		if strings.HasPrefix(raw, ":") {
+			return "127.0.0.1" + raw
+		}
+		return raw
+	}
+
+	listenAddr := normalizeAddr(getVal("REFWEIR_LISTEN_ADDR", "transport", "http", defaultListen), defaultListen)
+	publicURL := getVal("REFWEIR_PUBLIC_URL", "transport", "public_url", getEnvFirst([]string{"REFWEIR_ENDPOINT"}, defaultPublicURL))
+	gitURL := getVal("REFWEIR_GIT_URL", "transport", "git_url", getEnvFirst([]string{"REFWEIR_GIT_HOST"}, defaultGitURL))
+	sshAddr := normalizeAddr(getVal("REFWEIR_SSH_ADDR", "transport", "ssh", "127.0.0.1:2222"), "127.0.0.1:2222")
+	sshHostKeyPath := getVal("REFWEIR_SSH_HOST_KEY", "transport", "ssh_host_key", filepath.Join(dataDir, "ssh_host_key"))
 
 	jwtSecret, err := resolveJWTSecret(dataDir)
 	if err != nil {
@@ -188,4 +222,54 @@ func getEnvFirst(keys []string, fallback string) string {
 		}
 	}
 	return fallback
+}
+
+// parseSimpleTOML parses basic [section] and key = "value" pairs from a TOML string.
+func parseSimpleTOML(content string) map[string]map[string]string {
+	result := make(map[string]map[string]string)
+	currentSection := "global"
+
+	lines := strings.Split(content, "\n")
+	for _, rawLine := range lines {
+		line := strings.TrimSpace(rawLine)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		// Strip inline comment (# not inside quotes)
+		inQuotes := false
+		splitIdx := -1
+		for i, r := range line {
+			if r == '"' {
+				inQuotes = !inQuotes
+			} else if r == '#' && !inQuotes {
+				splitIdx = i
+				break
+			}
+		}
+		if splitIdx != -1 {
+			line = strings.TrimSpace(line[:splitIdx])
+		}
+
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			currentSection = strings.ToLower(strings.TrimSpace(line[1 : len(line)-1]))
+			if _, exists := result[currentSection]; !exists {
+				result[currentSection] = make(map[string]string)
+			}
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.ToLower(strings.TrimSpace(parts[0]))
+			val := strings.TrimSpace(parts[1])
+			if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' {
+				val = val[1 : len(val)-1]
+			}
+			if _, exists := result[currentSection]; !exists {
+				result[currentSection] = make(map[string]string)
+			}
+			result[currentSection][key] = val
+		}
+	}
+	return result
 }
