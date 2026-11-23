@@ -138,7 +138,8 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
   }
 
   useEffect(() => {
-    // If first-time user hasn't completed tour yet, auto-open tour (unless ?notour=1)
+    // If first-time user hasn't completed tour yet, auto-open tour (unless in demo mode or ?notour=1)
+    if (systemInfo.demoMode || isDemoModeActive()) return
     const p = new URLSearchParams(window.location.search)
     if (p.get('notour') !== '1') {
       const completed = localStorage.getItem('refweir_onboarding_tour_completed')
@@ -146,7 +147,9 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
         setTourOpen(true)
       }
     }
+  }, [systemInfo.demoMode])
 
+  useEffect(() => {
     // In live mode, dynamically resolve the active primary repository from cluster
     if (!isDemoModeActive()) {
       getRepositories().then((repos) => {

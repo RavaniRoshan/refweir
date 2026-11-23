@@ -55,55 +55,43 @@ export const ProductTour: React.FC<ProductTourProps> = ({
 
   const steps: TourStep[] = [
     {
-      id: 'cluster-architecture',
-      title: 'Sovereign Cluster Architecture',
-      subtitle: 'Single-binary Git forge with zero external dependencies and SQLite WAL storage',
-      icon: <Server className="w-5 h-5" />,
-      badge: 'Core Engine',
+      id: 'agent-mcp-bridge',
+      title: 'Autonomous AI Agent Bridge (MCP)',
+      subtitle: 'Native Model Context Protocol gateway exposing 35+ Git primitives to AI coding agents',
+      icon: <Bot className="w-5 h-5" />,
+      badge: 'Agent Gateway',
       color: 'text-primary',
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            refweir.dev runs as a self-contained daemon (<code className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-mono">refweird</code>) that unifies repository storage, Git wire protocols, and agent orchestration into a single sovereign service.
+            refweir.dev is the first Git server built for autonomous AI agents. Any MCP-compatible agent (Claude Code, Cursor, Windsurf, Devin) connects to your cluster to review PRs, triage issues, and run checks.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Smart-HTTP</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">:8080</div>
-              <p className="text-[10px] text-muted-foreground">Standard Git push/pull & REST API</p>
+          <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">MCP Server Endpoint</span>
+              <Badge variant="outline" className="font-mono text-[10px]">JSON-RPC 2.0</Badge>
             </div>
-
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Pure-Go SSH</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">:2222</div>
-              <p className="text-[10px] text-muted-foreground">Embedded SSH transport (zero-OpenSSH)</p>
-            </div>
-
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Storage Engine</span>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">SQLite WAL</div>
-              <p className="text-[10px] text-muted-foreground">ACID metadata & Litestream replicas</p>
+            <div className="flex items-center justify-between bg-input p-2 rounded border border-border font-mono text-xs text-foreground">
+              <span>http://localhost:8080/mcp</span>
+              <button
+                onClick={() => handleCopy('http://localhost:8080/mcp')}
+                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                {copiedText === 'http://localhost:8080/mcp' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
 
-          <div className="p-3 rounded-md bg-secondary/20 border border-border text-xs space-y-1.5">
-            <div className="font-semibold text-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span>How Everything Connects</span>
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
+              <span className="font-semibold text-foreground">35+ Mounted Tools</span>
+              <p className="text-muted-foreground">Diff inspection, symbolic AST search, branch switching, merge execution.</p>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              All Git refs, pull request reviews, and security policies are coordinated directly through the SQLite write-ahead log (<code className="font-mono text-foreground">data/meta.db</code>). Bare Git repositories are stored in <code className="font-mono text-foreground">data/git/</code> with zero CGO dependencies.
-            </p>
+            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
+              <span className="font-semibold text-foreground">Ephemeral Leases</span>
+              <p className="text-muted-foreground">HMAC-signed short-lived tokens ensuring bounded agent blast radius.</p>
+            </div>
           </div>
         </div>
       ),
@@ -156,43 +144,92 @@ export const ProductTour: React.FC<ProductTourProps> = ({
       ),
     },
     {
-      id: 'agent-mcp-bridge',
-      title: 'Autonomous AI Agent Bridge (MCP)',
-      subtitle: 'Native Model Context Protocol gateway exposing 35+ Git primitives to AI coding agents',
-      icon: <Bot className="w-5 h-5" />,
-      badge: 'Agent Gateway',
+      id: 'enterprise-rulesets',
+      title: 'Rulesets & Cryptographic Enforcement',
+      subtitle: 'Strict branch protection, Ed25519 commit signing verification, and automated merge queues',
+      icon: <ShieldCheck className="w-5 h-5" />,
+      badge: 'Enterprise Security',
       color: 'text-primary',
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            refweir.dev is the first Git server built for autonomous AI agents. Any MCP-compatible agent (Claude Code, Cursor, Windsurf, Devin) connects to your cluster to review PRs, triage issues, and run checks.
+            Protect your production mainline branches with cryptographic verification and enterprise-grade policy enforcement directly in SQLite WAL transactions.
           </p>
 
-          <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-foreground">MCP Server Endpoint</span>
-              <Badge variant="outline" className="font-mono text-[10px]">JSON-RPC 2.0</Badge>
+          <div className="space-y-2">
+            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-foreground">Cryptographic Commit Signing</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Reject unsigned commits or unverified keys before they ever hit the repository refs.
+                </p>
+              </div>
             </div>
-            <div className="flex items-center justify-between bg-input p-2 rounded border border-border font-mono text-xs text-foreground">
-              <span>http://localhost:8080/mcp</span>
-              <button
-                onClick={() => handleCopy('http://localhost:8080/mcp')}
-                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                {copiedText === 'http://localhost:8080/mcp' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+
+            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
+              <GitBranch className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="text-xs font-semibold text-foreground">Linear History & Merge Queues</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Prevent merge skew by running tests against queued branches before atomic fast-forward commits.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'cluster-architecture',
+      title: 'Sovereign Cluster Architecture',
+      subtitle: 'Single-binary Git forge with zero external dependencies and SQLite WAL storage',
+      icon: <Server className="w-5 h-5" />,
+      badge: 'Core Engine',
+      color: 'text-primary',
+      content: (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            refweir.dev runs as a self-contained daemon (<code className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-mono">refweird</code>) that unifies repository storage, Git wire protocols, and agent orchestration into a single sovereign service.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-foreground uppercase">Smart-HTTP</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="font-mono text-xs text-primary font-bold">:8080</div>
+              <p className="text-[10px] text-muted-foreground">Standard Git push/pull & REST API</p>
+            </div>
+
+            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-foreground uppercase">Pure-Go SSH</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="font-mono text-xs text-primary font-bold">:2222</div>
+              <p className="text-[10px] text-muted-foreground">Embedded SSH transport (zero-OpenSSH)</p>
+            </div>
+
+            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-foreground uppercase">Storage Engine</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="font-mono text-xs text-primary font-bold">SQLite WAL</div>
+              <p className="text-[10px] text-muted-foreground">ACID metadata & Litestream replicas</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
-              <span className="font-semibold text-foreground">35+ Mounted Tools</span>
-              <p className="text-muted-foreground">Diff inspection, symbolic AST search, branch switching, merge execution.</p>
+          <div className="p-3 rounded-md bg-secondary/20 border border-border text-xs space-y-1.5">
+            <div className="font-semibold text-foreground flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>How Everything Connects</span>
             </div>
-            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
-              <span className="font-semibold text-foreground">Ephemeral Leases</span>
-              <p className="text-muted-foreground">HMAC-signed short-lived tokens ensuring bounded agent blast radius.</p>
-            </div>
+            <p className="text-[11px] text-muted-foreground">
+              All Git refs, pull request reviews, and security policies are coordinated directly through the SQLite write-ahead log (<code className="font-mono text-foreground">data/meta.db</code>). Bare Git repositories are stored in <code className="font-mono text-foreground">data/git/</code> with zero CGO dependencies.
+            </p>
           </div>
         </div>
       ),
@@ -307,12 +344,21 @@ export const ProductTour: React.FC<ProductTourProps> = ({
               <p className="text-xs text-muted-foreground">{currentStep.subtitle}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleFinish}
+              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-secondary/60 transition-colors cursor-pointer"
+            >
+              Skip tour
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
+              aria-label="Close tour"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -365,6 +411,17 @@ export const ProductTour: React.FC<ProductTourProps> = ({
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Open Manual</span>
+              </Button>
+            )}
+
+            {currentStepIndex < steps.length - 1 && (
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={handleFinish}
+                className="text-xs text-muted-foreground hover:text-foreground mr-1"
+              >
+                Skip tour
               </Button>
             )}
 
