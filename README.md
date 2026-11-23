@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci-dev.yml"><img src="https://img.shields.io/github/actions/workflow/status/RavaniRoshan/refweir/ci-dev.yml?branch=main&style=flat-square&label=CI&color=10B981" alt="CI Status"></a>
-  <a href="https://ravaniroshan.github.io/refweir/docs/"><img src="https://img.shields.io/badge/Docs-refweir.dev%2Fdocs-2563EB?style=flat-square" alt="Documentation"></a>
+  <a href="https://refweir.dev/docs/"><img src="https://img.shields.io/badge/Docs-refweir.dev%2Fdocs-2563EB?style=flat-square" alt="Documentation"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/refweir?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/Go-Pure--Go%20(Zero%20CGO)-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Pure-Go">
@@ -15,9 +15,9 @@
 </p>
 
 <p align="center">
-  <a href="https://ravaniroshan.github.io/refweir/docs/"><strong>Documentation</strong></a> &nbsp;&bull;&nbsp;
-  <a href="https://ravaniroshan.github.io/refweir/docs/getting-started/"><strong>Getting Started</strong></a> &nbsp;&bull;&nbsp;
-  <a href="https://ravaniroshan.github.io/refweir/docs/architecture/"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://refweir.dev/docs/"><strong>Documentation</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://refweir.dev/docs/getting-started/"><strong>Getting Started</strong></a> &nbsp;&bull;&nbsp;
+  <a href="https://refweir.dev/docs/architecture/"><strong>Architecture</strong></a> &nbsp;&bull;&nbsp;
   <a href="ROADMAP.md"><strong>Roadmap</strong></a> &nbsp;&bull;&nbsp;
   <a href="CLAIMS.md"><strong>Claims Ledger</strong></a> &nbsp;&bull;&nbsp;
   <a href="CONTRIBUTING.md"><strong>Contributing</strong></a>

@@ -6,7 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 // moved under /refweir.dev/docs/<page>/.
 
 const outDir = resolve(import.meta.dirname, '..', 'out');
-const baseUrl = 'https://ravaniroshan.github.io/refweir';
+const baseUrl = 'https://refweir.dev';
 const docsDir = join(outDir, 'docs');
 
 if (!existsSync(docsDir)) {
