@@ -73,7 +73,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			if expStr := os.Getenv("REFWEIR_LEASE_EXPIRES_AT"); expStr != "" {
 				if exp, err := time.Parse(time.RFC3339, expStr); err == nil && time.Now().UTC().After(exp) {
 					auditRejection("agent.lease_rejected", refName, "Lease expired before push was processed")
-					fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease has expired\n")
+					fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
 					return fmt.Errorf("agent capability lease expired")
 				}
 			}
@@ -84,7 +84,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 				for _, dis := range disallowed {
 					if dis != "" && strings.HasPrefix(refName, dis) {
 						auditRejection("agent.lease_rejected", refName, "Lease prohibited modification of disallowed ref prefix "+dis)
-						fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease prohibited from modifying ref %s\n", refName)
+						fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
 						return fmt.Errorf("agent capability lease ref prohibited: %s", refName)
 					}
 				}
@@ -105,14 +105,14 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			}
 			if !permitted {
 				auditRejection("agent.lease_rejected", refName, "Ref is outside the lease's allowed prefixes")
-				fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease violation: ref %s is outside allowed prefixes %v\n", refName, allowed)
+				fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
 				return fmt.Errorf("agent capability lease ref violation: %s", refName)
 			}
 
 			// Agents under lease cannot delete refs
 			if strings.Trim(newRev, "0") == "" {
 				auditRejection("agent.lease_rejected", refName, "Lease does not permit deleting refs")
-				fmt.Fprintf(stderr, "remote: error: GH007: Agent capability lease does not permit deleting refs (%s)\n", refName)
+				fmt.Fprintf(stderr, "refweir: lease scope denies ref %s\n", refName)
 				return fmt.Errorf("agent capability lease deletion prohibited")
 			}
 		}

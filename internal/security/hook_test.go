@@ -75,8 +75,8 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 	var stderrMain bytes.Buffer
 	if err := PreReceiveHook(inputMain, &stderrMain); err == nil {
 		t.Fatal("expected lease push to main to be rejected, but got nil error")
-	} else if !strings.Contains(stderrMain.String(), "GH007") {
-		t.Fatalf("expected GH007 error code, got: %s", stderrMain.String())
+	} else if !strings.Contains(stderrMain.String(), "lease scope denies") {
+		t.Fatalf("expected lease denial error, got: %s", stderrMain.String())
 	}
 
 	// 3. Push to refs/heads/user-branch (outside allowed prefixes) fails
@@ -84,8 +84,8 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 	var stderrOther bytes.Buffer
 	if err := PreReceiveHook(inputOther, &stderrOther); err == nil {
 		t.Fatal("expected lease push to unauthorized ref to be rejected, but got nil error")
-	} else if !strings.Contains(stderrOther.String(), "outside allowed prefixes") {
-		t.Fatalf("expected outside allowed prefixes error, got: %s", stderrOther.String())
+	} else if !strings.Contains(stderrOther.String(), "lease scope denies") {
+		t.Fatalf("expected lease denial error, got: %s", stderrOther.String())
 	}
 
 	// 4. Ref deletion under lease fails
@@ -93,7 +93,7 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 	var stderrDel bytes.Buffer
 	if err := PreReceiveHook(inputDel, &stderrDel); err == nil {
 		t.Fatal("expected lease ref deletion to be rejected, got nil error")
-	} else if !strings.Contains(stderrDel.String(), "does not permit deleting refs") {
+	} else if !strings.Contains(stderrDel.String(), "lease scope denies") {
 		t.Fatalf("expected deletion prohibited error, got: %s", stderrDel.String())
 	}
 
@@ -103,7 +103,7 @@ func TestPreReceiveHook_AgentLeaseEnforcement(t *testing.T) {
 	var stderrExpired bytes.Buffer
 	if err := PreReceiveHook(inputExpired, &stderrExpired); err == nil {
 		t.Fatal("expected expired lease push to be rejected, got nil error")
-	} else if !strings.Contains(stderrExpired.String(), "lease has expired") {
+	} else if !strings.Contains(stderrExpired.String(), "lease scope denies") {
 		t.Fatalf("expected lease has expired error, got: %s", stderrExpired.String())
 	}
 }

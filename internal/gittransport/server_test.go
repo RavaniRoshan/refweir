@@ -345,13 +345,13 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 		t.Fatalf("push to refs/heads/agent/patch-1 failed: %v\nOutput: %s", err, out)
 	}
 
-	// 6. Push to refs/heads/main -> MUST FAIL with GH007
+	// 6. Push to refs/heads/main -> MUST FAIL with lease denial
 	out, err = gitExec(cloneDir, "push", "origin", "agent/patch-1:refs/heads/main")
 	if err == nil {
 		t.Fatalf("expected push to refs/heads/main to be rejected under lease, but succeeded: %s", out)
 	}
-	if !strings.Contains(out, "GH007") {
-		t.Fatalf("expected GH007 error in push output, got: %s", out)
+	if !strings.Contains(out, "lease scope denies") {
+		t.Fatalf("expected lease denial error in push output, got: %s", out)
 	}
 
 	// 7. Expired lease -> MUST FAIL with 401

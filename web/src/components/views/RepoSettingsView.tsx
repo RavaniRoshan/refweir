@@ -477,7 +477,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                       type="text"
                       disabled
                       value={owner}
-                      className="w-full h-8 px-3 text-xs bg-secondary/50 border border-border rounded-md text-muted-foreground font-mono outline-none"
+                      className="w-full h-8 px-3 text-xs bg-raised border border-hairline rounded-md text-muted-foreground font-mono outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -497,7 +497,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                       type="text"
                       disabled
                       value={repoName}
-                      className="w-full h-8 px-3 text-xs bg-secondary/50 border border-border rounded-md text-foreground font-mono outline-none"
+                      className="w-full h-8 px-3 text-xs bg-raised border border-hairline rounded-md text-foreground font-mono outline-none"
                     />
                   </div>
                 </div>
@@ -511,8 +511,8 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                       type="text"
                       value={repoDescription}
                       onChange={(e) => setRepoDescription(e.target.value)}
-                      placeholder="Enterprise repository on refweir.dev"
-                      className="flex-1 h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                      placeholder="No description yet"
+                      className="flex-1 h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                     />
                     <Button
                       type="button"
@@ -1099,7 +1099,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               value={newCollabLogin}
               onChange={(e) => setNewCollabLogin(e.target.value)}
               placeholder="e.g. alex"
-              className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
+              className="w-full h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
             />
           </div>
 
@@ -1214,7 +1214,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               value={newDeployKeyTitle}
               onChange={(e) => setNewDeployKeyTitle(e.target.value)}
               placeholder="e.g. Production CI Runner"
-              className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+              className="w-full h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </div>
 
@@ -1227,7 +1227,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               value={newDeployKeyContent}
               onChange={(e) => setNewDeployKeyContent(e.target.value)}
               placeholder="Begins with 'ssh-rsa', 'ssh-ed25519', or 'ecdsa-sha2-nistp256'"
-              className="w-full p-2.5 text-xs bg-input border border-border rounded-md text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring resize-none"
+              className="w-full p-2.5 text-xs bg-slab border border-hairline rounded-md text-foreground font-mono placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring resize-none"
             />
           </div>
 
@@ -1288,7 +1288,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               value={newWebhookUrl}
               onChange={(e) => setNewWebhookUrl(e.target.value)}
               placeholder="https://example.com/postreceive"
-              className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
+              className="w-full h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
             />
           </div>
 
@@ -1298,7 +1298,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
               <select
                 value={newWebhookContentType}
                 onChange={(e) => setNewWebhookContentType(e.target.value)}
-                className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                className="w-full h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
               >
                 <option value="json">application/json</option>
                 <option value="form">application/x-www-form-urlencoded</option>
@@ -1313,7 +1313,7 @@ export const RepoSettingsView: React.FC<RepoSettingsViewProps> = ({
                 value={newWebhookSecret}
                 onChange={(e) => setNewWebhookSecret(e.target.value)}
                 placeholder="Optional webhook secret"
-                className="w-full h-8 px-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
+                className="w-full h-8 px-3 text-xs bg-slab border border-hairline rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring font-mono"
               />
             </div>
           </div>

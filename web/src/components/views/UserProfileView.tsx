@@ -189,7 +189,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             live.map((r) => ({
               name: r.name,
               owner: r.full_name?.split('/')[0] || 'shiva',
-              description: r.description || 'Enterprise repository on refweir.dev',
+              description: r.description || '',
               language: r.language || 'Go',
               languageColor: r.languageColor || '#00ADD8',
               stars: r.stars || 0,
@@ -1140,7 +1140,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
             {
               name: newRepo.name,
               owner: newRepo.full_name?.split('/')[0] || user.login,
-              description: newRepo.description || 'Enterprise repository on refweir.dev',
+              description: newRepo.description || '',
               language: newRepo.language || 'Go',
               languageColor: newRepo.languageColor || '#00ADD8',
               stars: 0,

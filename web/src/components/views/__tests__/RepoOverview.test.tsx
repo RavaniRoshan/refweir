@@ -19,7 +19,7 @@ describe('RepoOverview Component', () => {
   const mockRepo = {
     ownerSlug: 'shiva',
     name: 'refweir.dev',
-    description: 'Enterprise repository on refweir.dev',
+    description: '',
     defaultBranch: 'main',
     isPrivate: false,
     starsCount: 12,

@@ -38,7 +38,7 @@ func Issue(secret []byte, agentID, repoID string, allowedRefs, disallowedRefs []
 		return "", nil, errors.New("lease signing secret must not be empty")
 	}
 	if agentID == "" || repoID == "" {
-		return "", nil, errors.New("agentID and repoID are required")
+		return "", nil, errors.New("agentId and repoId are required")
 	}
 	if ttl == 0 {
 		ttl = 15 * time.Minute

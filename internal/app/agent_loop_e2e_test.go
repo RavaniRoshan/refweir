@@ -254,13 +254,13 @@ func TestAgentLoop_EndToEnd_RealServer(t *testing.T) {
 		t.Fatalf("push to refs/heads/agent/patch-v1 failed: %v\nOutput: %s", err, pushOut)
 	}
 
-	// 9. NEGATIVE TEST: Agent attempts to push to refs/heads/main -> MUST FAIL with GH007
+	// 9. NEGATIVE TEST: Agent attempts to push to refs/heads/main -> MUST FAIL with lease denial
 	mainPushOut, err := gitExec("push", "origin", "agent/patch-v1:refs/heads/main")
 	if err == nil {
 		t.Fatalf("expected push to refs/heads/main to be rejected under lease, but succeeded: %s", mainPushOut)
 	}
-	if !strings.Contains(mainPushOut, "GH007") {
-		t.Fatalf("expected GH007 lease violation in push output, got: %s", mainPushOut)
+	if !strings.Contains(mainPushOut, "lease scope denies") {
+		t.Fatalf("expected lease denial in push output, got: %s", mainPushOut)
 	}
 
 	// 10. STEP 5: Agent opens PR via MCP

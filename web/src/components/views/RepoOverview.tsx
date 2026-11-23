@@ -772,7 +772,7 @@ git push -u origin main`}
                         <span>{repo.name}</span>
                       </h2>
                       <p className="text-foreground/90 leading-relaxed text-xs sm:text-sm">
-                        {repo.description || 'Enterprise repository on refweir.dev.'}
+                        {repo.description || 'No description yet'}
                       </p>
                     </div>
                   )}

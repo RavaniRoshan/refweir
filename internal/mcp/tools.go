@@ -1569,6 +1569,9 @@ func BuiltinTools() []ToolDef {
 				}
 				agentID := getString(args, "agentId")
 				repoID := getString(args, "repoId")
+				if agentID == "" || repoID == "" {
+					return nil, fmt.Errorf("issue lease: agentId and repoId are required")
+				}
 				if strings.Contains(repoID, "/") {
 					parts := strings.Split(repoID, "/")
 					if repo, err := s.store.GetRepo(ctx, parts[0], parts[1]); err == nil {

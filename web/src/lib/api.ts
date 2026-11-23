@@ -111,7 +111,7 @@ export async function getRepoInfo(owner: string, name: string, signal?: AbortSig
       return {
         ownerSlug: owner,
         name: name,
-        description: data.description || 'Enterprise repository on refweir.dev',
+        description: data.description || '',
         defaultBranch: data.defaultBranch || data.default_branch || 'main',
         isPrivate: Boolean(data.isPrivate || data.is_private || data.visibility === 'private'),
         isArchived: Boolean(data.archived || data.is_archived || data.isArchived),
@@ -136,7 +136,7 @@ export async function getRepoInfo(owner: string, name: string, signal?: AbortSig
     return {
       ownerSlug: owner,
       name: name,
-      description: data.description || 'Enterprise repository on refweir.dev',
+      description: data.description || '',
       defaultBranch: data.defaultBranch || data.default_branch || 'main',
       isPrivate: Boolean(data.isPrivate || data.is_private || data.visibility === 'private'),
       isArchived: Boolean(data.archived || data.is_archived || data.isArchived),
@@ -227,7 +227,7 @@ export async function getRepositories(signal?: AbortSignal): Promise<RepositoryR
     if (!Array.isArray(data?.repositories)) return []
     return data.repositories.map((r: any) => ({
       ...r,
-      description: r.description || 'Enterprise repository on refweir.dev',
+      description: r.description || '',
       language: r.language || 'Go',
       languageColor: r.languageColor || '#00ADD8',
       stars: r.stars || 0,

@@ -244,10 +244,10 @@ export const Header: React.FC<HeaderProps> = ({
                       ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
                       : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
                   }`}
-                  title="Click to toggle between Live Production API and Offline Sandbox Demo mode"
+                  title={isDemo ? 'Live demo' : 'Live instance'}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                  <span>{isDemo ? 'Sandbox Demo' : 'Live Production'}</span>
+                  <span>{isDemo ? 'Live demo' : 'Live instance'}</span>
                 </button>
               </div>
             </div>
