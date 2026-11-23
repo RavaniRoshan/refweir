@@ -169,7 +169,11 @@ func Open(cfg config.Config) (*App, error) {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok", "version": cfg.Version})
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status":    "ok",
+			"version":   cfg.Version,
+			"buildDate": "2026-11-23",
+		})
 	})
 
 	// Cluster Disaster Recovery & Replication API

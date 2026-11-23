@@ -47,7 +47,7 @@ describe('GlobalHomeView', () => {
 
     render(<GlobalHomeView onSelectRepo={onSelectRepo} onSelectTab={onSelectTab} />)
 
-    expect(screen.getByText('Enterprise Activity Feed')).toBeInTheDocument()
+    expect(screen.getByText('Activity')).toBeInTheDocument()
     expect(screen.getByText('Refweir Agent (Autonomous)')).toBeInTheDocument()
 
     // Filter by PRs only

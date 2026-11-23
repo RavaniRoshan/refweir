@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ArrowUpRight, CheckCircle2, FlaskConical, Loader2, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
@@ -19,6 +19,20 @@ export interface DemoBannerProps {
  * show it. The agent run is a real lease-backed push, not canned data.
  */
 export const DemoBanner: React.FC<DemoBannerProps> = ({ repo }) => {
+  const [collapsed] = useState(() => {
+    try {
+      return localStorage.getItem('refweir_demo_banner_collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('refweir_demo_banner_collapsed', 'true')
+    } catch {}
+  }, [])
+
   const [running, setRunning] = useState(false)
   const [merging, setMerging] = useState(false)
   const [result, setResult] = useState<DemoAgentRunResult | null>(null)
@@ -54,14 +68,18 @@ export const DemoBanner: React.FC<DemoBannerProps> = ({ repo }) => {
 
   return (
     <div className="w-full border-b border-hairline bg-slab">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-2 px-5 py-2.5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <div className="flex items-start gap-2 text-xs text-text-2">
-          <FlaskConical className="mt-0.5 size-3.5 shrink-0 text-signal" aria-hidden="true" />
-          <p>
+      <div className={`mx-auto flex max-w-[1440px] ${collapsed ? 'flex-row items-center justify-between py-1.5 px-5 lg:px-8' : 'flex-col gap-2 px-5 py-2.5 lg:flex-row lg:items-center lg:justify-between lg:px-8'}`}>
+        <div className="flex items-center gap-2 text-xs text-text-2 truncate">
+          <FlaskConical className="size-3.5 shrink-0 text-signal" aria-hidden="true" />
+          <p className="truncate">
             <span className="font-semibold text-text-1">Live demo.</span>{' '}
-            Seeded repository{repo ? ` (${repo})` : ''}, reset on a schedule. An agent run
-            pushes a real <code className="rounded bg-raised px-1 py-0.5 text-[11px]">agent/*</code>{' '}
-            branch under a scoped lease and opens a real pull request.
+            Seeded repository{repo ? ` (${repo})` : ''}, reset on a schedule.{' '}
+            {!collapsed && (
+              <>
+                An agent run pushes a real <code className="rounded bg-raised px-1 py-0.5 text-[11px]">agent/*</code>{' '}
+                branch under a scoped lease and opens a real pull request.
+              </>
+            )}
           </p>
         </div>
 

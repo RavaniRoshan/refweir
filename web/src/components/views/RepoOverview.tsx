@@ -828,9 +828,22 @@ git push -u origin main`}
                   <Tag className="w-3.5 h-3.5 text-primary" />
                   <span>Releases</span>
                 </h3>
-                <span className="text-[11px] text-muted-foreground font-mono">
-                  {releaseCount}
-                </span>
+                {releaseCount > 0 ? (
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {releaseCount}
+                  </span>
+                ) : (
+                  <a
+                    href="#releases"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      window.dispatchEvent(new CustomEvent('refweir_navigate_tab', { detail: 'releases' }))
+                    }}
+                    className="text-[11px] text-signal hover:underline cursor-pointer font-medium"
+                  >
+                    Draft release
+                  </a>
+                )}
               </div>
               {latestRelease ? (
                 <div className="flex items-center gap-2">
@@ -843,8 +856,18 @@ git push -u origin main`}
                   </div>
                 </div>
               ) : (
-                <div className="text-[11px] text-muted-foreground">
-                  No releases published.
+                <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+                  <span>No releases published.</span>
+                  <a
+                    href="#releases"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      window.dispatchEvent(new CustomEvent('refweir_navigate_tab', { detail: 'releases' }))
+                    }}
+                    className="text-signal hover:underline cursor-pointer font-medium"
+                  >
+                    Draft a release
+                  </a>
                 </div>
               )}
             </div>

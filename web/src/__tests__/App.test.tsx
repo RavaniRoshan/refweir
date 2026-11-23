@@ -188,7 +188,7 @@ describe('App End-to-End Navigation', () => {
     fireEvent.click(brandBtn)
 
     await waitFor(() => {
-      expect(screen.getByText('Enterprise Activity Feed')).toBeInTheDocument()
+      expect(screen.getByText('Activity')).toBeInTheDocument()
       expect(screen.getByText('Cluster Telemetry')).toBeInTheDocument()
     })
   })

@@ -156,6 +156,18 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
             <p className="text-xs text-muted-foreground leading-relaxed">
               Push an existing Git repository to this remote to start tracking commit history and cryptographic signature verifications.
             </p>
+            <div className="pt-2">
+              <a
+                href="#code"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.dispatchEvent(new CustomEvent('refweir_navigate_tab', { detail: 'code' }))
+                }}
+                className="text-xs text-signal font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                Create a new file or push commits
+              </a>
+            </div>
           </div>
 
           {/* Quick Terminal Snippet */}

@@ -108,6 +108,25 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
     demoMode?: boolean
     demoRepo?: string
   }>({})
+  const [healthInfo, setHealthInfo] = useState<{ version?: string; buildDate?: string }>({})
+
+  useEffect(() => {
+    fetch('/healthz')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (data) setHealthInfo(data) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const handleNav = (e: Event) => {
+      const customEvent = e as CustomEvent<string>
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail as any)
+      }
+    }
+    window.addEventListener('refweir_navigate_tab', handleNav)
+    return () => window.removeEventListener('refweir_navigate_tab', handleNav)
+  }, [])
 
   useEffect(() => {
     fetch('/api/v1/system/info')
@@ -386,7 +405,9 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
               </span>
-              <span>refweird (127.0.0.1:8080)</span>
+              <span>
+                refweird · {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1') ? 'local instance' : (typeof window !== 'undefined' ? window.location.host : 'local instance')} · v{healthInfo.version || systemInfo.version || 'dev'} · built {healthInfo.buildDate || '2026-11-23'}
+              </span>
             </span>
             <span>•</span>
             <span className="text-foreground flex items-center gap-1">
@@ -399,7 +420,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
 
           <div className="flex items-center gap-4">
             <a
-              href="https://ravaniroshan.github.io/refweir/docs/"
+              href="https://refweir.dev/docs"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors hover:underline"
@@ -416,7 +437,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
             </a>
             <span className="text-border">|</span>
             <span className="text-foreground font-semibold">
-              refweir.dev {systemInfo.version ?? ''}
+              refweir.dev {healthInfo.version || systemInfo.version || ''}
             </span>
           </div>
         </div>
