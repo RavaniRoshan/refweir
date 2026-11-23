@@ -359,9 +359,58 @@ func (s *Server) handleLocks(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		}
 	}
 
+	if lfsPath == "locks/verify" && r.Method == http.MethodPost {
+		locks, err := s.store.ListLFSLocks(ctx, repoID, "")
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+		ours := make([]map[string]any, 0)
+		theirs := make([]map[string]any, 0)
+		for _, l := range locks {
+			item := map[string]any{
+				"id":        l.ID,
+				"path":      l.Path,
+				"locked_at": l.LockedAt,
+				"owner":     map[string]string{"name": l.OwnerName},
+			}
+			if l.OwnerName == userID {
+				ours = append(ours, item)
+			} else {
+				theirs = append(theirs, item)
+			}
+		}
+		w.Header().Set("Content-Type", LFSMediaType)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ours":   ours,
+			"theirs": theirs,
+		})
+		return
+	}
+
 	if strings.HasSuffix(lfsPath, "/unlock") && r.Method == http.MethodPost {
 		id := strings.TrimSuffix(strings.TrimPrefix(lfsPath, "locks/"), "/unlock")
-		lock, err := s.store.DeleteLFSLock(ctx, id)
+		var req struct {
+			Force bool `json:"force"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+
+		lock, err := s.store.GetLFSLock(ctx, id)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		if lock.OwnerName != userID && !req.Force {
+			w.Header().Set("Content-Type", LFSMediaType)
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"message": "unable to unlock lock owned by another user without force",
+			})
+			return
+		}
+
+		deletedLock, err := s.store.DeleteLFSLock(ctx, id)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -369,10 +418,10 @@ func (s *Server) handleLocks(w http.ResponseWriter, r *http.Request, ownerSlug, 
 		w.Header().Set("Content-Type", LFSMediaType)
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"lock": map[string]any{
-				"id":        lock.ID,
-				"path":      lock.Path,
-				"locked_at": lock.LockedAt,
-				"owner":     map[string]string{"name": lock.OwnerName},
+				"id":        deletedLock.ID,
+				"path":      deletedLock.Path,
+				"locked_at": deletedLock.LockedAt,
+				"owner":     map[string]string{"name": deletedLock.OwnerName},
 			},
 		})
 		return

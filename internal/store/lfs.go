@@ -95,6 +95,20 @@ func (db *DB) CreateLFSLock(ctx context.Context, lock LFSLock) error {
 	return nil
 }
 
+// GetLFSLock retrieves an existing lock by ID.
+func (db *DB) GetLFSLock(ctx context.Context, id string) (LFSLock, error) {
+	var lock LFSLock
+	err := db.sql.QueryRowContext(ctx, `
+		SELECT id, repository_id, path, owner_name, locked_at
+		FROM lfs_locks
+		WHERE id = ?
+	`, id).Scan(&lock.ID, &lock.RepositoryID, &lock.Path, &lock.OwnerName, &lock.LockedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return LFSLock{}, ErrLFSLockNotFound
+	}
+	return lock, err
+}
+
 // DeleteLFSLock removes an existing lock.
 func (db *DB) DeleteLFSLock(ctx context.Context, id string) (LFSLock, error) {
 	var lock LFSLock
