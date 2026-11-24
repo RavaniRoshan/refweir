@@ -46,10 +46,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     <button
       ref={ref}
       disabled={disabled || loading}
+      aria-busy={loading ? 'true' : undefined}
       className={cn(baseStyles, sizeStyles[size], variantStyles[variant], className)}
       {...props}
     >
-      {loading && <Loader2 className="size-3.5 animate-spin" />}
+      {loading && <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />}
       {children}
     </button>
   )

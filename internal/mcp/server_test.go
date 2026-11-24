@@ -876,4 +876,23 @@ func TestMCP_WebhookTools(t *testing.T) {
 	if len(hooks) != 0 {
 		t.Fatalf("expected 0 webhooks after delete, got %d", len(hooks))
 	}
+
+	// 4. create_webhook with SSRF target should fail
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      4,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_webhook",
+			"arguments": map[string]any{
+				"ownerSlug": "acme",
+				"repoName":  "api-gateway",
+				"url":       "http://169.254.169.254/latest/meta-data/",
+			},
+		},
+	})
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] != true {
+		t.Fatalf("expected create_webhook with cloud metadata IP to fail with isError=true")
+	}
 }

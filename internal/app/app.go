@@ -35,6 +35,7 @@ import (
 	"refweir.dev/internal/origin"
 	"refweir.dev/internal/raftcluster"
 	"refweir.dev/internal/replication"
+	"refweir.dev/internal/security"
 	"refweir.dev/internal/sshserver"
 	"refweir.dev/internal/store"
 	"refweir.dev/internal/telemetry"
@@ -1611,6 +1612,10 @@ func Open(cfg config.Config) (*App, error) {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid JSON payload: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := security.ValidateWebhookURL(req.URL); err != nil {
+			http.Error(w, "Invalid webhook URL: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 		eventsJSON := `["push"]`

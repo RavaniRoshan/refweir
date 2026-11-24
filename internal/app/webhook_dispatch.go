@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"refweir.dev/internal/security"
 	"refweir.dev/internal/store"
 	"refweir.dev/pkg/idgen"
 )
@@ -68,6 +69,14 @@ func DispatchRepoWebhook(ctx context.Context, db *store.DB, hook *store.RepoWebh
 	}
 
 	start := time.Now()
+	if err := security.ValidateWebhookURL(hook.URL); err != nil {
+		delivery.ResponseStatusCode = 0
+		delivery.ResponseBody = fmt.Sprintf(`{"error": %q}`, err.Error())
+		delivery.DurationMs = int(time.Since(start).Milliseconds())
+		delivery.Delivered = false
+		_ = db.RecordRepoWebhookDelivery(ctx, delivery)
+		return delivery, err
+	}
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, hook.URL, bytes.NewReader(payloadBytes))
 	if err != nil {
 		delivery.ResponseStatusCode = 0

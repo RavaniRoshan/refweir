@@ -46,7 +46,7 @@ export const Badge: React.FC<BadgeProps> = ({
     )}
     {...props}
   >
-    {pulse && <span className={cn('size-1.5 rounded-full motion-pulse', dotColors[variant])} />}
+    {pulse && <span aria-hidden="true" className={cn('size-1.5 rounded-full motion-pulse', dotColors[variant])} />}
     {children}
   </span>
 )

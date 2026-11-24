@@ -12,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"refweir.dev/internal/audit"
 	"refweir.dev/internal/engine"
+	"refweir.dev/internal/security"
 	"refweir.dev/internal/store"
 	"refweir.dev/internal/symbolsearch"
 	"refweir.dev/pkg/agentlease"
@@ -2044,6 +2045,9 @@ func BuiltinTools() []ToolDef {
 				insecureSSL := getBool(args, "insecureSsl")
 				if url == "" {
 					return nil, fmt.Errorf("url is required")
+				}
+				if err := security.ValidateWebhookURL(url); err != nil {
+					return nil, fmt.Errorf("invalid webhook URL: %w", err)
 				}
 				repo, err := s.store.GetRepo(ctx, owner, name)
 				if err != nil {

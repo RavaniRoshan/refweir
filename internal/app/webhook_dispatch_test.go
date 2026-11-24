@@ -176,3 +176,30 @@ func TestDispatchRepoEvent_AsyncFiltering(t *testing.T) {
 		// OK
 	}
 }
+
+func TestWebhookDispatch_SSRFRejection(t *testing.T) {
+	ctx := context.Background()
+	db := newWebhookTestDB(t)
+
+	nsID := idgen.New("ns")
+	_ = db.CreateNamespace(ctx, store.Namespace{ID: nsID, Slug: "acme-sec", Name: "Acme Sec"})
+	repoID := idgen.New("repo")
+	_ = db.CreateRepo(ctx, store.Repo{ID: repoID, NamespaceID: nsID, Name: "sec-repo", FullName: "acme-sec/sec-repo", DefaultBranch: "main"})
+
+	// Direct attempt with AWS metadata IP
+	hook := &store.RepoWebhook{
+		ID:        "hook_ssrf_1",
+		RepoID:    repoID,
+		URL:       "http://169.254.169.254/latest/meta-data/",
+		Events:    `["push"]`,
+		Active:    true,
+	}
+
+	delivery, err := DispatchRepoWebhook(ctx, db, hook, "push", map[string]string{"ref": "refs/heads/main"})
+	if err == nil {
+		t.Fatal("expected error dispatching to metadata IP, got nil")
+	}
+	if delivery.Delivered {
+		t.Errorf("expected delivery.Delivered to be false")
+	}
+}
