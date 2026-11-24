@@ -3,10 +3,14 @@
 The product (`web/`) and the documentation (`site/`) keep one cohesive palette, one
 typeface, and one set of surfaces.
 
-Per the decision on 2026-11-11, **the product does not maintain an independent marketing landing site.**
-Only two frontend surfaces are maintained:
-1. **Forge UI (`web/`)**: dense, authenticated Primer/React Aria application embedded directly inside the `refweird` daemon.
-2. **Documentation (`site/`)**: technical reference, guides, and architecture documentation powered by Fumadocs, with the root (`/`) redirecting cleanly to `/docs/`.
+Per the decision on 2026-11-11, the product previously redirected the root (`/`) to `/docs/`.
+
+Per the decision on 2026-11-24, **the root (`/`) serves a unified single-page product landing page** with a one-line promise, walkthrough demo video, copyable install command, 3 core feature blocks (scoped capability leases, native MCP, single hermetic binary), honest architectural limits from the README, and links to documentation and GitHub.
+
+Three frontend surfaces are maintained:
+1. **Forge UI (`web/`)**: dense, authenticated React Aria application embedded directly inside the `refweird` daemon.
+2. **Documentation (`site/content/docs/`)**: technical reference, guides, and architecture documentation powered by Fumadocs under `/docs/`.
+3. **Landing page (`site/app/page.tsx`)**: single-page presentation at `/` strictly styled with unified tokens from `site/app/global.css` (zero gradients, zero stock images). Supported on both GitHub Pages (`basePath="/refweir"`) and Vercel (`NEXT_PUBLIC_BASE_PATH=""`).
 
 ---
 

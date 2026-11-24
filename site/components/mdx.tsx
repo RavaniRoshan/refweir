@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/refweir.dev';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/refweir';
 
 function Badge({ children }: { children: ReactNode }) {
   return (

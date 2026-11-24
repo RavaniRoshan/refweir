@@ -1,24 +1,26 @@
 import { createMDX } from 'fumadocs-mdx/next';
 
-const basePath = '/refweir';
+const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH !== undefined
+  ? process.env.NEXT_PUBLIC_BASE_PATH
+  : (process.env.BASE_PATH !== undefined ? process.env.BASE_PATH : '/refweir');
 
-// Make the base path available while the app renders during `next build`,
-// not only in the client bundle.
-process.env.NEXT_PUBLIC_BASE_PATH ??= basePath;
+const normalizedBasePath = (rawBasePath === '/' || rawBasePath === '""' || rawBasePath === "''") ? '' : rawBasePath;
+
+process.env.NEXT_PUBLIC_BASE_PATH = normalizedBasePath;
 
 const withMDX = createMDX();
 
 /** @type {import('next').NextConfig} */
 const config = {
   output: 'export',
-  basePath,
+  ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
   trailingSlash: true,
   reactStrictMode: true,
   images: {
     unoptimized: true,
   },
   env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
+    NEXT_PUBLIC_BASE_PATH: normalizedBasePath,
   },
   experimental: {
     agentUpgrade: 'security',

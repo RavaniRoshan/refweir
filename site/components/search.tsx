@@ -13,7 +13,7 @@ import {
 } from 'fumadocs-ui/components/dialog/search';
 import { useStaticSearch } from 'fumadocs-core/search/client';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '/refweir.dev';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '/refweir';
 
 export default function StaticSearchDialog(props: SharedProps) {
   const search = useStaticSearch({
