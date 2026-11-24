@@ -686,3 +686,85 @@ func TestCLI_Audit(t *testing.T) {
 		t.Errorf("expected 1 audit event, got: %+v", auditResp)
 	}
 }
+
+func TestCLI_ClusterCommands(t *testing.T) {
+	var requestedPath, requestedMethod string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		requestedMethod = r.Method
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/cluster/replication":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"nodeId": "node-1", "role": "primary", "health": "healthy", "seq": 42}`))
+		case "/api/v1/cluster/checkpoint":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok": true, "status": "checkpointed"}`))
+		case "/api/v1/cluster/snapshot":
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"snapshotId": "snap_01", "sizeBytes": 65536, "checksumSha256": "abc123"}`))
+		case "/api/v1/cluster/failover/promote":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status": "promoted", "role": "primary"}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "test_tok_admin",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. cluster status
+	if err := c.Run([]string{"cluster", "status"}); err != nil {
+		t.Fatalf("cluster status: %v", err)
+	}
+	if requestedPath != "/api/v1/cluster/replication" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/cluster/replication, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "primary") || !strings.Contains(stdout.String(), "healthy") {
+		t.Errorf("expected primary and healthy in stdout: %s", stdout.String())
+	}
+
+	// 2. cluster checkpoint
+	stdout.Reset()
+	if err := c.Run([]string{"cluster", "checkpoint"}); err != nil {
+		t.Fatalf("cluster checkpoint: %v", err)
+	}
+	if requestedPath != "/api/v1/cluster/checkpoint" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/cluster/checkpoint, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "checkpointed") {
+		t.Errorf("expected checkpointed in stdout: %s", stdout.String())
+	}
+
+	// 3. cluster snapshot
+	stdout.Reset()
+	if err := c.Run([]string{"cluster", "snapshot"}); err != nil {
+		t.Fatalf("cluster snapshot: %v", err)
+	}
+	if requestedPath != "/api/v1/cluster/snapshot" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/cluster/snapshot, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "snap_01") {
+		t.Errorf("expected snap_01 in stdout: %s", stdout.String())
+	}
+
+	// 4. cluster promote
+	stdout.Reset()
+	if err := c.Run([]string{"cluster", "promote", "--yes"}); err != nil {
+		t.Fatalf("cluster promote: %v", err)
+	}
+	if requestedPath != "/api/v1/cluster/failover/promote" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/cluster/failover/promote, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "promoted") {
+		t.Errorf("expected promoted in stdout: %s", stdout.String())
+	}
+}

@@ -84,6 +84,8 @@ func (c *CLI) Run(args []string) error {
 		return c.runCompletion(args[1:])
 	case "audit":
 		return c.runAudit(args[1:])
+	case "cluster":
+		return c.runCluster(args[1:])
 	case "api":
 		return c.runAPI(args[1:])
 	case "conformance":
@@ -107,6 +109,7 @@ Commands:
   refweir doctor             Diagnose daemon connectivity, auth, and local environment
   refweir completion <shell> Generate shell autocompletion script (bash, zsh, fish)
   refweir audit              Inspect administrative audit trail (list)
+  refweir cluster            Manage cluster replication and disaster recovery (status, checkpoint, snapshot, promote)
   refweir api <endpoint>     Make an authenticated request to REST API
   refweir conformance        Run API conformance test suite against refweird
 
@@ -1509,6 +1512,9 @@ _refweir_completion() {
         audit)
             COMPREPLY=( $(compgen -W "list" -- "$cur") )
             ;;
+        cluster)
+            COMPREPLY=( $(compgen -W "status checkpoint snapshot promote" -- "$cur") )
+            ;;
         doctor)
             COMPREPLY=( $(compgen -W "--json" -- "$cur") )
             ;;
@@ -1536,6 +1542,7 @@ _refweir() {
         'doctor:Diagnose daemon connectivity and environment'
         'completion:Generate shell completion script'
         'audit:Inspect administrative audit trail'
+        'cluster:Manage cluster replication and disaster recovery'
         'api:Make authenticated request to REST API'
         'conformance:Run API conformance test suite'
     )
@@ -1572,6 +1579,7 @@ complete -c refweir -n "__fish_use_subcommand" -a "app" -d "Manage apps"
 complete -c refweir -n "__fish_use_subcommand" -a "doctor" -d "Diagnose daemon connectivity and environment"
 complete -c refweir -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
 complete -c refweir -n "__fish_use_subcommand" -a "audit" -d "Inspect administrative audit trail"
+complete -c refweir -n "__fish_use_subcommand" -a "cluster" -d "Manage cluster replication and disaster recovery"
 complete -c refweir -n "__fish_use_subcommand" -a "api" -d "Make authenticated REST request"
 complete -c refweir -n "__fish_use_subcommand" -a "conformance" -d "Run API conformance suite"
 `
@@ -1657,5 +1665,154 @@ func (c *CLI) runAudit(args []string) error {
 
 	default:
 		return fmt.Errorf("unknown audit subcommand %q. Run 'refweir audit list' for usage", sub)
+	}
+}
+
+func (c *CLI) runCluster(args []string) error {
+	if len(args) == 0 {
+		return errors.New("usage: refweir cluster <status|checkpoint|snapshot|promote>")
+	}
+
+	sub := args[0]
+	subArgs := args[1:]
+
+	switch sub {
+	case "status":
+		fs := flag.NewFlagSet("cluster status", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		jsonOut := fs.Bool("json", false, "Output cluster replication status in JSON format")
+		if err := fs.Parse(subArgs); err != nil {
+			return err
+		}
+
+		data, code, err := c.doRequest(http.MethodGet, "/api/v1/cluster/replication", nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		var st struct {
+			NodeID     string `json:"nodeId"`
+			Role       string `json:"role"`
+			Health     string `json:"health"`
+			Seq        uint64 `json:"seq"`
+			ReplicaDir string `json:"replicaDir"`
+			LastSync   string `json:"lastSync"`
+		}
+		if err := json.Unmarshal(data, &st); err != nil {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		fmt.Fprintln(c.Stdout, "Refweir Cluster Replication Status:")
+		fmt.Fprintf(c.Stdout, "  Node ID:     %s\n", st.NodeID)
+		fmt.Fprintf(c.Stdout, "  Role:        %s\n", st.Role)
+		fmt.Fprintf(c.Stdout, "  Health:      %s\n", st.Health)
+		if st.Seq > 0 {
+			fmt.Fprintf(c.Stdout, "  Sequence:    %d\n", st.Seq)
+		}
+		if st.ReplicaDir != "" {
+			fmt.Fprintf(c.Stdout, "  Replica Dir: %s\n", st.ReplicaDir)
+		}
+		if st.LastSync != "" {
+			fmt.Fprintf(c.Stdout, "  Last Sync:   %s\n", st.LastSync)
+		}
+		return nil
+
+	case "checkpoint":
+		fs := flag.NewFlagSet("cluster checkpoint", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		jsonOut := fs.Bool("json", false, "Output in JSON format")
+		if err := fs.Parse(subArgs); err != nil {
+			return err
+		}
+
+		data, code, err := c.doRequest(http.MethodPost, "/api/v1/cluster/checkpoint", nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, "SQLite WAL checkpointed successfully.")
+		return nil
+
+	case "snapshot":
+		fs := flag.NewFlagSet("cluster snapshot", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		jsonOut := fs.Bool("json", false, "Output in JSON format")
+		if err := fs.Parse(subArgs); err != nil {
+			return err
+		}
+
+		data, code, err := c.doRequest(http.MethodPost, "/api/v1/cluster/snapshot", nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		var meta struct {
+			Filename       string `json:"filename"`
+			SizeBytes      int64  `json:"sizeBytes"`
+			ChecksumSHA256 string `json:"checksumSha256"`
+			SnapshotID     string `json:"snapshotId"`
+		}
+		_ = json.Unmarshal(data, &meta)
+		name := meta.Filename
+		if name == "" {
+			name = meta.SnapshotID
+		}
+		fmt.Fprintf(c.Stdout, "Created atomic point-in-time snapshot: %s (%d bytes)\n", name, meta.SizeBytes)
+		if meta.ChecksumSHA256 != "" {
+			fmt.Fprintf(c.Stdout, "  SHA-256: %s\n", meta.ChecksumSHA256)
+		}
+		return nil
+
+	case "promote":
+		fs := flag.NewFlagSet("cluster promote", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		yes := fs.Bool("yes", false, "Confirm promotion without interactive prompt")
+		yShort := fs.Bool("y", false, "Confirm promotion without interactive prompt (shorthand)")
+		jsonOut := fs.Bool("json", false, "Output in JSON format")
+		if err := fs.Parse(subArgs); err != nil {
+			return err
+		}
+
+		if !*yes && !*yShort {
+			return errors.New("confirmation required: pass --yes to promote this node to primary cluster role")
+		}
+
+		data, code, err := c.doRequest(http.MethodPost, "/api/v1/cluster/failover/promote", nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, "Standby replica successfully promoted to primary.")
+		return nil
+
+	default:
+		return fmt.Errorf("unknown cluster subcommand %q. Run 'refweir cluster' for usage", sub)
 	}
 }

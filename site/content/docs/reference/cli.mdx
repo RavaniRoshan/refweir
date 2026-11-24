@@ -209,3 +209,21 @@ refweir audit list --actor alice --action agent.lease_issued --limit 50
 # Output audit trail as JSON
 refweir audit list --json
 ```
+
+### 12. `refweir cluster`
+
+Inspect cluster replication health, trigger non-blocking SQLite WAL checkpoints, generate atomic snapshots, and initiate failover promotion.
+
+```bash
+# View real-time cluster replication status, active node role, and peer sync
+refweir cluster status [--json]
+
+# Trigger an on-demand non-blocking SQLite WAL checkpoint (admin only)
+refweir cluster checkpoint
+
+# Capture an atomic VACUUM INTO database snapshot with WAL sequence metadata (admin only)
+refweir cluster snapshot [--json]
+
+# Promote a standby replica to cluster primary during planned failover or disaster recovery
+refweir cluster promote --yes
+```

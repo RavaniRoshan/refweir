@@ -222,14 +222,45 @@ func Open(cfg config.Config) (*App, error) {
 		}
 	})
 
-	mux.HandleFunc("POST /api/v1/cluster/failover/promote", func(w http.ResponseWriter, r *http.Request) {
+	checkClusterAdmin := func(w http.ResponseWriter, r *http.Request) bool {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return false
+		}
+		count, _ := db.CountUsers(r.Context())
+		if count > 0 {
+			caller, err := auth.ResolveUser(r.Context(), db, r)
+			if err != nil || caller == nil {
+				writeAPIError(w, http.StatusUnauthorized, "Authentication required to manage cluster")
+				return false
+			}
+			if caller.Role != "admin" {
+				writeAPIError(w, http.StatusForbidden, "Administrator privileges required for cluster management")
+				return false
+			}
+		}
+		return true
+	}
+
+	mux.HandleFunc("POST /api/v1/cluster/failover/promote", func(w http.ResponseWriter, r *http.Request) {
+		if !checkClusterAdmin(w, r) {
+			return
+		}
 		if replCtrl != nil {
 			if err := replCtrl.PromoteToPrimary(r.Context()); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			_ = audit.Log(audit.Event{
+				Actor:     "cluster-admin",
+				ActorType: "user",
+				Action:    "cluster.promoted_primary",
+				Severity:  audit.SeverityCritical,
+				Details:   "Promoted standby replica to primary cluster role",
+			})
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"status": "promoted",
 				"role":   "primary",
@@ -239,6 +270,59 @@ func Open(cfg config.Config) (*App, error) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"status": "noop",
 		})
+	})
+
+	mux.HandleFunc("POST /api/v1/cluster/checkpoint", func(w http.ResponseWriter, r *http.Request) {
+		if !checkClusterAdmin(w, r) {
+			return
+		}
+		if replCtrl != nil {
+			if err := replCtrl.Checkpoint(r.Context()); err != nil {
+				writeAPIError(w, http.StatusInternalServerError, "WAL checkpoint failed: "+err.Error())
+				return
+			}
+		} else {
+			if _, err := db.SQL().ExecContext(r.Context(), "PRAGMA wal_checkpoint(PASSIVE)"); err != nil {
+				writeAPIError(w, http.StatusInternalServerError, "WAL checkpoint failed: "+err.Error())
+				return
+			}
+		}
+		_ = audit.Log(audit.Event{
+			Actor:     "cluster-admin",
+			ActorType: "user",
+			Action:    "cluster.wal_checkpointed",
+			Severity:  audit.SeverityInfo,
+			Details:   "Triggered on-demand non-blocking SQLite WAL checkpoint",
+		})
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":     true,
+			"status": "checkpointed",
+		})
+	})
+
+	mux.HandleFunc("POST /api/v1/cluster/snapshot", func(w http.ResponseWriter, r *http.Request) {
+		if !checkClusterAdmin(w, r) {
+			return
+		}
+		if replCtrl == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "Replication controller unavailable")
+			return
+		}
+		meta, err := replCtrl.CreateSnapshot(r.Context())
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "Failed to create cluster snapshot: "+err.Error())
+			return
+		}
+		_ = audit.Log(audit.Event{
+			Actor:     "cluster-admin",
+			ActorType: "user",
+			Action:    "cluster.snapshot_created",
+			Resource:  meta.Filename,
+			Severity:  audit.SeverityInfo,
+			Details:   fmt.Sprintf("Created atomic snapshot %s (%d bytes)", meta.Filename, meta.SizeBytes),
+		})
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(meta)
 	})
 
 	// Raft Consensus & Cluster State API

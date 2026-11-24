@@ -706,6 +706,58 @@ paths:
         '400':
           description: SSRF validation blocked target URL or invalid parameters
 
+  /api/v1/cluster/replication:
+    get:
+      summary: Cluster replication status
+      description: Returns the real-time high-availability replication status and role of the cluster node.
+      responses:
+        '200':
+          description: Replication status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplicationStatus'
+
+  /api/v1/cluster/checkpoint:
+    post:
+      summary: Trigger WAL checkpoint
+      description: Triggers an on-demand non-blocking SQLite WAL checkpoint (admin only).
+      responses:
+        '200':
+          description: Checkpoint executed successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator privileges required
+
+  /api/v1/cluster/snapshot:
+    post:
+      summary: Trigger atomic database snapshot
+      description: Captures an atomic VACUUM INTO database snapshot with WAL sequence metadata (admin only).
+      responses:
+        '201':
+          description: Snapshot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotMetadata'
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator privileges required
+
+  /api/v1/cluster/failover/promote:
+    post:
+      summary: Promote node to primary
+      description: Initiates a high-availability failover and promotes this standby replica to cluster primary (admin only).
+      responses:
+        '200':
+          description: Node promoted successfully
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator privileges required
+
 components:
   schemas:
     SystemInfo:
@@ -905,4 +957,38 @@ components:
         issuedAt:
           type: string
         expiresAt:
+          type: string
+
+    ReplicationStatus:
+      type: object
+      properties:
+        role:
+          type: string
+        nodeId:
+          type: string
+        term:
+          type: integer
+        peers:
+          type: array
+          items:
+            type: string
+        walSequence:
+          type: integer
+        lastSync:
+          type: string
+        inSync:
+          type: boolean
+
+    SnapshotMetadata:
+      type: object
+      properties:
+        filename:
+          type: string
+        walSequence:
+          type: integer
+        checksum:
+          type: string
+        sizeBytes:
+          type: integer
+        createdAt:
           type: string
