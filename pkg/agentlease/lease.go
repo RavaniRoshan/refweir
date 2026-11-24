@@ -228,3 +228,54 @@ func sign(secret []byte, data string) string {
 	mac.Write([]byte(data))
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
+
+// Enforcer unifies cryptographic lease verification, revocation checking,
+// and ref-level push authorization into a single deep module.
+type Enforcer struct {
+	secret      []byte
+	pubKey      ed25519.PublicKey
+	isRevokedFn func(repoID, leaseID string) bool
+}
+
+// NewEnforcer creates an enforcer with optional symmetric secret, asymmetric public key,
+// and repository-level revocation check callback.
+func NewEnforcer(secret []byte, pubKey ed25519.PublicKey, isRevokedFn func(repoID, leaseID string) bool) *Enforcer {
+	return &Enforcer{
+		secret:      secret,
+		pubKey:      pubKey,
+		isRevokedFn: isRevokedFn,
+	}
+}
+
+// VerifyToken decodes, cryptographically validates, and checks expiration of a token.
+func (e *Enforcer) VerifyToken(token string) (*Lease, error) {
+	if strings.HasPrefix(token, "ed25519.") {
+		if len(e.pubKey) == ed25519.PublicKeySize {
+			return VerifyEd25519(e.pubKey, token)
+		}
+		return nil, ErrInvalidSignature
+	}
+	if len(e.secret) > 0 {
+		return Verify(e.secret, token)
+	}
+	return nil, ErrInvalidSignature
+}
+
+// AuthorizePush validates token authenticity, repo matching, non-revocation, and ref push permission.
+func (e *Enforcer) AuthorizePush(token, repoID, ref string) (*Lease, error) {
+	lease, err := e.VerifyToken(token)
+	if err != nil {
+		return nil, err
+	}
+	if lease.RepoID != "" && repoID != "" && lease.RepoID != repoID {
+		return nil, ErrRefNotAllowed
+	}
+	if e.isRevokedFn != nil && e.isRevokedFn(repoID, lease.ID) {
+		return nil, ErrRevokedLease
+	}
+	if ref != "" && !lease.CanPushRef(ref) {
+		return nil, ErrRefNotAllowed
+	}
+	return lease, nil
+}
+

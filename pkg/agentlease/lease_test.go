@@ -156,3 +156,63 @@ func TestAgentLease_Ed25519(t *testing.T) {
 		t.Errorf("expected wrong public key to fail verification")
 	}
 }
+
+func TestAgentLease_Enforcer(t *testing.T) {
+	secret := []byte("enforcer-test-secret-456")
+	pub, priv, _ := ed25519.GenerateKey(nil)
+
+	revokedIDs := map[string]bool{}
+	isRevoked := func(repoID, leaseID string) bool {
+		return revokedIDs[leaseID]
+	}
+
+	enforcer := NewEnforcer(secret, pub, isRevoked)
+
+	// 1. Test HMAC token via enforcer
+	hmacToken, hmacLease, err := Issue(secret, "agent1", "repo1", []string{"refs/heads/agent/"}, []string{"refs/heads/main"}, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("Issue HMAC: %v", err)
+	}
+
+	authLease, err := enforcer.AuthorizePush(hmacToken, "repo1", "refs/heads/agent/fix")
+	if err != nil {
+		t.Fatalf("AuthorizePush HMAC: %v", err)
+	}
+	if authLease.ID != hmacLease.ID {
+		t.Errorf("expected lease ID %s, got %s", hmacLease.ID, authLease.ID)
+	}
+
+	// 2. Reject wrong repo
+	_, err = enforcer.AuthorizePush(hmacToken, "wrong_repo", "refs/heads/agent/fix")
+	if err != ErrRefNotAllowed {
+		t.Errorf("expected ErrRefNotAllowed on wrong repo, got %v", err)
+	}
+
+	// 3. Reject disallowed ref
+	_, err = enforcer.AuthorizePush(hmacToken, "repo1", "refs/heads/main")
+	if err != ErrRefNotAllowed {
+		t.Errorf("expected ErrRefNotAllowed on main ref, got %v", err)
+	}
+
+	// 4. Test Ed25519 token via enforcer
+	edToken, _, err := IssueEd25519(priv, "agent2", "repo1", []string{"refs/heads/feat/"}, nil, 10*time.Minute)
+	if err != nil {
+		t.Fatalf("Issue Ed25519: %v", err)
+	}
+
+	authEdLease, err := enforcer.AuthorizePush(edToken, "repo1", "refs/heads/feat/deepen")
+	if err != nil {
+		t.Fatalf("AuthorizePush Ed25519: %v", err)
+	}
+	if authEdLease.AgentID != "agent2" {
+		t.Errorf("expected agent2, got %s", authEdLease.AgentID)
+	}
+
+	// 5. Test revocation
+	revokedIDs[authEdLease.ID] = true
+	_, err = enforcer.AuthorizePush(edToken, "repo1", "refs/heads/feat/deepen")
+	if err != ErrRevokedLease {
+		t.Errorf("expected ErrRevokedLease after revocation, got %v", err)
+	}
+}
+

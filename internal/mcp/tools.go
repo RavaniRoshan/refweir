@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"refweir.dev/internal/audit"
 	"refweir.dev/internal/engine"
+	"refweir.dev/internal/forge"
 	"refweir.dev/internal/security"
 	"refweir.dev/internal/store"
 	"refweir.dev/internal/symbolsearch"
@@ -151,31 +151,15 @@ func BuiltinTools() []ToolDef {
 				owner := getString(args, "ownerSlug")
 				name := getString(args, "name")
 				branch := getString(args, "defaultBranch")
-				if branch == "" {
-					branch = "main"
-				}
-				ns, err := s.store.GetNamespaceBySlug(ctx, owner)
-				if err != nil {
-					return nil, fmt.Errorf("namespace %q not found: %w", owner, err)
-				}
-				repo := store.Repo{
-					ID:                  idgen.NewRepo(),
-					NamespaceID:         ns.ID,
-					Name:                name,
-					FullName:            owner + "/" + name,
-					DefaultBranch:       branch,
-					Visibility:          "private",
-					AllowMergeCommit:    true,
-					AllowSquashMerge:    true,
-					DeleteBranchOnMerge: false,
-				}
-				if err := s.store.CreateRepo(ctx, repo); err != nil {
-					return nil, err
-				}
-				if _, err := s.git.Init(owner, name, branch); err != nil {
-					return nil, fmt.Errorf("init git repo: %w", err)
-				}
-				return repo, nil
+
+				return s.Forge().CreateRepository(ctx, forge.CreateRepoRequest{
+					Owner:         owner,
+					Name:          name,
+					DefaultBranch: branch,
+					Visibility:    "private",
+					Actor:         "mcp-agent",
+					ActorType:     "agent",
+				})
 			},
 		},
 		// 4. get_file_contents
@@ -1664,22 +1648,7 @@ func BuiltinTools() []ToolDef {
 				if len(secret) == 0 && len(pubKey) == 0 {
 					return nil, fmt.Errorf("lease verification keys are not configured")
 				}
-				var lease *agentlease.Lease
-				var err error
-				if strings.HasPrefix(token, "ed25519.") {
-					if len(pubKey) == ed25519.PublicKeySize {
-						lease, err = agentlease.VerifyEd25519(pubKey, token)
-					} else if len(secret) == ed25519.PublicKeySize {
-						lease, err = agentlease.Verify(secret, token)
-					} else {
-						return nil, agentlease.ErrInvalidSignature
-					}
-				} else {
-					if len(secret) == 0 {
-						return nil, fmt.Errorf("lease signing secret is not configured")
-					}
-					lease, err = agentlease.Verify(secret, token)
-				}
+				lease, err := s.Enforcer().VerifyToken(token)
 				if err != nil {
 					return nil, err
 				}
@@ -2142,78 +2111,17 @@ func BuiltinTools() []ToolDef {
 			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
 				owner := getString(args, "ownerSlug")
 				name := getString(args, "repoName")
-				sourceRepo, err := s.store.GetRepo(ctx, owner, name)
-				if err != nil {
-					return nil, fmt.Errorf("source repository not found: %w", err)
-				}
-
 				targetOrg := getString(args, "targetNamespace")
-				if targetOrg == "" {
-					targetOrg = "refweir"
-				}
 				forkName := getString(args, "forkName")
-				if forkName == "" {
-					forkName = sourceRepo.Name
-				}
 
-				if targetOrg == owner && forkName == sourceRepo.Name {
-					return nil, fmt.Errorf("cannot fork repository into itself")
-				}
-
-				if _, err := s.store.GetRepo(ctx, targetOrg, forkName); err == nil {
-					return nil, fmt.Errorf("repository %s/%s already exists", targetOrg, forkName)
-				}
-
-				targetNS, err := s.store.GetNamespaceBySlug(ctx, targetOrg)
-				if err != nil {
-					targetNS = store.Namespace{
-						ID:   idgen.NewNS(),
-						Slug: targetOrg,
-						Name: targetOrg,
-						Type: "user",
-					}
-					_ = s.store.CreateNamespace(ctx, targetNS)
-				}
-
-				if _, err := s.git.Fork(owner, sourceRepo.Name, targetOrg, forkName); err != nil {
-					return nil, fmt.Errorf("fork git repository: %w", err)
-				}
-
-				targetFullName := targetOrg + "/" + forkName
-				cloneURL := fmt.Sprintf("http://localhost:8080/%s/%s.git", targetOrg, forkName)
-				webURL := fmt.Sprintf("http://localhost:8080/%s/%s", targetOrg, forkName)
-
-				forkRecord := store.Repo{
-					ID:                  idgen.NewRepo(),
-					NamespaceID:         targetNS.ID,
-					Name:                forkName,
-					FullName:            targetFullName,
-					Description:         sourceRepo.Description,
-					DefaultBranch:       sourceRepo.DefaultBranch,
-					Visibility:          sourceRepo.Visibility,
-					CloneURL:            cloneURL,
-					WebURL:              webURL,
-					AllowMergeCommit:    sourceRepo.AllowMergeCommit,
-					AllowSquashMerge:    sourceRepo.AllowSquashMerge,
-					DeleteBranchOnMerge: sourceRepo.DeleteBranchOnMerge,
-					ParentRepoID:        sourceRepo.ID,
-					IsFork:              true,
-				}
-
-				if err := s.store.CreateRepo(ctx, forkRecord); err != nil {
-					return nil, fmt.Errorf("record fork: %w", err)
-				}
-
-				_ = audit.Log(audit.Event{
-					Actor:     "mcp-agent",
-					ActorType: "agent",
-					Action:    "repo.fork",
-					Resource:  targetFullName,
-					Severity:  audit.SeverityInfo,
-					Details:   fmt.Sprintf("Agent forked repository %s/%s to %s", owner, name, targetFullName),
+				return s.Forge().ForkRepository(ctx, forge.ForkRepoRequest{
+					SourceOwner:     owner,
+					SourceName:      name,
+					TargetNamespace: targetOrg,
+					TargetName:      forkName,
+					Actor:           "mcp-agent",
+					ActorType:       "agent",
 				})
-
-				return forkRecord, nil
 			},
 		},
 		// 57. list_forks
@@ -2229,22 +2137,8 @@ func BuiltinTools() []ToolDef {
 			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
 				owner := getString(args, "ownerSlug")
 				name := getString(args, "repoName")
-				sourceRepo, err := s.store.GetRepo(ctx, owner, name)
-				if err != nil {
-					return nil, fmt.Errorf("repository not found: %w", err)
-				}
 				limit := getInt(args, "limit")
-				if limit <= 0 {
-					limit = 30
-				}
-				forks, err := s.store.ListForks(ctx, sourceRepo.ID, limit)
-				if err != nil {
-					return nil, err
-				}
-				if forks == nil {
-					forks = []store.Repo{}
-				}
-				return forks, nil
+				return s.Forge().ListForks(ctx, owner, name, limit)
 			},
 		},
 		// 58. sync_fork
@@ -2262,44 +2156,13 @@ func BuiltinTools() []ToolDef {
 				name := getString(args, "repoName")
 				branch := getString(args, "branch")
 
-				repo, err := s.store.GetRepo(ctx, owner, name)
-				if err != nil {
-					return nil, fmt.Errorf("repository not found: %w", err)
-				}
-				if !repo.IsFork || repo.ParentRepoID == "" {
-					return nil, fmt.Errorf("repository %s/%s is not a fork", owner, name)
-				}
-
-				parentRepo, err := s.store.GetRepoByID(ctx, repo.ParentRepoID)
-				if err != nil {
-					return nil, fmt.Errorf("upstream repository not found: %w", err)
-				}
-
-				if branch == "" {
-					branch = repo.DefaultBranch
-					if branch == "" {
-						branch = "main"
-					}
-				}
-
-				parentParts := strings.Split(parentRepo.FullName, "/")
-				parentNS := parentParts[0]
-				sig := object.Signature{Name: "Refweir Agent", Email: "agent@refweir.local", When: time.Now()}
-				res, err := s.git.SyncFork(parentNS, parentRepo.Name, owner, name, branch, sig)
-				if err != nil {
-					return nil, err
-				}
-
-				_ = audit.Log(audit.Event{
+				return s.Forge().SyncFork(ctx, forge.SyncForkRequest{
+					Owner:     owner,
+					Name:      name,
+					Branch:    branch,
 					Actor:     "mcp-agent",
 					ActorType: "agent",
-					Action:    "repo.fork_sync",
-					Resource:  repo.FullName,
-					Severity:  audit.SeverityInfo,
-					Details:   fmt.Sprintf("Agent synchronized fork %s from upstream %s (branch %s, type %s)", repo.FullName, parentRepo.FullName, branch, res.MergeType),
 				})
-
-				return res, nil
 			},
 		},
 	}

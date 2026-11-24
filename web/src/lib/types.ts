@@ -354,6 +354,15 @@ export interface RepositoryRecord {
   forks?: number
   language?: string
   languageColor?: string
+  is_fork?: boolean
+  parent_repo_id?: string
+}
+
+export interface SyncForkResult {
+  merge_type: string
+  base_branch: string
+  commit_sha: string
+  message?: string
 }
 
 export interface ClusterSystemInfo {

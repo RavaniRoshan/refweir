@@ -241,20 +241,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.execBackend(w, r, repo.ID, ownerSlug, repoName, subPath, userID, activeLease, activeLeaseToken)
 }
 
+func (s *Server) getEnforcer() *agentlease.Enforcer {
+	return agentlease.NewEnforcer(s.leaseSecret, s.leasePubKey, func(repoID, leaseID string) bool {
+		revoked, _ := s.store.IsLeaseRevoked(context.Background(), repoID, leaseID)
+		return revoked
+	})
+}
+
 func (s *Server) verifyLease(candidate string) (*agentlease.Lease, error) {
-	if strings.HasPrefix(candidate, "ed25519.") {
-		if len(s.leasePubKey) == ed25519.PublicKeySize {
-			return agentlease.VerifyEd25519(s.leasePubKey, candidate)
-		}
-		if len(s.leaseSecret) == ed25519.PublicKeySize {
-			return agentlease.Verify(s.leaseSecret, candidate)
-		}
-		return nil, agentlease.ErrInvalidSignature
-	}
-	if len(s.leaseSecret) > 0 {
-		return agentlease.Verify(s.leaseSecret, candidate)
-	}
-	return nil, agentlease.ErrInvalidSignature
+	return s.getEnforcer().VerifyToken(candidate)
 }
 
 func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.Repo) (string, *agentlease.Lease, string, error) {

@@ -15,6 +15,7 @@ import {
   getIssues,
   getReleases,
   getBranches,
+  listForks,
   type BranchItem,
 } from '@/lib/api';
 import type {
@@ -191,6 +192,25 @@ export function useBranchesQuery(
     {
       queryKey: queryKeys.repos.branches(owner, name),
       queryFn: ({ signal }) => getBranches(owner, name, signal),
+      enabled: Boolean(owner && name),
+      ...options,
+    },
+    queryClient
+  );
+}
+
+export function useForksQuery(
+  owner: string,
+  name: string,
+  limit = 30,
+  options?: Partial<UseQueryOptions<RepositoryRecord[], Error>>,
+  client?: QueryClient
+) {
+  const queryClient = useSafeQueryClient(client);
+  return useQuery(
+    {
+      queryKey: queryKeys.repos.forks(owner, name),
+      queryFn: () => listForks(owner, name, limit),
       enabled: Boolean(owner && name),
       ...options,
     },

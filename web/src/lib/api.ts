@@ -31,6 +31,7 @@ import type {
   DeployKeyItem,
   RepoWebhookItem,
   RepoWebhookDeliveryItem,
+  SyncForkResult,
 } from './types'
 import { normalizeAgentActivity } from './events'
 
@@ -2357,6 +2358,94 @@ export async function mergeDemoPullRequest(prNumber: number): Promise<DemoMergeR
     throw new Error(data?.error || `Demo merge failed (HTTP ${res.status})`)
   }
   return data as DemoMergeResult
+}
+
+/**
+ * Create a downstream fork of an existing repository.
+ */
+export async function forkRepository(
+  owner: string,
+  name: string,
+  data?: { organization?: string; name?: string }
+): Promise<RepositoryRecord> {
+  if (isDemoModeActive()) {
+    const targetOrg = data?.organization || 'refweir'
+    const targetName = data?.name || name
+    return {
+      id: `repo_fork_${Date.now()}`,
+      name: targetName,
+      full_name: `${targetOrg}/${targetName}`,
+      default_branch: 'main',
+      visibility: 'public',
+      is_private: false,
+      clone_url: `http://localhost:8080/${targetOrg}/${targetName}.git`,
+      web_url: `http://localhost:8080/${targetOrg}/${targetName}`,
+      updated_at: new Date().toISOString(),
+      is_fork: true,
+      parent_repo_id: `repo_${owner}_${name}`,
+    }
+  }
+
+  const res = await fetch(`/api/v1/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/forks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {}),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData?.error || errData?.message || `Failed to fork repository (HTTP ${res.status})`)
+  }
+  return res.json()
+}
+
+/**
+ * Synchronize a forked repository branch with upstream changes.
+ */
+export async function syncFork(
+  owner: string,
+  name: string,
+  branch?: string
+): Promise<SyncForkResult> {
+  if (isDemoModeActive()) {
+    return {
+      merge_type: 'fast-forward',
+      base_branch: branch || 'main',
+      commit_sha: 'a1b2c3d4e5f67890123456789abcdef012345678',
+      message: 'Fast-forward synchronized with upstream in sandbox mode',
+    }
+  }
+
+  const res = await fetch(`/api/v1/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/forks/sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ branch }),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData?.error || errData?.message || `Failed to sync fork (HTTP ${res.status})`)
+  }
+  return res.json()
+}
+
+/**
+ * List repositories forked from a parent repository.
+ */
+export async function listForks(
+  owner: string,
+  name: string,
+  limit = 30
+): Promise<RepositoryRecord[]> {
+  if (isDemoModeActive()) {
+    return []
+  }
+
+  const res = await fetch(`/api/v1/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/forks?limit=${limit}`)
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    throw new Error(errData?.error || errData?.message || `Failed to list forks (HTTP ${res.status})`)
+  }
+  const data = await res.json()
+  return data || []
 }
 
 // Export initial fallback values for components that need synchronous defaults

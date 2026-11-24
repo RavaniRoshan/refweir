@@ -14,20 +14,44 @@ import (
 	"refweir.dev/internal/agentactivity"
 	"refweir.dev/internal/audit"
 	"refweir.dev/internal/auth"
+	"refweir.dev/internal/forge"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/metrics"
 	"refweir.dev/internal/store"
+	"refweir.dev/pkg/agentlease"
 )
 
 // Server implements the Model Context Protocol (MCP) HTTP JSON-RPC 2.0 server.
 type Server struct {
 	store       *store.DB
 	git         *gitstore.Store
+	forge       *forge.Engine
 	allTools    []ToolDef
 	toolMap     map[string]ToolDef
 	leaseSecret []byte
 	leasePubKey ed25519.PublicKey
 	mergeHook   func(context.Context, store.PullRequest)
+}
+
+// SetForge sets the Forge engine used by MCP tools.
+func (s *Server) SetForge(f *forge.Engine) {
+	s.forge = f
+}
+
+// Forge returns the initialized forge engine, lazily creating one if unset.
+func (s *Server) Forge() *forge.Engine {
+	if s.forge == nil {
+		s.forge = forge.New(s.store, s.git, nil, forge.Config{})
+	}
+	return s.forge
+}
+
+// Enforcer returns a capability lease enforcer.
+func (s *Server) Enforcer() *agentlease.Enforcer {
+	return agentlease.NewEnforcer(s.leaseSecret, s.leasePubKey, func(repoID, leaseID string) bool {
+		revoked, _ := s.store.IsLeaseRevoked(context.Background(), repoID, leaseID)
+		return revoked
+	})
 }
 
 // SetMergeHook registers a callback invoked after a successful pull-request merge.

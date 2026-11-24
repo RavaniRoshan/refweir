@@ -18,6 +18,7 @@ export const queryKeys = {
     collaborators: (owner: string, name: string) => ['repos', 'collaborators', owner, name] as const,
     deployKeys: (owner: string, name: string) => ['repos', 'deployKeys', owner, name] as const,
     webhooks: (owner: string, name: string) => ['repos', 'webhooks', owner, name] as const,
+    forks: (owner: string, name: string) => ['repos', 'forks', owner, name] as const,
   },
   agent: {
     activities: ['agent', 'activities'] as const,

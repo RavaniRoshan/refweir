@@ -5,6 +5,8 @@ import {
   createIssue,
   createRelease,
   createBranch,
+  forkRepository,
+  syncFork,
 } from '@/lib/api';
 import { useSafeQueryClient } from './useRepoQueries';
 import { queryKeys } from './queryKeys';
@@ -122,3 +124,47 @@ export function useCreateBranchMutation(owner: string, name: string, client?: Qu
     queryClient
   );
 }
+
+export function useForkRepositoryMutation(owner: string, name: string, client?: QueryClient) {
+  const queryClient = useSafeQueryClient(client);
+
+  return useMutation(
+    {
+      mutationFn: (data?: { organization?: string; name?: string }) =>
+        forkRepository(owner, name, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.repos.all,
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.repos.forks(owner, name),
+        });
+      },
+    },
+    queryClient
+  );
+}
+
+export function useSyncForkMutation(owner: string, name: string, client?: QueryClient) {
+  const queryClient = useSafeQueryClient(client);
+
+  return useMutation(
+    {
+      mutationFn: (params?: { branch?: string }) =>
+        syncFork(owner, name, params?.branch),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.repos.detail(owner, name),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.repos.branches(owner, name),
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['repos', 'commits', owner, name],
+        });
+      },
+    },
+    queryClient
+  );
+}
+
