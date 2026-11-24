@@ -1,12 +1,29 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  type ColumnDef,
+  type SortingState,
+  type RowSelectionState,
+} from '@tanstack/react-table'
 import {
   Users,
   UserPlus,
   Mail,
   RefreshCw,
   Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  CheckSquare,
+  Square,
 } from 'lucide-react'
-import { Box, BoxHeader, BoxBody, BoxRow } from '@/components/ui/Card'
+import { Box, BoxHeader, BoxBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Dialog } from '@/components/ui/Dialog'
@@ -17,7 +34,11 @@ import { getEnterpriseUsers, createEnterpriseUser, type EnterpriseUser } from '@
 export const EnterpriseUsers: React.FC = () => {
   const [users, setUsers] = useState<EnterpriseUser[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'contributor' | 'member'>('all')
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -76,14 +97,152 @@ export const EnterpriseUsers: React.FC = () => {
     }
   }
 
-  const filteredUsers = users.filter((u) => {
-    const q = searchQuery.toLowerCase()
-    return (
-      u.name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.username.toLowerCase().includes(q)
-    )
+  // Filtered dataset for TanStack Table
+  const data = useMemo(() => {
+    if (roleFilter === 'all') return users
+    return users.filter((u) => u.role === roleFilter)
+  }, [users, roleFilter])
+
+  const columns = useMemo<ColumnDef<EnterpriseUser>[]>(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <button
+            type="button"
+            onClick={table.getToggleAllRowsSelectedHandler()}
+            className="text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center p-0.5"
+            aria-label="Select all members"
+          >
+            {table.getIsAllRowsSelected() ? (
+              <CheckSquare className="w-3.5 h-3.5 text-primary" />
+            ) : (
+              <Square className="w-3.5 h-3.5" />
+            )}
+          </button>
+        ),
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={row.getToggleSelectedHandler()}
+            className="text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center p-0.5"
+            aria-label={`Select ${row.original.name}`}
+          >
+            {row.getIsSelected() ? (
+              <CheckSquare className="w-3.5 h-3.5 text-primary" />
+            ) : (
+              <Square className="w-3.5 h-3.5" />
+            )}
+          </button>
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: 'name',
+        header: 'User',
+        cell: ({ row }) => {
+          const u = row.original
+          return (
+            <div className="flex items-center gap-3">
+              <LivingAvatar name={u.name} size="md" />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-semibold text-foreground">{u.name}</span>
+                  <span className="text-xs text-muted-foreground font-mono">@{u.username}</span>
+                </div>
+                <div className="text-[11px] font-mono text-muted-foreground">
+                  ID: {u.id}
+                </div>
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => {
+          const r = row.original.role
+          return (
+            <Badge
+              variant={r === 'admin' ? 'agent' : 'outline'}
+              className="text-[10px] py-0 capitalize"
+            >
+              {r}
+            </Badge>
+          )
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+          const s = row.original.status
+          return (
+            <Badge
+              variant={s === 'active' ? 'success' : 'closed'}
+              className="text-[10px] py-0 capitalize"
+            >
+              {s}
+            </Badge>
+          )
+        },
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Mail className="w-3 h-3 text-muted-foreground" />
+            <span>{row.original.email}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'lastActive',
+        header: 'Activity',
+        cell: ({ row }) => (
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+            {row.original.lastActive}
+          </span>
+        ),
+      },
+    ],
+    []
+  )
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+      rowSelection,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const q = String(filterValue).toLowerCase()
+      const u = row.original
+      return (
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.username.toLowerCase().includes(q)
+      )
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   })
+
+  const selectedCount = Object.keys(rowSelection).length
 
   return (
     <div className="space-y-4">
@@ -100,11 +259,16 @@ export const EnterpriseUsers: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Manage developer memberships, access roles, and platform administrator privileges.
+            Manage developer memberships, access roles, and platform administrator privileges. Powered by TanStack Table.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <span className="text-xs font-mono text-primary font-medium mr-1">
+              {selectedCount} selected
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={loadUsers} disabled={loading} className="gap-1.5 text-xs">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -117,14 +281,39 @@ export const EnterpriseUsers: React.FC = () => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Role Filters */}
+        <div className="flex items-center gap-1 p-0.5 bg-secondary border border-border rounded-md text-xs w-full sm:w-auto">
+          {(['all', 'admin', 'contributor', 'member'] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => {
+                setRoleFilter(r)
+                table.setPageIndex(0)
+              }}
+              className={`px-2.5 py-1 rounded capitalize transition-colors cursor-pointer ${
+                roleFilter === r
+                  ? 'bg-background text-foreground font-semibold shadow-2xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {r === 'all' ? 'All Roles' : r}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-sm w-full">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search users by name, username, or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={globalFilter ?? ''}
+            onChange={(e) => {
+              setGlobalFilter(e.target.value)
+              table.setPageIndex(0)
+            }}
             className="w-full h-8 pl-8 pr-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
           />
         </div>
@@ -132,73 +321,126 @@ export const EnterpriseUsers: React.FC = () => {
 
       {/* Users Table */}
       <Box>
-        <BoxHeader className="bg-secondary/35 py-2.5">
+        <BoxHeader className="bg-secondary/35 py-2.5 flex items-center justify-between">
           <span className="font-semibold text-foreground text-xs">Registered Members</span>
-          <span className="text-muted-foreground font-mono text-[11px]">{filteredUsers.length} accounts</span>
+          <span className="text-muted-foreground font-mono text-[11px]">
+            {table.getFilteredRowModel().rows.length} {table.getFilteredRowModel().rows.length === 1 ? 'account' : 'accounts'}
+          </span>
         </BoxHeader>
 
-        <BoxBody className="p-0">
+        <BoxBody className="p-0 overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center text-xs text-muted-foreground font-mono flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin text-primary" />
               <span>Loading user accounts...</span>
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : table.getRowModel().rows.length === 0 ? (
             <div className="p-8 text-center space-y-3">
               <Users className="w-6 h-6 text-muted-foreground mx-auto" />
               <h4 className="text-xs font-semibold text-foreground">No users found</h4>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                {searchQuery ? 'No accounts matched your search query.' : 'Create an account or connect your SCIM/SSO provider to sync corporate users.'}
+                {globalFilter ? 'No accounts matched your search query.' : 'Create an account or connect your SCIM/SSO provider to sync corporate users.'}
               </p>
-              {!searchQuery && (
+              {!globalFilter && (
                 <Button size="sm" variant="primary" onClick={() => setInviteModalOpen(true)} className="mt-2 text-xs">
                   Add First User
                 </Button>
               )}
             </div>
           ) : (
-            filteredUsers.map((u) => (
-              <BoxRow
-                key={u.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 hover:bg-secondary/20 transition-colors gap-3"
-              >
-                <div className="flex items-center gap-3">
-                  <LivingAvatar name={u.name} size="md" />
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-foreground">{u.name}</span>
-                      <span className="text-xs text-muted-foreground font-mono">@{u.username}</span>
-                      <Badge
-                        variant={u.role === 'admin' ? 'agent' : 'outline'}
-                        className="text-[10px] py-0 capitalize"
-                      >
-                        {u.role}
-                      </Badge>
-                      <Badge
-                        variant={u.status === 'active' ? 'success' : 'closed'}
-                        className="text-[10px] py-0 capitalize"
-                      >
-                        {u.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-muted-foreground" />
-                        <span>{u.email}</span>
-                      </span>
-                      <span>•</span>
-                      <span className="font-mono text-[11px]">{u.id}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <span className="text-[11px] text-muted-foreground">{u.lastActive}</span>
-                </div>
-              </BoxRow>
-            ))
+            <table className="w-full text-left border-collapse">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id} className="border-b border-border bg-secondary/20">
+                    {headerGroup.headers.map((header) => {
+                      const canSort = header.column.getCanSort()
+                      const isSorted = header.column.getIsSorted()
+                      return (
+                        <th
+                          key={header.id}
+                          className="px-3.5 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider select-none"
+                        >
+                          {header.isPlaceholder ? null : canSort ? (
+                            <button
+                              type="button"
+                              onClick={header.column.getToggleSortingHandler()}
+                              className="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
+                            >
+                              {typeof header.column.columnDef.header === 'function'
+                                ? header.column.columnDef.header(header.getContext())
+                                : header.column.columnDef.header}
+                              {isSorted === 'asc' ? (
+                                <ArrowUp className="w-3 h-3 text-primary" />
+                              ) : isSorted === 'desc' ? (
+                                <ArrowDown className="w-3 h-3 text-primary" />
+                              ) : (
+                                <ArrowUpDown className="w-2.5 h-2.5 opacity-40 hover:opacity-100" />
+                              )}
+                            </button>
+                          ) : typeof header.column.columnDef.header === 'function' ? (
+                            header.column.columnDef.header(header.getContext())
+                          ) : (
+                            header.column.columnDef.header
+                          )}
+                        </th>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className={`hover:bg-secondary/20 transition-colors ${
+                      row.getIsSelected() ? 'bg-primary/5' : ''
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-3.5 py-3 align-middle">
+                        {typeof cell.column.columnDef.cell === 'function'
+                          ? cell.column.columnDef.cell(cell.getContext())
+                          : (cell.getValue() as React.ReactNode)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </BoxBody>
+
+        {/* Pagination */}
+        {!loading && table.getPageCount() > 1 && (
+          <div className="flex items-center justify-between px-3.5 py-2 border-t border-border bg-secondary/15 text-xs text-muted-foreground">
+            <div>
+              Page <strong className="text-foreground">{table.getState().pagination.pageIndex + 1}</strong> of{' '}
+              <strong className="text-foreground">{table.getPageCount()}</strong>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                className="gap-1 text-xs"
+              >
+                <ChevronLeft className="w-3 h-3" />
+                <span>Previous</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                className="gap-1 text-xs"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Box>
 
       {/* Add User Modal */}
@@ -255,54 +497,46 @@ export const EnterpriseUsers: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Initial Password * (min. 8 chars)</label>
+            <label className="text-xs font-medium text-foreground">Initial Password *</label>
             <Input
               type="password"
-              placeholder="••••••••••••"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={8}
               className="text-xs font-mono"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground">Platform Role</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setRole('member')}
-                className={`p-2.5 rounded-md border text-left transition-colors ${
-                  role === 'member'
-                    ? 'bg-secondary border-primary text-foreground'
-                    : 'bg-card border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <div className="text-xs font-semibold">Member</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">Read/write access to permitted repositories.</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`p-2.5 rounded-md border text-left transition-colors ${
-                  role === 'admin'
-                    ? 'bg-secondary border-primary text-foreground'
-                    : 'bg-card border-border text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <div className="text-xs font-semibold">Administrator</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">Full control over users, cluster, SSO, and policies.</div>
-              </button>
-            </div>
+            <label className="text-xs font-medium text-foreground">Access Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as any)}
+              className="w-full h-8 px-2.5 text-xs bg-input border border-border rounded-md text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+            >
+              <option value="member">Member (Repository developer & code author)</option>
+              <option value="admin">Platform Administrator (Full tenant & forge authority)</option>
+            </select>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button type="button" variant="outline" size="sm" onClick={() => setInviteModalOpen(false)}>
+          <div className="pt-2 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setInviteModalOpen(false)}
+              className="text-xs"
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={submitting}>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={submitting}
+              className="text-xs gap-1.5"
+            >
               {submitting ? 'Creating...' : 'Create Account'}
             </Button>
           </div>
