@@ -44,6 +44,19 @@ type EvaluationResult struct {
 	Blockers []MergeBlocker
 }
 
+// PushBlocker describes a condition preventing a push or direct commit to a ref.
+type PushBlocker struct {
+	Kind    string `json:"kind"`
+	Message string `json:"message"`
+}
+
+// PushEvaluationResult contains the outcome of evaluating rulesets against a push or direct commit.
+type PushEvaluationResult struct {
+	Allowed  bool
+	Verdict  string // "allowed" | "blocked"
+	Blockers []PushBlocker
+}
+
 // MergeEvaluationOptions contains optional contextual arguments for evaluating rulesets on a PR or merge attempt.
 type MergeEvaluationOptions struct {
 	MergeMethod          string // "merge", "squash", "rebase"
@@ -373,3 +386,87 @@ func (e *Engine) EvaluateMergeWithOptions(
 ) EvaluationResult {
 	return EvaluateMergeWithOptions(ctx, rulesets, defaultBranch, baseRef, actingUserID, actingAppID, approvedReviewCount, checkRuns, opts)
 }
+
+// EvaluatePush evaluates push protection rulesets for a target ref (e.g. refs/heads/main).
+func EvaluatePush(
+	ctx context.Context,
+	rulesets []store.Ruleset,
+	defaultBranch string,
+	targetRef string,
+	actingUserID string,
+	actingAppID string,
+	isDeletion bool,
+	isForcePush bool,
+) PushEvaluationResult {
+	var blockers []PushBlocker
+
+	for _, rs := range rulesets {
+		if rs.Enforcement != "active" {
+			continue
+		}
+		if rs.Kind != "push_branch" && rs.Kind != "merge_branch" && rs.Kind != "push_repository" {
+			continue
+		}
+
+		if !refApplies(targetRef, rs.IncludedRefNames, rs.ExcludedRefNames, defaultBranch) {
+			continue
+		}
+
+		if canBypass(rs.BypassActors, actingUserID, actingAppID, false) {
+			continue
+		}
+
+		for _, rule := range rs.Rules {
+			switch rule.RuleType {
+			case "pull_request":
+				blockers = append(blockers, PushBlocker{
+					Kind:    "pull_request_required",
+					Message: fmt.Sprintf("Direct pushes to %s are blocked. Changes must be made through a pull request.", targetRef),
+				})
+
+			case "block_deletions", "deletion":
+				if isDeletion {
+					blockers = append(blockers, PushBlocker{
+						Kind:    "block_deletions",
+						Message: fmt.Sprintf("Deletion of protected ref %s is prohibited.", targetRef),
+					})
+				}
+
+			case "block_force_pushes", "non_fast_forward":
+				if isForcePush {
+					blockers = append(blockers, PushBlocker{
+						Kind:    "block_force_pushes",
+						Message: fmt.Sprintf("Force pushes (non-fast-forward updates) to protected ref %s are prohibited.", targetRef),
+					})
+				}
+			}
+		}
+	}
+
+	allowed := len(blockers) == 0
+	verdict := "allowed"
+	if !allowed {
+		verdict = "blocked"
+	}
+
+	return PushEvaluationResult{
+		Allowed:  allowed,
+		Verdict:  verdict,
+		Blockers: blockers,
+	}
+}
+
+// EvaluatePush evaluates push protection rulesets for a target ref.
+func (e *Engine) EvaluatePush(
+	ctx context.Context,
+	rulesets []store.Ruleset,
+	defaultBranch string,
+	targetRef string,
+	actingUserID string,
+	actingAppID string,
+	isDeletion bool,
+	isForcePush bool,
+) PushEvaluationResult {
+	return EvaluatePush(ctx, rulesets, defaultBranch, targetRef, actingUserID, actingAppID, isDeletion, isForcePush)
+}
+

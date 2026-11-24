@@ -8,8 +8,13 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"refweir.dev/internal/config"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/store"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestAppLifecycle(t *testing.T) {
@@ -207,3 +212,95 @@ func TestAuditLogsRequireAuthenticationOnceInitialized(t *testing.T) {
 		t.Fatalf("GET /api/v1/admin/audit-logs without auth = %d, want 401", rec.Code)
 	}
 }
+
+func TestRESTCommit_PushProtection(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:8080",
+		DataDir:    t.TempDir(),
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+	}
+	app, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer app.Close()
+
+	ns := store.Namespace{
+		ID:   idgen.NewNS(),
+		Slug: "protectteam",
+		Type: "team",
+		Name: "Protect Team",
+	}
+	if err := app.Store.CreateNamespace(ctx, ns); err != nil {
+		t.Fatalf("CreateNamespace: %v", err)
+	}
+
+	repo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   ns.ID,
+		Name:          "gatekeeper",
+		FullName:      "protectteam/gatekeeper",
+		DefaultBranch: "main",
+	}
+	if err := app.Store.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("CreateRepo: %v", err)
+	}
+
+	if _, err := app.Git.Init("protectteam", "gatekeeper", "main"); err != nil {
+		t.Fatalf("Git.Init: %v", err)
+	}
+	sig := object.Signature{Name: "Admin", Email: "admin@refweir.dev", When: time.Now()}
+	if _, err := app.Git.WriteFiles("protectteam", "gatekeeper", "main", []gitstore.FileChange{
+		{Path: "README.md", Content: "# Gatekeeper\n"},
+	}, sig, "init"); err != nil {
+		t.Fatalf("WriteFiles: %v", err)
+	}
+
+	// 1. Commit containing AWS secret key -> rejected with 422 Unprocessable Entity
+	secretPayload := `{"branch":"main","path":"credentials.txt","content":"AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n","message":"leak"}`
+	reqSecret := httptest.NewRequest(http.MethodPost, "/api/v1/repos/protectteam/gatekeeper/contents", strings.NewReader(secretPayload))
+	recSecret := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recSecret, reqSecret)
+	if recSecret.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected 422 for secret commit, got status %d: %s", recSecret.Code, recSecret.Body.String())
+	}
+
+	// 2. Clean commit to feature branch -> 201 Created
+	cleanPayload := `{"branch":"feat-clean","path":"hello.txt","content":"clean code\n","message":"add hello"}`
+	reqClean := httptest.NewRequest(http.MethodPost, "/api/v1/repos/protectteam/gatekeeper/contents", strings.NewReader(cleanPayload))
+	recClean := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recClean, reqClean)
+	if recClean.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for clean commit, got status %d: %s", recClean.Code, recClean.Body.String())
+	}
+
+	// 3. Add ruleset blocking direct pushes to main (requiring PR)
+	rs := store.Ruleset{
+		ID:               idgen.NewRuleset(),
+		RepoID:           repo.ID,
+		Name:             "protect-main",
+		Enforcement:      "active",
+		Kind:             "push_branch",
+		IncludedRefNames: []string{"refs/heads/main"},
+		Rules: []store.RulesetRule{
+			{
+				RuleType: "pull_request",
+			},
+		},
+	}
+	if _, err := app.Store.CreateRuleset(ctx, rs); err != nil {
+		t.Fatalf("CreateRuleset: %v", err)
+	}
+
+	// 4. Direct commit to main branch is now blocked with 403 Forbidden
+	directPayload := `{"branch":"main","path":"direct.txt","content":"direct edit\n","message":"bypass attempt"}`
+	reqDirect := httptest.NewRequest(http.MethodPost, "/api/v1/repos/protectteam/gatekeeper/contents", strings.NewReader(directPayload))
+	recDirect := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recDirect, reqDirect)
+	if recDirect.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for direct commit to protected branch, got status %d: %s", recDirect.Code, recDirect.Body.String())
+	}
+}
+

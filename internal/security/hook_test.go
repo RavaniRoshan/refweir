@@ -147,3 +147,43 @@ func TestPreReceiveHook_AuditsLeaseAndProtectedBranchRejections(t *testing.T) {
 		t.Fatalf("expected protected branch audit event, got: %s", auditBuf.String())
 	}
 }
+
+func TestPreReceiveHook_RulesetEvaluation(t *testing.T) {
+	rsJSON := `[
+		{
+			"enforcement": "active",
+			"kind": "push_branch",
+			"includedRefNames": ["refs/heads/main"],
+			"rules": [{"ruleType": "pull_request"}]
+		},
+		{
+			"enforcement": "active",
+			"kind": "push_branch",
+			"includedRefNames": ["refs/heads/release/*"],
+			"rules": [{"ruleType": "block_deletions"}]
+		}
+	]`
+	t.Setenv("REFWEIR_RULESETS_JSON", rsJSON)
+	t.Setenv("REFWEIR_DEFAULT_BRANCH", "main")
+	t.Setenv("REFWEIR_LEASE_TOKEN", "")
+	t.Setenv("REFWEIR_LEASE_ID", "")
+
+	// 1. Direct push to main blocked by pull_request rule
+	inputMain := bytes.NewBufferString("1111111111111111111111111111111111111111 2222222222222222222222222222222222222222 refs/heads/main\n")
+	var stderrMain bytes.Buffer
+	if err := PreReceiveHook(inputMain, &stderrMain); err == nil {
+		t.Fatal("expected direct push to main to be rejected by ruleset")
+	} else if !strings.Contains(stderrMain.String(), "GH006") || !strings.Contains(stderrMain.String(), "Direct pushes to refs/heads/main are blocked") {
+		t.Fatalf("unexpected stderr output: %s", stderrMain.String())
+	}
+
+	// 2. Deletion of release branch blocked by block_deletions rule
+	inputDel := bytes.NewBufferString("1111111111111111111111111111111111111111 0000000000000000000000000000000000000000 refs/heads/release/v1.0\n")
+	var stderrDel bytes.Buffer
+	if err := PreReceiveHook(inputDel, &stderrDel); err == nil {
+		t.Fatal("expected deletion of release/v1.0 to be rejected by ruleset")
+	} else if !strings.Contains(stderrDel.String(), "Deletion of protected ref refs/heads/release/v1.0 is prohibited") {
+		t.Fatalf("unexpected stderr output: %s", stderrDel.String())
+	}
+}
+

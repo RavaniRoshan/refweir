@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -404,6 +405,16 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 	)
 	if gitProtocol != "" {
 		env = append(env, "GIT_PROTOCOL="+gitProtocol)
+	}
+	if repo.ID != "" && s.store != nil {
+		if rulesets, err := s.store.ListRulesets(sessionCtx, repo.ID); err == nil && len(rulesets) > 0 {
+			if rsBytes, err := json.Marshal(rulesets); err == nil {
+				env = append(env, "REFWEIR_RULESETS_JSON="+string(rsBytes))
+			}
+		}
+		if repo.DefaultBranch != "" {
+			env = append(env, "REFWEIR_DEFAULT_BRANCH="+repo.DefaultBranch)
+		}
 	}
 	cmd.Env = env
 

@@ -3,6 +3,7 @@ package security
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,9 @@ import (
 	"time"
 
 	"refweir.dev/internal/audit"
+	"refweir.dev/internal/engine"
 	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/store"
 )
 
 var revRegex = regexp.MustCompile(`^[0-9a-fA-F]{40,64}$`)
@@ -39,6 +42,15 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			actor = "agent:unknown"
 		}
 		actorType = "agent"
+	}
+
+	var rulesets []store.Ruleset
+	if rsJSON := os.Getenv("REFWEIR_RULESETS_JSON"); rsJSON != "" {
+		_ = json.Unmarshal([]byte(rsJSON), &rulesets)
+	}
+	defaultBranch := os.Getenv("REFWEIR_DEFAULT_BRANCH")
+	if defaultBranch == "" {
+		defaultBranch = "main"
 	}
 
 	auditRejection := func(action, refName, details string) {
@@ -128,8 +140,27 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 			}
 		}
 
+		isDeletion := strings.Trim(newRev, "0") == ""
+		isForcePush := false
+		if !isDeletion && strings.Trim(oldRev, "0") != "" {
+			ancestorCheck := exec.CommandContext(ctx, "git", "merge-base", "--is-ancestor", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+			if err := ancestorCheck.Run(); err != nil {
+				isForcePush = true
+			}
+		}
+
+		if len(rulesets) > 0 {
+			pushEval := engine.EvaluatePush(ctx, rulesets, defaultBranch, refName, actor, "", isDeletion, isForcePush)
+			if !pushEval.Allowed {
+				auditRejection("security.ruleset_push_blocked", refName, pushEval.Blockers[0].Message)
+				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
+				fmt.Fprintf(stderr, "remote: error: %s\n", pushEval.Blockers[0].Message)
+				return fmt.Errorf("ruleset push violation: %s", pushEval.Blockers[0].Message)
+			}
+		}
+
 		// Ref deletion: all zeros
-		if strings.Trim(newRev, "0") == "" {
+		if isDeletion {
 			if refName == "refs/heads/main" || refName == "refs/heads/master" {
 				auditRejection("security.protected_branch_blocked", refName, "Deletion of protected default branch was blocked")
 				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
@@ -140,14 +171,11 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		}
 
 		// Force-push detection (non-fast-forward) on protected default branches
-		if strings.Trim(oldRev, "0") != "" && (refName == "refs/heads/main" || refName == "refs/heads/master") {
-			ancestorCheck := exec.CommandContext(ctx, "git", "merge-base", "--is-ancestor", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
-			if err := ancestorCheck.Run(); err != nil {
-				auditRejection("security.protected_branch_blocked", refName, "Non-fast-forward update to protected default branch was blocked")
-				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
-				fmt.Fprintf(stderr, "remote: error: Force-push (non-fast-forward update) to protected branch is not permitted\n")
-				return fmt.Errorf("protected branch force-push rejected")
-			}
+		if isForcePush && (refName == "refs/heads/main" || refName == "refs/heads/master") {
+			auditRejection("security.protected_branch_blocked", refName, "Non-fast-forward update to protected default branch was blocked")
+			fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
+			fmt.Fprintf(stderr, "remote: error: Force-push (non-fast-forward update) to protected branch is not permitted\n")
+			return fmt.Errorf("protected branch force-push rejected")
 		}
 
 		var cmd *exec.Cmd

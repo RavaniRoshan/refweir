@@ -10,10 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"refweir.dev/internal/gitstore"
-	"refweir.dev/internal/store"
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/object"
+	"refweir.dev/internal/gitstore"
+	"refweir.dev/internal/metrics"
+	"refweir.dev/internal/security"
+	"refweir.dev/internal/store"
 )
 
 var suggestionRegex = regexp.MustCompile("(?s)```suggestion[ \\t]*(?:\\r?\\n)?(.*?)(?:\\r?\\n)?```")
@@ -200,6 +202,12 @@ func (a *App) ApplySuggestion(ctx context.Context, owner, repo string, prNumber 
 			Path:    path,
 			Content: newContent,
 		},
+	}
+
+	violations := security.DefaultScanner.ScanFile(path, []byte(newContent))
+	if len(violations) > 0 {
+		metrics.DefaultRegistry.IncSecretPushBlocks()
+		return "", fmt.Errorf("suggestion contains sensitive credentials: %s", violations[0].PatternID)
 	}
 
 	newHash, err := a.Git.WriteFiles(owner, repoName, headBranch, changes, author, message)

@@ -1835,7 +1835,7 @@ func Open(cfg config.Config) (*App, error) {
 	})
 
 	// Direct File Commit & In-Browser File Creation (Web & API)
-	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/files", func(w http.ResponseWriter, r *http.Request) {
+	fileCommitHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -1904,6 +1904,39 @@ func Open(cfg config.Config) (*App, error) {
 			req.Email = "user@refweir.dev"
 		}
 
+		// 1. Secret scanning protection
+		violations := security.DefaultScanner.ScanFile(req.Path, []byte(req.Content))
+		if len(violations) > 0 {
+			metrics.DefaultRegistry.IncSecretPushBlocks()
+			_ = audit.Log(audit.Event{
+				Actor:     req.Email,
+				ActorType: "user",
+				Action:    "security.secret_commit_blocked",
+				Resource:  owner + "/" + name + ":" + req.Path,
+				Severity:  audit.SeverityCritical,
+				Details:   fmt.Sprintf("Blocked direct commit containing sensitive credentials in %s", req.Path),
+			})
+			writeAPIError(w, http.StatusUnprocessableEntity, security.FormatPushRejection(violations))
+			return
+		}
+
+		// 2. Ruleset protection on target branch
+		targetRef := req.Branch
+		if !strings.HasPrefix(targetRef, "refs/") {
+			targetRef = "refs/heads/" + targetRef
+		}
+		if rulesets, err := db.ListRulesets(r.Context(), repo.ID); err == nil && len(rulesets) > 0 {
+			actorID := ""
+			if caller, err := auth.ResolveUser(r.Context(), db, r); err == nil && caller != nil {
+				actorID = caller.ID
+			}
+			pushEval := engine.EvaluatePush(r.Context(), rulesets, repo.DefaultBranch, targetRef, actorID, "", false, false)
+			if !pushEval.Allowed {
+				writeAPIError(w, http.StatusForbidden, "Protected branch direct commit prohibited: "+pushEval.Blockers[0].Message)
+				return
+			}
+		}
+
 		repoLock := git.RepoLock(owner, name)
 		repoLock.Lock()
 		defer repoLock.Unlock()
@@ -1949,7 +1982,9 @@ func Open(cfg config.Config) (*App, error) {
 			"path":       req.Path,
 			"branch":     req.Branch,
 		})
-	})
+	}
+	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/files", fileCommitHandler)
+	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/contents", fileCommitHandler)
 
 	// Repository Issues REST API
 	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/issues", func(w http.ResponseWriter, r *http.Request) {

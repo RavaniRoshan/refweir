@@ -180,3 +180,67 @@ func TestEvaluateMerge_RequireSignedCommits(t *testing.T) {
 	}
 }
 
+func TestEvaluatePush_DirectPushBlockedByPullRequestRule(t *testing.T) {
+	ctx := context.Background()
+
+	rs := store.Ruleset{
+		Enforcement:      "active",
+		Kind:             "push_branch",
+		IncludedRefNames: []string{"refs/heads/main"},
+		Rules: []store.RulesetRule{
+			{
+				RuleType: "pull_request",
+			},
+		},
+	}
+
+	// 1. Direct push to main -> blocked
+	res := engine.EvaluatePush(ctx, []store.Ruleset{rs}, "main", "refs/heads/main", "user_1", "", false, false)
+	if res.Allowed || len(res.Blockers) == 0 {
+		t.Fatalf("expected direct push to main to be blocked, got %+v", res)
+	}
+
+	// 2. Direct push to feature branch -> allowed
+	resFeat := engine.EvaluatePush(ctx, []store.Ruleset{rs}, "main", "refs/heads/feature-1", "user_1", "", false, false)
+	if !resFeat.Allowed {
+		t.Fatalf("expected direct push to feature branch to be allowed, got %+v", resFeat)
+	}
+}
+
+func TestEvaluatePush_DeletionsAndForcePushesBlocked(t *testing.T) {
+	ctx := context.Background()
+
+	rs := store.Ruleset{
+		Enforcement:      "active",
+		Kind:             "push_branch",
+		IncludedRefNames: []string{"refs/heads/main"},
+		Rules: []store.RulesetRule{
+			{
+				RuleType: "block_deletions",
+			},
+			{
+				RuleType: "block_force_pushes",
+			},
+		},
+	}
+
+	// 1. Deletion attempt -> blocked
+	resDel := engine.EvaluatePush(ctx, []store.Ruleset{rs}, "main", "refs/heads/main", "user_1", "", true, false)
+	if resDel.Allowed || len(resDel.Blockers) == 0 || resDel.Blockers[0].Kind != "block_deletions" {
+		t.Fatalf("expected deletion to be blocked, got %+v", resDel)
+	}
+
+	// 2. Force push attempt -> blocked
+	resForce := engine.EvaluatePush(ctx, []store.Ruleset{rs}, "main", "refs/heads/main", "user_1", "", false, true)
+	if resForce.Allowed || len(resForce.Blockers) == 0 || resForce.Blockers[0].Kind != "block_force_pushes" {
+		t.Fatalf("expected force push to be blocked, got %+v", resForce)
+	}
+
+	// 3. Normal fast-forward push -> allowed
+	resNormal := engine.EvaluatePush(ctx, []store.Ruleset{rs}, "main", "refs/heads/main", "user_1", "", false, false)
+	if !resNormal.Allowed {
+		t.Fatalf("expected normal push to be allowed when no pull_request rule, got %+v", resNormal)
+	}
+}
+
+

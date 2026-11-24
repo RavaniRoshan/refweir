@@ -424,6 +424,16 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, repoID, own
 	if refweirdPath := os.Getenv("REFWEIRD_PATH"); refweirdPath != "" {
 		cmd.Env = append(cmd.Env, "REFWEIRD_PATH="+refweirdPath)
 	}
+	if repoID != "" && s.store != nil {
+		if rulesets, err := s.store.ListRulesets(r.Context(), repoID); err == nil && len(rulesets) > 0 {
+			if rsBytes, err := json.Marshal(rulesets); err == nil {
+				cmd.Env = append(cmd.Env, "REFWEIR_RULESETS_JSON="+string(rsBytes))
+			}
+		}
+		if repo, err := s.store.GetRepoByID(r.Context(), repoID); err == nil && repo.DefaultBranch != "" {
+			cmd.Env = append(cmd.Env, "REFWEIR_DEFAULT_BRANCH="+repo.DefaultBranch)
+		}
+	}
 	if strings.Contains(subPath, "git-receive-pack") {
 		cmd.Stdin = http.MaxBytesReader(w, r.Body, 512*1024*1024)
 	} else {

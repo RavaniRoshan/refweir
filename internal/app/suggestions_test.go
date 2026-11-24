@@ -389,3 +389,64 @@ func TestApplySuggestion_ClosedPR(t *testing.T) {
 		t.Fatal("expected error applying suggestion on closed PR, got nil")
 	}
 }
+
+func TestApplySuggestion_SecretBlocked(t *testing.T) {
+	app, _, repo := setupTestApp(t)
+	ctx := context.Background()
+
+	_, err := app.Git.WriteFiles("acme", "widget", "main", []gitstore.FileChange{
+		{Path: "config.env", Content: "KEY=initial\n"},
+	}, object.Signature{Name: "Tester", Email: "tester@refweir.dev", When: time.Now()}, "init")
+	if err != nil {
+		t.Fatalf("WriteFiles: %v", err)
+	}
+
+	_, err = app.Git.WriteFiles("acme", "widget", "feat-secret", []gitstore.FileChange{
+		{Path: "config.env", Content: "KEY=initial\n"},
+	}, object.Signature{Name: "Tester", Email: "tester@refweir.dev", When: time.Now()}, "branch")
+	if err != nil {
+		t.Fatalf("WriteFiles: %v", err)
+	}
+
+	pr := store.PullRequest{
+		ID:      idgen.NewPR(),
+		RepoID:  repo.ID,
+		Number:  10,
+		State:   "open",
+		Title:   "feat secret test",
+		HeadRef: "feat-secret",
+		BaseRef: "main",
+	}
+	if err := app.Store.CreatePullRequest(ctx, &pr); err != nil {
+		t.Fatalf("CreatePullRequest: %v", err)
+	}
+
+	thread := store.PRThread{
+		ID:            idgen.NewPRThread(),
+		RepoID:        repo.ID,
+		PullRequestID: pr.ID,
+		Path:          "config.env",
+		StartLine:     1,
+		EndLine:       1,
+	}
+	if err := app.Store.CreateThread(ctx, thread); err != nil {
+		t.Fatalf("CreateThread: %v", err)
+	}
+
+	// Suggestion containing an AWS Secret Key
+	comment := store.PRComment{
+		ID:            idgen.NewPRComment(),
+		RepoID:        repo.ID,
+		PullRequestID: pr.ID,
+		ThreadID:      thread.ID,
+		Body:          "```suggestion\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n```",
+	}
+	if err := app.Store.CreateComment(ctx, comment); err != nil {
+		t.Fatalf("CreateComment: %v", err)
+	}
+
+	_, err = app.ApplySuggestion(ctx, "acme", "widget", 10, comment.ID)
+	if err == nil {
+		t.Fatal("expected error applying suggestion with secret, got nil")
+	}
+}
