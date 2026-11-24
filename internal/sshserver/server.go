@@ -38,6 +38,12 @@ type Server struct {
 	quit        chan struct{}
 	wg          sync.WaitGroup
 	sem         chan struct{}
+	onPushHook  func(ctx context.Context, repoID, ownerSlug, repoName string)
+}
+
+// SetPushHook registers a callback invoked after a successful git-receive-pack push over SSH.
+func (s *Server) SetPushHook(hook func(ctx context.Context, repoID, ownerSlug, repoName string)) {
+	s.onPushHook = hook
 }
 
 // New constructs an embedded SSH server.
@@ -444,6 +450,9 @@ func (s *Server) executeGitCommand(conn *ssh.ServerConn, channel ssh.Channel, ra
 		} else {
 			exitCode = 1
 		}
+	}
+	if isReceive && exitCode == 0 && s.onPushHook != nil {
+		s.onPushHook(sessionCtx, repo.ID, ownerSlug, repoName)
 	}
 	sendExitStatus(channel, exitCode)
 }

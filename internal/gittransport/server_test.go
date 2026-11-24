@@ -371,3 +371,90 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 		t.Fatalf("expected push with revoked lease to fail, but succeeded: %s", out)
 	}
 }
+
+func TestGitTransport_PushEventHookTriggered(t *testing.T) {
+	ctx := context.Background()
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	defer db.Close()
+
+	gitDir := filepath.Join(t.TempDir(), "git")
+	git, err := gitstore.New(gitDir)
+	if err != nil {
+		t.Fatalf("gitstore.New: %v", err)
+	}
+
+	userID := idgen.NewUser()
+	_ = db.CreateUserWithPassword(ctx, store.User{ID: userID, Login: "pusher", Email: "pusher@refweir.dev"})
+	nsID := idgen.NewNS()
+	_ = db.CreateNamespace(ctx, store.Namespace{ID: nsID, Slug: "hookteam", Type: "user", Name: "Hook Team", OwnerUserID: userID})
+	repoID := idgen.NewRepo()
+	_ = db.CreateRepo(ctx, store.Repo{ID: repoID, NamespaceID: nsID, Name: "hook-repo", FullName: "hookteam/hook-repo", DefaultBranch: "main"})
+
+	// Init bare git repo with initial commit
+	if _, err := git.Init("hookteam", "hook-repo", "main"); err != nil {
+		t.Fatal(err)
+	}
+	sig := object.Signature{Name: "Pusher", Email: "pusher@refweir.dev", When: time.Now()}
+	if _, err := git.WriteFiles("hookteam", "hook-repo", "main", []gitstore.FileChange{
+		{Path: "README.md", Content: "# Hook Repo\n"},
+	}, sig, "initial commit"); err != nil {
+		t.Fatal(err)
+	}
+
+	rawKey, prefix, hash, _ := auth.GenerateAPIKey()
+	_ = db.CreateAPIKey(ctx, store.APIKey{
+		ID:        idgen.New("key"),
+		UserID:    userID,
+		KeyHash:   hash,
+		KeyPrefix: prefix,
+		Name:      "pusher-key",
+		Scopes:    "*",
+	})
+
+	hookCalled := make(chan string, 1)
+	srv := NewServer(db, git, nil)
+	srv.SetPushHook(func(ctx context.Context, gotRepoID, ownerSlug, repoName string) {
+		hookCalled <- gotRepoID
+	})
+
+	ts := httptest.NewServer(srv)
+	defer ts.Close()
+
+	cloneURL := strings.Replace(ts.URL, "http://", "http://pusher:"+rawKey+"@", 1) + "/hookteam/hook-repo.git"
+	cloneDir := filepath.Join(t.TempDir(), "local-clone")
+	cmd := exec.Command("git", "clone", cloneURL, cloneDir)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("clone failed: %v: %s", err, string(out))
+	}
+
+	// Make a commit and push
+	if err := os.WriteFile(filepath.Join(cloneDir, "file.txt"), []byte("hook test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cAdd := exec.Command("git", "add", "file.txt")
+	cAdd.Dir = cloneDir
+	_ = cAdd.Run()
+
+	cCommit := exec.Command("git", "-c", "user.name=Pusher", "-c", "user.email=pusher@refweir.dev", "commit", "-m", "push hook test")
+	cCommit.Dir = cloneDir
+	_ = cCommit.Run()
+
+	cPush := exec.Command("git", "push", "origin", "main")
+	cPush.Dir = cloneDir
+	if out, err := cPush.CombinedOutput(); err != nil {
+		t.Fatalf("push failed: %v: %s", err, string(out))
+	}
+
+	select {
+	case calledID := <-hookCalled:
+		if calledID != repoID {
+			t.Errorf("got repoID %q, want %q", calledID, repoID)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for OnPushHook to be called after git push")
+	}
+}
+

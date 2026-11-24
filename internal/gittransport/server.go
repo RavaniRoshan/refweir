@@ -38,6 +38,12 @@ type Server struct {
 	backendPath string
 	sem         chan struct{}
 	leaseSecret []byte
+	onPushHook  func(ctx context.Context, repoID, ownerSlug, repoName string)
+}
+
+// SetPushHook registers a callback invoked after a successful git-receive-pack push.
+func (s *Server) SetPushHook(hook func(ctx context.Context, repoID, ownerSlug, repoName string)) {
+	s.onPushHook = hook
 }
 
 // NewServer returns an initialized Git Smart HTTP transport Server.
@@ -225,7 +231,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_ = audit.Log(ev)
 	}
 
-	s.execBackend(w, r, ownerSlug, repoName, subPath, userID, activeLease, activeLeaseToken)
+	s.execBackend(w, r, repo.ID, ownerSlug, repoName, subPath, userID, activeLease, activeLeaseToken)
 }
 
 func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.Repo) (string, *agentlease.Lease, string, error) {
@@ -378,7 +384,7 @@ func (s *Server) checkCredential(ctx context.Context, cred string) (string, erro
 	return "", errors.New("invalid credential")
 }
 
-func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, repoName, subPath, userID string, activeLease *agentlease.Lease, activeLeaseToken string) {
+func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, repoID, ownerSlug, repoName, subPath, userID string, activeLease *agentlease.Lease, activeLeaseToken string) {
 	select {
 	case s.sem <- struct{}{}:
 		defer func() { <-s.sem }()
@@ -418,7 +424,11 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 	if refweirdPath := os.Getenv("REFWEIRD_PATH"); refweirdPath != "" {
 		cmd.Env = append(cmd.Env, "REFWEIRD_PATH="+refweirdPath)
 	}
-	cmd.Stdin = r.Body
+	if strings.Contains(subPath, "git-receive-pack") {
+		cmd.Stdin = http.MaxBytesReader(w, r.Body, 512*1024*1024)
+	} else {
+		cmd.Stdin = r.Body
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -482,5 +492,8 @@ func (s *Server) execBackend(w http.ResponseWriter, r *http.Request, ownerSlug, 
 
 	w.WriteHeader(statusCode)
 	_, _ = io.Copy(w, reader)
-	_ = cmd.Wait()
+	waitErr := cmd.Wait()
+	if subPath == "/git-receive-pack" && statusCode == http.StatusOK && waitErr == nil && s.onPushHook != nil {
+		s.onPushHook(r.Context(), repoID, ownerSlug, repoName)
+	}
 }

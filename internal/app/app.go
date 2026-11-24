@@ -4202,6 +4202,15 @@ func Open(cfg config.Config) (*App, error) {
 	if cfg.JWTSecret != "" {
 		gitTransport.SetLeaseSecret([]byte(cfg.JWTSecret))
 	}
+	gitTransport.SetPushHook(func(ctx context.Context, repoID, ownerSlug, repoName string) {
+		DispatchRepoEvent(ctx, db, repoID, "push", map[string]any{
+			"repository": map[string]any{
+				"id":        repoID,
+				"name":      repoName,
+				"full_name": ownerSlug + "/" + repoName,
+			},
+		})
+	})
 	uiHandler := webui.Handler()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Path
@@ -4231,6 +4240,15 @@ func Open(cfg config.Config) (*App, error) {
 			_ = db.Close()
 			return nil, fmt.Errorf("app: init ssh server: %w", err)
 		}
+		sshSrv.SetPushHook(func(ctx context.Context, repoID, ownerSlug, repoName string) {
+			DispatchRepoEvent(ctx, db, repoID, "push", map[string]any{
+				"repository": map[string]any{
+					"id":        repoID,
+					"name":      repoName,
+					"full_name": ownerSlug + "/" + repoName,
+				},
+			})
+		})
 	}
 
 	metricsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

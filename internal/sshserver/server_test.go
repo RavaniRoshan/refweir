@@ -4,13 +4,19 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"fmt"
+	"net"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"golang.org/x/crypto/ssh"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/store"
-	"golang.org/x/crypto/ssh"
+	"refweir.dev/pkg/idgen"
 )
 
 func TestSSHServerAuthentication(t *testing.T) {
@@ -344,5 +350,162 @@ func TestSSHServerCertificateAuthentication(t *testing.T) {
 	_, err = ssh.Dial("tcp", server.Addr().String(), expiredConfig)
 	if err == nil {
 		t.Fatalf("expected dial with expired certificate to FAIL, but it succeeded!")
+	}
+}
+
+func TestSSHServer_PushEventHookTriggered(t *testing.T) {
+	dataDir := t.TempDir()
+	db, err := store.Open(filepath.Join(dataDir, "meta.db"))
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	defer db.Close()
+
+	git, err := gitstore.New(filepath.Join(dataDir, "git"))
+	if err != nil {
+		t.Fatalf("gitstore.New: %v", err)
+	}
+
+	keyDir := t.TempDir()
+	keyPath := filepath.Join(keyDir, "id_ed25519")
+	cmdKeygen := exec.Command("ssh-keygen", "-t", "ed25519", "-N", "", "-f", keyPath)
+	if out, err := cmdKeygen.CombinedOutput(); err != nil {
+		t.Fatalf("ssh-keygen failed: %v: %s", err, string(out))
+	}
+	pubBytes, err := os.ReadFile(keyPath + ".pub")
+	if err != nil {
+		t.Fatalf("read pubkey: %v", err)
+	}
+	sshPub, _, _, _, err := ssh.ParseAuthorizedKey(pubBytes)
+	if err != nil {
+		t.Fatalf("ParseAuthorizedKey: %v", err)
+	}
+	fingerprint := ssh.FingerprintSHA256(sshPub)
+
+	ctx := context.Background()
+	user := store.User{
+		ID:        idgen.NewUser(),
+		Email:     "sshpush@refweir.dev",
+		Login:     "sshpushuser",
+		Role:      "member",
+		Status:    "active",
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	if err := db.CreateUserWithPassword(ctx, user); err != nil {
+		t.Fatalf("CreateUserWithPassword: %v", err)
+	}
+
+	ns := store.Namespace{
+		ID:          idgen.NewNS(),
+		Slug:        "sshhookteam",
+		Type:        "team",
+		Name:        "SSH Hook Team",
+		OwnerUserID: user.ID,
+	}
+	if err := db.CreateNamespace(ctx, ns); err != nil {
+		t.Fatalf("CreateNamespace: %v", err)
+	}
+
+	repo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   ns.ID,
+		Name:          "ssh-repo",
+		FullName:      "sshhookteam/ssh-repo",
+		DefaultBranch: "main",
+		Visibility:    "private",
+	}
+	if err := db.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("CreateRepo: %v", err)
+	}
+
+	keyRecord := store.SSHKey{
+		ID:          idgen.New("sshkey"),
+		UserID:      user.ID,
+		Name:        "Push Test Key",
+		Fingerprint: fingerprint,
+		PublicKey:   string(ssh.MarshalAuthorizedKey(sshPub)),
+		KeyType:     sshPub.Type(),
+		CreatedAt:   time.Now().UTC().Format(time.RFC3339),
+	}
+	if err := db.AddUserSSHKey(ctx, keyRecord); err != nil {
+		t.Fatalf("AddUserSSHKey: %v", err)
+	}
+
+	if _, err := git.Init("sshhookteam", "ssh-repo", "main"); err != nil {
+		t.Fatalf("git.Init: %v", err)
+	}
+	sig := object.Signature{Name: "SSH User", Email: "sshpush@refweir.dev", When: time.Now()}
+	if _, err := git.WriteFiles("sshhookteam", "ssh-repo", "main", []gitstore.FileChange{
+		{Path: "README.md", Content: "# SSH Hook Repo\n"},
+	}, sig, "initial commit"); err != nil {
+		t.Fatalf("git.WriteFiles: %v", err)
+	}
+
+	hookCalled := make(chan string, 1)
+	server, err := New("127.0.0.1:0", db, git, filepath.Join(dataDir, "host_key"))
+	if err != nil {
+		t.Fatalf("New SSH Server: %v", err)
+	}
+	server.SetPushHook(func(ctx context.Context, gotRepoID, ownerSlug, repoName string) {
+		hookCalled <- gotRepoID
+	})
+	if err := server.Start(); err != nil {
+		t.Fatalf("server.Start: %v", err)
+	}
+	defer server.Close()
+
+	port := server.Addr().(*net.TCPAddr).Port
+	sshCmd := fmt.Sprintf("ssh -i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentityAgent=none -p %d", keyPath, port)
+
+	localRepoDir := filepath.Join(t.TempDir(), "local-ssh-repo")
+	_ = os.MkdirAll(localRepoDir, 0o755)
+
+	cmdInit := exec.Command("git", "init", "-b", "main")
+	cmdInit.Dir = localRepoDir
+	if out, err := cmdInit.CombinedOutput(); err != nil {
+		t.Fatalf("git init failed: %v: %s", err, string(out))
+	}
+
+	cRemote := exec.Command("git", "remote", "add", "origin", fmt.Sprintf("ssh://git@127.0.0.1:%d/sshhookteam/ssh-repo.git", port))
+	cRemote.Dir = localRepoDir
+	_ = cRemote.Run()
+
+	cFetch := exec.Command("git", "fetch", "origin", "main")
+	cFetch.Dir = localRepoDir
+	cFetch.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+	if out, err := cFetch.CombinedOutput(); err != nil {
+		t.Fatalf("git fetch failed: %v: %s", err, string(out))
+	}
+
+	cReset := exec.Command("git", "reset", "--hard", "origin/main")
+	cReset.Dir = localRepoDir
+	_ = cReset.Run()
+
+	if err := os.WriteFile(filepath.Join(localRepoDir, "ssh_push_test.txt"), []byte("ssh push hook verified\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cAdd := exec.Command("git", "add", "ssh_push_test.txt")
+	cAdd.Dir = localRepoDir
+	_ = cAdd.Run()
+
+	cCommit := exec.Command("git", "-c", "user.name=SSH User", "-c", "user.email=sshpush@refweir.dev", "commit", "-m", "ssh push test")
+	cCommit.Dir = localRepoDir
+	_ = cCommit.Run()
+
+	cPush := exec.Command("git", "push", "origin", "main")
+	cPush.Dir = localRepoDir
+	cPush.Env = append(os.Environ(), "GIT_SSH_COMMAND="+sshCmd)
+	if out, err := cPush.CombinedOutput(); err != nil {
+		t.Fatalf("git push failed: %v: %s", err, string(out))
+	}
+
+	select {
+	case calledID := <-hookCalled:
+		if calledID != repo.ID {
+			t.Errorf("got repoID %q, want %q", calledID, repo.ID)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for OnPushHook to be called after SSH git push")
 	}
 }
