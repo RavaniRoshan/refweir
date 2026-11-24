@@ -33,7 +33,7 @@ describe('RepoOverview Component', () => {
     vi.clearAllMocks()
   })
 
-  it('renders canonical GitHub Quick Setup screen when repository is empty', async () => {
+  it('renders canonical Refweir Quick Setup screen when repository is empty', async () => {
     vi.mocked(api.getFiles).mockResolvedValueOnce([])
 
     render(

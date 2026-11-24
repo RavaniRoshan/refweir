@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CommitsView } from '../CommitsView'
 import * as api from '@/lib/api'
@@ -73,5 +73,42 @@ describe('CommitsView Component', () => {
     expect(await screen.findByText(/Cryptographic Signature Audit Attestation/i)).toBeInTheDocument()
     expect(screen.getByText(/OpenSSH SIGSPEC/i)).toBeInTheDocument()
     expect(screen.getByText(/CRYPTOGRAPHICALLY VALID/i)).toBeInTheDocument()
+  })
+
+  it('filters commits via search input', async () => {
+    render(<CommitsView />)
+
+    expect(await screen.findByText('feat: implement capability leases in engine')).toBeInTheDocument()
+
+    const searchInput = screen.getByPlaceholderText(/Filter commits/i)
+    fireEvent.change(searchInput, { target: { value: 'leases' } })
+
+    expect(screen.getByText('feat: implement capability leases in engine')).toBeInTheDocument()
+    expect(screen.queryByText('chore: update CI matrix')).not.toBeInTheDocument()
+    expect(screen.getByText(/Showing 1 of 2 commits/i)).toBeInTheDocument()
+  })
+
+  it('filters commits by verified only toggle', async () => {
+    render(<CommitsView />)
+
+    expect(await screen.findByText('feat: implement capability leases in engine')).toBeInTheDocument()
+
+    const verifiedFilterBtn = screen.getByRole('button', { name: /^verified$/i })
+    fireEvent.click(verifiedFilterBtn)
+
+    expect(screen.getByText('feat: implement capability leases in engine')).toBeInTheDocument()
+    expect(screen.queryByText('chore: update CI matrix')).not.toBeInTheDocument()
+  })
+
+  it('switches between Timeline and TanStack Virtual Log mode', async () => {
+    render(<CommitsView />)
+
+    expect(await screen.findByText('feat: implement capability leases in engine')).toBeInTheDocument()
+
+    const virtualBtn = screen.getByRole('button', { name: /virtual log/i })
+    fireEvent.click(virtualBtn)
+
+    expect(screen.getByText(/Virtualized Commit Stream/i)).toBeInTheDocument()
+    expect(screen.getByText(/TanStack Virtual v3/i)).toBeInTheDocument()
   })
 })

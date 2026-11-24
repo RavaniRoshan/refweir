@@ -45,9 +45,9 @@ export interface RepoOverviewProps {
 }
 
 /**
- * GitHub Primer Repository Overview Screen.
+ * Refweir Repository Overview Screen.
  * Dual-Mode:
- * 1. Empty Repository State: Canonical GitHub Quick Setup screen with HTTPS/SSH switcher and command blocks.
+ * 1. Empty Repository State: Canonical Refweir Quick Setup screen with HTTPS/SSH switcher and command blocks.
  * 2. Populated Repository State: File tree + real dynamic README + dynamic language distribution + metadata sidebar.
  */
 export const RepoOverview: React.FC<RepoOverviewProps> = ({
@@ -495,7 +495,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
           </div>
         </Box>
       ) : files.length === 0 && !loading ? (
-        /* Canonical GitHub Quick Setup Screen (When Repo is Brand New with 0 Commits) */
+        /* Canonical Refweir Quick Setup Screen (When Repo is Brand New with 0 Commits) */
         <div className="space-y-6">
           <Box className="overflow-hidden border border-border">
             {/* Quick Setup Blue/Secondary Banner */}
@@ -673,7 +673,7 @@ git push -u origin main`}
           </Box>
         </div>
       ) : (
-        /* Standard GitHub Two-Column Overview Layout (When files exist) */
+        /* Standard Refweir Two-Column Overview Layout (When files exist) */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (9 cols / 75%): File Tree + Readme */}
           <div className="lg:col-span-8 xl:col-span-9 space-y-5">
@@ -797,7 +797,7 @@ git push -u origin main`}
             )}
           </div>
 
-          {/* Right Column (4 cols / 25%): GitHub Repo Metadata Sidebar */}
+          {/* Right Column (4 cols / 25%): Repository Metadata Sidebar */}
           <div className="lg:col-span-4 xl:col-span-3 space-y-5 text-xs">
             {/* About Section */}
             <div className="space-y-2.5 border-b border-border pb-5">

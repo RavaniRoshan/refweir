@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { MergeBox } from '../MergeBox'
 
-describe('Canonical GitHub PR MergeBox Component', () => {
+describe('Canonical Refweir PR MergeBox Component', () => {
   it('renders merge box in open state with checks passed', () => {
     render(<MergeBox onMerge={() => {}} checksPassed={true} isMerged={false} />)
 

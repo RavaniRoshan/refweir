@@ -345,7 +345,7 @@ git push origin feature/agent-capabilities`
       <AnimatePresence mode="wait">
         {selectedPr ? (
           /* =========================================================================
-             PR DETAIL VIEW: Canonical GitHub Two-Column Architecture
+             PR DETAIL VIEW: Canonical Refweir Two-Column Architecture
              ========================================================================= */
           <motion.div
             key="pr-detail"
@@ -451,7 +451,7 @@ git push origin feature/agent-capabilities`
               </button>
             </div>
 
-            {/* GitHub Canonical Two-Column Grid */}
+            {/* Refweir Canonical Two-Column Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
               {/* Left Column: Timeline, Merge Box, Discussion, Diff (9 cols) */}
               <div className="lg:col-span-9 space-y-4">
@@ -577,7 +577,7 @@ git push origin feature/agent-capabilities`
                             </BoxBody>
                           </Box>
 
-                          {/* GitHub Canonical Merge Box */}
+                          {/* Refweir Canonical Merge Box */}
                           <MergeBox
                             onMerge={handleMergePr}
                             isMerged={selectedPr.state === 'merged'}
@@ -813,7 +813,7 @@ git push origin feature/agent-capabilities`
           </motion.div>
         ) : (
           /* =========================================================================
-             PR LIST VIEW: GitHub Primer Table & Filter System
+             PR LIST VIEW: Refweir Table & Filter System
              ========================================================================= */
           <motion.div
             key="pr-list"

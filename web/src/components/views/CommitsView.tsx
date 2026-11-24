@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
   GitCommit,
   Copy,
@@ -11,12 +11,17 @@ import {
   Code2,
   ChevronDown,
   X,
+  Search,
+  ListFilter,
+  Layers,
 } from 'lucide-react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { Box, BoxBody, BoxRow } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { LivingAvatar } from '@/components/ui/LivingAvatar'
 import { getCommits, defaultRepo, type CommitItem, type RepoInfo } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
 interface CommitsViewProps {
   repo?: RepoInfo
@@ -28,8 +33,13 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
   const [refreshing, setRefreshing] = useState(false)
   const [copiedSha, setCopiedSha] = useState<string | null>(null)
   const [inspectingCommit, setInspectingCommit] = useState<CommitItem | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [viewMode, setViewMode] = useState<'timeline' | 'virtual'>('timeline')
+
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMountedRef = useRef(true)
+  const virtualListParentRef = useRef<HTMLDivElement>(null)
 
   const loadCommits = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
@@ -84,15 +94,41 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
     copyTimeoutRef.current = setTimeout(() => setCopiedSha(null), 2000)
   }
 
-  // Group commits by date (e.g. "Commits on Oct 15, 2026")
-  const groupedCommits = commits.reduce<Record<string, CommitItem[]>>((acc, commit) => {
-    const dateKey = commit.timestamp?.includes('ago')
-      ? 'Commits on Today'
-      : commit.timestamp || 'Commits'
-    if (!acc[dateKey]) acc[dateKey] = []
-    acc[dateKey].push(commit)
-    return acc
-  }, {})
+  // Filtered commits based on search and verified toggle
+  const filteredCommits = useMemo(() => {
+    return commits.filter((c) => {
+      if (verifiedOnly && !c.verified) return false
+      if (!searchQuery.trim()) return true
+      const q = searchQuery.toLowerCase().trim()
+      return (
+        c.message.toLowerCase().includes(q) ||
+        c.author.name.toLowerCase().includes(q) ||
+        c.author.email.toLowerCase().includes(q) ||
+        c.sha.toLowerCase().includes(q) ||
+        c.shortSha.toLowerCase().includes(q)
+      )
+    })
+  }, [commits, verifiedOnly, searchQuery])
+
+  // Group commits by date for standard timeline view
+  const groupedCommits = useMemo(() => {
+    return filteredCommits.reduce<Record<string, CommitItem[]>>((acc, commit) => {
+      const dateKey = commit.timestamp?.includes('ago')
+        ? 'Commits on Today'
+        : commit.timestamp || 'Commits'
+      if (!acc[dateKey]) acc[dateKey] = []
+      acc[dateKey].push(commit)
+      return acc
+    }, {})
+  }, [filteredCommits])
+
+  // TanStack Virtualizer for high-throughput virtualized log mode
+  const rowVirtualizer = useVirtualizer({
+    count: filteredCommits.length,
+    getScrollElement: () => virtualListParentRef.current,
+    estimateSize: () => 68,
+    overscan: 6,
+  })
 
   const verifiedCount = commits.filter((c) => c.verified).length
   const verificationPercent = commits.length > 0 ? Math.round((verifiedCount / commits.length) * 100) : 0
@@ -100,8 +136,8 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
   return (
     <div className="space-y-4">
       {/* Top Controls Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Branch indicator */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-secondary-foreground border border-border rounded-md text-xs font-medium">
             <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
@@ -110,7 +146,7 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
           </div>
 
           {commits.length > 0 && (
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-border text-xs text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-border text-xs text-muted-foreground">
               <span>{commits.length} commits</span>
               <span>•</span>
               <span className="text-success flex items-center gap-1 font-medium">
@@ -121,19 +157,106 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Action Group: Search, Filter, Mode Switcher, Refresh */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Commit Search Input */}
+          <div className="relative w-48 sm:w-56">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter commits..."
+              className="w-full pl-8 pr-7 py-1 text-xs rounded-md bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:bg-background transition-colors"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Verified Only Toggle */}
+          <button
+            onClick={() => setVerifiedOnly(!verifiedOnly)}
+            className={cn(
+              'inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors cursor-pointer',
+              verifiedOnly
+                ? 'bg-success/15 text-success border-success/40'
+                : 'bg-secondary text-muted-foreground border-border hover:text-foreground hover:bg-secondary/80'
+            )}
+            title="Filter to show only cryptographically signed and verified commits"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Verified</span>
+          </button>
+
+          {/* View Mode Switcher: Timeline vs TanStack Virtual High-Throughput */}
+          <div className="inline-flex rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={cn(
+                'px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer',
+                viewMode === 'timeline'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Timeline
+            </button>
+            <button
+              onClick={() => setViewMode('virtual')}
+              className={cn(
+                'px-2.5 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1',
+                viewMode === 'virtual'
+                  ? 'bg-background text-foreground shadow-xs font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+              title="TanStack Virtual 60fps high-performance log for large histories"
+            >
+              <Layers className="w-3 h-3 text-primary" />
+              <span>Virtual Log</span>
+            </button>
+          </div>
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => loadCommits(true)}
             disabled={refreshing}
-            className="text-xs gap-1.5"
+            className="text-xs gap-1.5 h-7"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
         </div>
       </div>
+
+      {/* Filter status row (if filters active) */}
+      {(searchQuery || verifiedOnly) && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground bg-secondary/20 border border-border/60 px-3 py-1.5 rounded-md">
+          <div className="flex items-center gap-2">
+            <ListFilter className="w-3.5 h-3.5 text-primary" />
+            <span>
+              Showing {filteredCommits.length} of {commits.length} commits
+              {searchQuery ? ` matching "${searchQuery}"` : ''}
+              {verifiedOnly ? ' (verified only)' : ''}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setSearchQuery('')
+              setVerifiedOnly(false)
+            }}
+            className="text-primary hover:underline text-[11px] cursor-pointer"
+          >
+            Reset filters
+          </button>
+        </div>
+      )}
 
       {/* Loading state */}
       {loading ? (
@@ -184,7 +307,7 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                     'git-push-cmd'
                   )
                 }
-                className="hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors cursor-pointer"
               >
                 {copiedSha === 'git-push-cmd' ? (
                   <Check className="w-3.5 h-3.5 text-success" />
@@ -198,8 +321,130 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
             <div className="text-foreground font-semibold">git push -u origin main</div>
           </div>
         </Box>
+      ) : filteredCommits.length === 0 ? (
+        /* No Search Matches State */
+        <Box className="p-8 text-center space-y-2">
+          <div className="text-sm font-semibold text-foreground">No commits match your filter</div>
+          <p className="text-xs text-muted-foreground">
+            Try adjusting your search query or disabling the "Verified Only" filter.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchQuery('')
+              setVerifiedOnly(false)
+            }}
+            className="text-xs mt-2"
+          >
+            Clear Filters
+          </Button>
+        </Box>
+      ) : viewMode === 'virtual' ? (
+        /* =========================================================================
+           TanStack Virtual Mode: 60fps High-Throughput Commit Stream
+           ========================================================================= */
+        <Box className="overflow-hidden">
+          <div className="bg-secondary/40 border-b border-border px-3.5 py-2 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              <span className="font-semibold text-foreground">Virtualized Commit Stream</span>
+              <span>· {filteredCommits.length} entries in viewport</span>
+            </div>
+            <span className="font-mono text-[11px]">TanStack Virtual v3</span>
+          </div>
+
+          <div
+            ref={virtualListParentRef}
+            className="max-h-[580px] overflow-y-auto relative divide-y divide-border"
+            style={{ contain: 'strict' }}
+          >
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const commit = filteredCommits[virtualRow.index]
+                if (!commit) return null
+                const isInspectOpen = inspectingCommit?.sha === commit.sha
+                const sigType = commit.verification?.key_type?.toUpperCase() || (commit.verified ? 'SSH' : 'UNSIGNED')
+
+                return (
+                  <div
+                    key={commit.sha}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    className="p-3 flex items-center justify-between gap-3 hover:bg-secondary/20 transition-colors text-xs border-b border-border/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <LivingAvatar
+                        name={commit.author.name}
+                        isAgent={commit.author.isAgent}
+                        size="sm"
+                      />
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer truncate">
+                            {commit.message}
+                          </span>
+                          {commit.verified ? (
+                            <button
+                              onClick={() => setInspectingCommit(isInspectOpen ? null : commit)}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors cursor-pointer"
+                            >
+                              <ShieldCheck className="w-3 h-3 text-success" />
+                              <span>Verified ({sigType})</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground border border-border px-1 rounded">
+                              Unsigned
+                            </span>
+                          )}
+                          {commit.author.isAgent && (
+                            <Badge variant="agent" className="text-[10px] py-0 px-1.5">
+                              Agent
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {commit.author.name} · {commit.timestamp}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopySha(commit.sha)}
+                        className="font-mono text-xs gap-1 h-7 px-2"
+                      >
+                        <span>{commit.shortSha}</span>
+                        {copiedSha === commit.sha ? (
+                          <Check className="w-3 h-3 text-success" />
+                        ) : (
+                          <Copy className="w-3 h-3 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </Box>
       ) : (
-        /* Date-Grouped Commit Timeline (GitHub Canonical Design) */
+        /* =========================================================================
+           Date-Grouped Commit Timeline (Refweir Design)
+           ========================================================================= */
         <div className="space-y-6">
           {Object.entries(groupedCommits).map(([dateGroup, groupList]) => (
             <div key={dateGroup} className="space-y-2">
@@ -315,7 +560,7 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                             </div>
                             <button
                               onClick={() => setInspectingCommit(null)}
-                              className="text-muted-foreground hover:text-foreground"
+                              className="text-muted-foreground hover:text-foreground cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>

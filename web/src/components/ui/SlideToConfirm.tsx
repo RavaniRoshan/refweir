@@ -12,7 +12,7 @@ export interface SlideToConfirmProps {
 }
 
 /**
- * SlideToConfirm backwards-compatibility wrapper that renders the authentic GitHub MergeBox.
+ * SlideToConfirm backwards-compatibility wrapper that renders the authentic Refweir MergeBox.
  */
 export const SlideToConfirm: React.FC<SlideToConfirmProps> = ({
   onConfirm,

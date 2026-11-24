@@ -322,7 +322,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
 
   return (
     <div className="space-y-6">
-      {/* 2-Column GitHub Profile Grid */}
+      {/* 2-Column Profile Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
         {/* Left Column: Identity Sidebar */}
         <aside className="md:col-span-1 space-y-4">
