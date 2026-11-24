@@ -30,3 +30,12 @@ Object.assign(navigator, {
     writeText: vi.fn().mockImplementation(() => Promise.resolve()),
   },
 })
+
+// Mock ResizeObserver for Recharts
+class MockResizeObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
+window.ResizeObserver = MockResizeObserver
+global.ResizeObserver = MockResizeObserver

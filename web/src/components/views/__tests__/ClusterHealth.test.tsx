@@ -82,4 +82,24 @@ describe('ClusterHealth Admin View', () => {
       expect(writeTextMock).toHaveBeenCalled()
     }
   })
+
+  it('renders historical telemetry chart and switches chart modes', async () => {
+    render(<ClusterHealth />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Cluster Telemetry & Historical Trends')).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId('telemetry-chart')).toBeInTheDocument()
+
+    // Switch to Engine Overhead
+    const resourcesBtn = screen.getByRole('button', { name: /Engine Overhead/i })
+    fireEvent.click(resourcesBtn)
+    expect(screen.getByTestId('telemetry-chart')).toBeInTheDocument()
+
+    // Switch back to Throughput
+    const throughputBtn = screen.getByRole('button', { name: /Throughput/i })
+    fireEvent.click(throughputBtn)
+    expect(screen.getByTestId('telemetry-chart')).toBeInTheDocument()
+  })
 })

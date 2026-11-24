@@ -132,6 +132,18 @@ export interface AuditEvent {
   details: string
 }
 
+export interface MetricHistorySample {
+  timestamp: string
+  uptimeSeconds: number
+  httpRequestsTotal: number
+  gitTransfersTotal: number
+  mcpCallsTotal: number
+  secretPushBlocks: number
+  allocatedMemoryMb: number
+  goroutines: number
+  cpuUsagePercent: number
+}
+
 export interface ClusterMetrics {
   serverStatus: 'healthy' | 'degraded' | 'syncing'
   uptime: string
@@ -145,6 +157,7 @@ export interface ClusterMetrics {
   litestreamSyncStatus: 'active' | 'standby' | 'disabled'
   lastBackupTimestamp: string
   mcpMountedToolsCount: number
+  history?: MetricHistorySample[]
 }
 
 export interface SsoProvider {

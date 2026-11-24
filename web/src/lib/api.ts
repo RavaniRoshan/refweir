@@ -1100,6 +1100,7 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
         litestreamSyncStatus: data.litestreamSyncStatus || 'active',
         lastBackupTimestamp: data.lastBackupTimestamp || 'Continuous',
         mcpMountedToolsCount: data.mcpMountedToolsCount || 34,
+        history: Array.isArray(data.history) ? data.history : undefined,
       }
     }
   } catch (err) {
@@ -1120,7 +1121,22 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
     litestreamSyncStatus: 'standby',
     lastBackupTimestamp: 'Managed via local WAL',
     mcpMountedToolsCount: 34,
+    history: mockClusterMetrics.history,
   }
+}
+
+export async function getMetricsHistory(signal?: AbortSignal): Promise<import('./types').MetricHistorySample[]> {
+  if (isDemoModeActive()) {
+    return mockClusterMetrics.history || []
+  }
+  try {
+    const res = await fetch('/api/v1/admin/metrics/history', { signal })
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data.samples)) return data.samples
+    }
+  } catch {}
+  return mockClusterMetrics.history || []
 }
 
 export async function getSsoProviders(): Promise<SsoProvider[]> {

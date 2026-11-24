@@ -74,6 +74,21 @@ func TestAppLifecycle(t *testing.T) {
 	if recHealth.Code != http.StatusOK {
 		t.Fatalf("GET /api/v1/admin/health status = %d, want 200", recHealth.Code)
 	}
+	var healthData map[string]any
+	if err := json.Unmarshal(recHealth.Body.Bytes(), &healthData); err != nil {
+		t.Fatalf("failed to decode health response: %v", err)
+	}
+	if _, ok := healthData["history"]; !ok {
+		t.Fatalf("expected health response to contain 'history' field")
+	}
+
+	// 4b. Admin metrics history endpoint returns retained samples
+	reqHistory := httptest.NewRequest(http.MethodGet, "/api/v1/admin/metrics/history", nil)
+	recHistory := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recHistory, reqHistory)
+	if recHistory.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/metrics/history status = %d, want 200", recHistory.Code)
+	}
 
 	// 5. Admin audit logs endpoint returns json log records (no users yet, so
 	// the fresh-install bootstrap path is allowed)

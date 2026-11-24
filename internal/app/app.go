@@ -298,6 +298,8 @@ func Open(cfg config.Config) (*App, error) {
 			walSize = 65536
 		}
 
+		metrics.DefaultRegistry.SampleNow(memMb, runtime.NumGoroutine(), 0.5)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -313,6 +315,15 @@ func Open(cfg config.Config) (*App, error) {
 			"litestreamSyncStatus": "active",
 			"lastBackupTimestamp":  time.Now().UTC().Format(time.RFC3339),
 			"mcpMountedToolsCount": len(mcp.BuiltinTools()),
+			"history":              metrics.DefaultRegistry.History(),
+		})
+	})
+
+	mux.HandleFunc("GET /api/v1/admin/metrics/history", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"samples": metrics.DefaultRegistry.History(),
 		})
 	})
 

@@ -283,6 +283,13 @@ export const mockClusterMetrics: ClusterMetrics = {
   litestreamSyncStatus: 'active',
   lastBackupTimestamp: '3 minutes ago (s3://refweir-backups-prod/wal/)',
   mcpMountedToolsCount: 34,
+  history: [
+    { timestamp: new Date(Date.now() - 3600000).toISOString(), uptimeSeconds: 3600, httpRequestsTotal: 120, gitTransfersTotal: 14, mcpCallsTotal: 45, secretPushBlocks: 0, allocatedMemoryMb: 58.2, goroutines: 32, cpuUsagePercent: 1.2 },
+    { timestamp: new Date(Date.now() - 2700000).toISOString(), uptimeSeconds: 4500, httpRequestsTotal: 280, gitTransfersTotal: 29, mcpCallsTotal: 110, secretPushBlocks: 1, allocatedMemoryMb: 61.5, goroutines: 35, cpuUsagePercent: 1.5 },
+    { timestamp: new Date(Date.now() - 1800000).toISOString(), uptimeSeconds: 5400, httpRequestsTotal: 490, gitTransfersTotal: 52, mcpCallsTotal: 230, secretPushBlocks: 1, allocatedMemoryMb: 63.8, goroutines: 36, cpuUsagePercent: 1.7 },
+    { timestamp: new Date(Date.now() - 900000).toISOString(), uptimeSeconds: 6300, httpRequestsTotal: 710, gitTransfersTotal: 78, mcpCallsTotal: 340, secretPushBlocks: 2, allocatedMemoryMb: 64.0, goroutines: 37, cpuUsagePercent: 1.6 },
+    { timestamp: new Date().toISOString(), uptimeSeconds: 7200, httpRequestsTotal: 940, gitTransfersTotal: 96, mcpCallsTotal: 420, secretPushBlocks: 2, allocatedMemoryMb: 64.2, goroutines: 38, cpuUsagePercent: 1.8 },
+  ],
 }
 
 export const mockSsoProviders: SsoProvider[] = [

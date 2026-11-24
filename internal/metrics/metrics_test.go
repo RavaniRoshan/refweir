@@ -1,10 +1,12 @@
 package metrics
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMetricsRegistry(t *testing.T) {
@@ -46,5 +48,39 @@ func TestMetricsRegistry(t *testing.T) {
 		if !strings.Contains(body, expected) {
 			t.Errorf("expected metric output to contain %q, got: %s", expected, body)
 		}
+	}
+}
+
+func TestHistoricalMetricsRetention(t *testing.T) {
+	reg := NewRegistry()
+	history := reg.History()
+	if len(history) == 0 {
+		t.Fatalf("expected seeded history, got 0 samples")
+	}
+
+	initialLen := len(history)
+	sample := reg.SampleNow(42.5, 30, 1.2)
+	if sample.AllocatedMemoryMb != 42.5 {
+		t.Errorf("expected allocatedMemoryMb = 42.5, got %f", sample.AllocatedMemoryMb)
+	}
+	if sample.Goroutines != 30 {
+		t.Errorf("expected goroutines = 30, got %d", sample.Goroutines)
+	}
+
+	newHistory := reg.History()
+	if len(newHistory) != initialLen+1 {
+		t.Errorf("expected %d samples, got %d", initialLen+1, len(newHistory))
+	}
+
+	// Test periodic sampler
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	reg.StartPeriodicSampler(ctx, 20*time.Millisecond)
+	time.Sleep(60 * time.Millisecond)
+	cancel()
+
+	sampledHistory := reg.History()
+	if len(sampledHistory) <= len(newHistory) {
+		t.Errorf("expected periodic sampler to add samples, had %d, now %d", len(newHistory), len(sampledHistory))
 	}
 }
