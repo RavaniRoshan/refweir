@@ -2,6 +2,7 @@
   "title": "How-to guides",
   "pages": [
     "git-transport",
+    "forks-and-sync",
     "mcp-setup",
     "rulesets",
     "ssh-git-lfs",

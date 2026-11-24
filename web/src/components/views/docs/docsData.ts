@@ -2,6 +2,7 @@ export interface DocSection {
   id: string
   title: string
   level?: 2 | 3
+  content?: string
 }
 
 export interface DocCodeSnippet {
@@ -55,7 +56,7 @@ export const DOCS_CATEGORIES: DocCategory[] = [
     title: 'Get Started',
     icon: 'Rocket',
     description: 'Learn the fundamentals of Refweir, deployment models, and quick bootstrap.',
-    articleIds: ['overview', 'quickstart', 'configuration'],
+    articleIds: ['overview', 'quickstart', 'configuration', 'forks-and-upstream'],
   },
   {
     id: 'agents-mcp',
@@ -265,6 +266,122 @@ REFWEIR_ENABLE_BACKGROUND_REVIEWER=true`,
     relatedArticles: ['overview', 'quickstart', 'storage-replication'],
   },
 
+  'forks-and-upstream': {
+    id: 'forks-and-upstream',
+    categoryId: 'get-started',
+    title: 'Working with Forks & Upstream Synchronization',
+    lead: 'How to fork repositories, preserve parent lineage, and synchronize divergent branches with upstream using fast-forward or 3-way merges.',
+    readTime: '4 min read',
+    badge: 'Git Forge Lineage',
+    lastUpdated: 'November 2026',
+    sections: [
+      {
+        id: 'what-is-a-fork',
+        title: 'What is a Fork in Refweir?',
+        content:
+          'A fork is a personal or organization-owned copy of an upstream parent repository that shares initial Git object history while living in an isolated bare repository on disk. In Refweir, forks maintain bidirectional lineage tracking via parent_repo_id and is_fork metadata flags.',
+      },
+      {
+        id: 'forking-workflow',
+        title: 'Forking Repositories with Two-Phase Concurrency Safety',
+        content:
+          'Forks can be initiated via the Web UI, CLI (refweir repo fork), REST API, or MCP (fork_repository). To eliminate deadlocks during concurrent multi-tenant forking, Refweir enforces deterministic two-phase repository mutex locking in alphabetical order of namespace slugs.',
+      },
+      {
+        id: 'upstream-synchronization',
+        title: 'Synchronizing Branches with Upstream',
+        content:
+          'When the parent repository advances, fork branches can be synchronized without a local working tree checkout. Refweir fetches upstream into refs/remotes/upstream/<branch> and tests ancestor status. If the fork is an ancestor, it performs an instant fast-forward. If non-conflicting commits exist on both sides, a 3-way merge is minted. Conflicting changes fail closed with HTTP 409 Conflict.',
+      },
+      {
+        id: 'mcp-and-cli-tooling',
+        title: 'CLI, REST, and Autonomous MCP Tooling',
+        content:
+          'Operators and agents can manage the entire fork lifecycle using refweir repo fork, refweir repo forks, and refweir repo sync-fork, or via the embedded MCP server using tools fork_repository, list_forks, and sync_fork.',
+      },
+    ],
+    callouts: [
+      {
+        type: 'tip',
+        title: 'Two-Phase Concurrency Locks',
+        content:
+          'Refweir always locks source and destination repositories in lexicographical order (srcKey < targetKey), completely preventing deadlocks when reciprocal forks run simultaneously.',
+      },
+      {
+        type: 'important',
+        title: 'Lineage Preservation',
+        content:
+          'Forks inherit all branches and tags from their parent, but commit and branch permissions remain strictly isolated within the fork owner namespace.',
+      },
+    ],
+    codeSnippets: [
+      {
+        language: 'bash',
+        label: 'CLI Commands',
+        code: `# Fork an upstream repository
+refweir repo fork upstream/core --org contributor --name core
+
+# List all downstream forks of a repository
+refweir repo forks upstream/core
+
+# Synchronize fork branch from upstream parent
+refweir repo sync-fork contributor/core --branch main`,
+      },
+      {
+        language: 'curl',
+        label: 'REST API',
+        code: `# 1. Create a fork
+curl -X POST http://localhost:8080/api/v1/repos/upstream/core/forks \\
+  -H "Authorization: Bearer $REFWEIR_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{"organization": "contributor", "name": "core"}'
+
+# 2. Synchronize fork branch with upstream
+curl -X POST http://localhost:8080/api/v1/repos/contributor/core/forks/sync \\
+  -H "Authorization: Bearer $REFWEIR_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{"branch": "main"}'`,
+      },
+      {
+        language: 'json',
+        label: 'MCP Tool Calls',
+        code: `{
+  "method": "tools/call",
+  "params": {
+    "name": "sync_fork",
+    "arguments": {
+      "ownerSlug": "contributor",
+      "repoName": "core",
+      "branch": "main"
+    }
+  }
+}`,
+      },
+    ],
+    params: [
+      {
+        name: 'ownerSlug',
+        type: 'string',
+        required: true,
+        description: 'Namespace or owner of the forked repository.',
+      },
+      {
+        name: 'repoName',
+        type: 'string',
+        required: true,
+        description: 'Repository name of the fork.',
+      },
+      {
+        name: 'branch',
+        type: 'string',
+        required: false,
+        description: 'Target branch to synchronize. Defaults to the repository default branch.',
+        default: 'main',
+      },
+    ],
+    relatedArticles: ['quickstart', 'mcp-tools-reference', 'cli-reference'],
+  },
+
   'agentic-workflows': {
     id: 'agentic-workflows',
     categoryId: 'agents-mcp',
@@ -312,8 +429,8 @@ REFWEIR_ENABLE_BACKGROUND_REVIEWER=true`,
   'mcp-tools-reference': {
     id: 'mcp-tools-reference',
     categoryId: 'agents-mcp',
-    title: '55 Model Context Protocol (MCP) Tools Reference',
-    lead: 'Complete specification of all 55 Model Context Protocol tools exposed by Refweir for autonomous agent navigation, code mutation, and pull request reviews.',
+    title: '58 Model Context Protocol (MCP) Tools Reference',
+    lead: 'Complete specification of all 58 Model Context Protocol tools exposed by Refweir for autonomous agent navigation, code mutation, repository forking, branch synchronization, and pull request reviews.',
     readTime: '8 min read',
     badge: 'MCP Specification 2024-11-05',
     lastUpdated: 'November 2026',
@@ -323,6 +440,7 @@ REFWEIR_ENABLE_BACKGROUND_REVIEWER=true`,
       { id: 'git-mutation-tools', title: 'Branching & Mutation Tools (16-30)' },
       { id: 'pull-request-tools', title: 'Pull Request & Review Tools (31-45)' },
       { id: 'governance-tools', title: 'Rulesets & Lease Management (46-55)' },
+      { id: 'forks-and-mirroring-tools', title: 'Forks & Lineage Tools (56-58)' },
     ],
     params: [
       {
@@ -354,6 +472,24 @@ REFWEIR_ENABLE_BACKGROUND_REVIEWER=true`,
         type: 'tool',
         required: true,
         description: 'Invoke the autonomous background reviewer on an open pull request diff.',
+      },
+      {
+        name: 'fork_repository',
+        type: 'tool',
+        required: true,
+        description: 'Tool 56: Fork a repository into an organization or user namespace with lineage tracking.',
+      },
+      {
+        name: 'list_forks',
+        type: 'tool',
+        required: true,
+        description: 'Tool 57: List downstream repositories forked from a specified parent repository.',
+      },
+      {
+        name: 'sync_fork',
+        type: 'tool',
+        required: true,
+        description: 'Tool 58: Synchronize a forked repository branch with its upstream parent repository via fast-forward or 3-way merge.',
       },
     ],
     codeSnippets: [

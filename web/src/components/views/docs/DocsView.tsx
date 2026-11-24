@@ -205,6 +205,33 @@ export const DocsView: React.FC<DocsViewProps> = ({
           <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/60" />
           <span className="font-semibold text-foreground">{currentArticle.title}</span>
         </div>
+
+        {/* Popular Topics Quick Filter Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-border/40 text-xs">
+          <span className="text-[11px] font-medium text-muted-foreground mr-1">Popular Topics:</span>
+          {[
+            { id: 'quickstart', label: 'Quickstart' },
+            { id: 'forks-and-upstream', label: 'Forks & Sync' },
+            { id: 'capability-leases', label: 'Capability Leases' },
+            { id: 'mcp-tools-reference', label: '58 MCP Tools' },
+            { id: 'rulesets-policy', label: 'Branch Rulesets' },
+            { id: 'audit-logs', label: 'Audit Logs & SIEM' },
+            { id: 'cli-reference', label: 'CLI Reference' },
+          ].map((topic) => (
+            <button
+              key={topic.id}
+              onClick={() => setSelectedArticleId(topic.id)}
+              className={cn(
+                'px-2 py-0.5 rounded text-[11px] transition-colors cursor-pointer border',
+                selectedArticleId === topic.id
+                  ? 'bg-primary/10 border-primary text-primary font-medium'
+                  : 'bg-secondary/40 border-border/60 text-muted-foreground hover:text-foreground hover:bg-secondary'
+              )}
+            >
+              {topic.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 2. Main 3-Column Documentation Layout */}
@@ -539,11 +566,15 @@ export const DocsView: React.FC<DocsViewProps> = ({
                   </a>
                 </h2>
                 <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
-                  <p>
-                    Refer to the enterprise implementation specifications and runtime configurations
-                    for details regarding <strong>{sec.title}</strong>. For automated CI/CD integration,
-                    configure rulesets and ambient agent leases to ensure zero-trust compliance.
-                  </p>
+                  {sec.content ? (
+                    <p className="text-foreground/90 leading-relaxed whitespace-pre-line">{sec.content}</p>
+                  ) : (
+                    <p>
+                      Refer to the enterprise implementation specifications and runtime configurations
+                      for details regarding <strong>{sec.title}</strong>. For automated CI/CD integration,
+                      configure rulesets and ambient agent leases to ensure zero-trust compliance.
+                    </p>
+                  )}
                 </div>
               </section>
             ))}

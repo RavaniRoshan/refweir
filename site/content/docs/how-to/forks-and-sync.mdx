@@ -1,0 +1,158 @@
+---
+title: Working with Forks & Upstream Synchronization
+description: Learn how to fork repositories, track parent lineage, and synchronize branches with upstream using the CLI, REST API, or autonomous MCP tools.
+---
+
+A fork is a personal or organization-owned copy of another repository that shares Git object histories and parent lineage while preserving an isolated bare Git repository on disk.
+
+Refweir provides native support for repository forks, two-phase concurrency locking to eliminate deadlock risk during concurrent cross-fork operations, and automatic branch synchronization via fast-forward and 3-way merges.
+
+## 1. Forking a Repository
+
+You can fork any accessible repository into another organization or user namespace.
+
+### Via Web UI
+Navigate to any repository overview page and click the **Fork** button in the header. Select your destination namespace and optional custom repository name.
+
+### Via CLI
+Run `refweir repo fork`:
+
+```bash
+refweir repo fork upstream-org/core --org my-team --name core
+```
+
+### Via REST API
+Send an authenticated `POST` request to `/api/v1/repos/{owner}/{name}/forks`:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/repos/upstream-org/core/forks \
+  -H "Authorization: Bearer $REFWEIR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"organization": "my-team", "name": "core"}'
+```
+
+### Via Model Context Protocol (MCP)
+Autonomous coding agents can invoke the `fork_repository` tool:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "fork_repository",
+    "arguments": {
+      "ownerSlug": "upstream-org",
+      "repoName": "core",
+      "targetNamespace": "my-team",
+      "forkName": "core"
+    }
+  }
+}
+```
+
+---
+
+## 2. Listing Repository Forks
+
+To inspect all downstream forks derived from a parent repository:
+
+### Via CLI
+```bash
+refweir repo forks upstream-org/core
+# Or output in machine-readable JSON:
+refweir repo forks upstream-org/core --json
+```
+
+### Via REST API
+```bash
+curl -s http://localhost:8080/api/v1/repos/upstream-org/core/forks | jq .
+```
+
+### Via MCP
+Agents can call `list_forks`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "list_forks",
+    "arguments": {
+      "ownerSlug": "upstream-org",
+      "repoName": "core",
+      "limit": 30
+    }
+  }
+}
+```
+
+---
+
+## 3. Synchronizing a Fork Branch with Upstream
+
+When the parent repository advances, you can bring your fork's branch up to date without needing a local working tree checkout.
+
+Refweir's synchronization engine performs the following:
+1. **Fetch:** Fetches the upstream branch into the fork's bare repository under `refs/remotes/upstream/<branch>`.
+2. **Fast-Forward Check:** If the fork branch is an ancestor of upstream, advances the branch reference directly (`merge_type: "fast-forward"`).
+3. **Clean 3-Way Merge:** If changes have occurred on both sides, evaluates mergeability using `merge-tree`. If clean, writes a 3-way merge commit (`merge_type: "merge"`).
+4. **Conflict Handling:** If conflicting changes are detected, the operation aborts safely and returns HTTP 409 Conflict with the conflicting paths.
+
+### Via CLI
+```bash
+refweir repo sync-fork my-team/core --branch main
+```
+
+### Via REST API
+```bash
+curl -X POST http://localhost:8080/api/v1/repos/my-team/core/forks/sync \
+  -H "Authorization: Bearer $REFWEIR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"branch": "main"}'
+```
+
+### Via MCP
+Agents can invoke `sync_fork`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "sync_fork",
+    "arguments": {
+      "ownerSlug": "my-team",
+      "repoName": "core",
+      "branch": "main"
+    }
+  }
+}
+```
+
+---
+
+## 4. Two-Phase Concurrency Safety
+
+Forking and fork synchronization copy objects across two distinct bare repositories on disk.
+
+To prevent deadlocks when concurrent processes or agents perform reciprocal fork actions (e.g. Repository A synchronizing from B while Repository B synchronizes from A), Refweir's `gitstore.Store` acquires repository mutexes deterministically:
+
+```go
+// Locks are always acquired in alphabetical order of repository slug
+if srcKey < targetKey {
+    srcLock.RLock()
+    defer srcLock.RUnlock()
+    targetLock.Lock()
+    defer targetLock.Unlock()
+} else {
+    targetLock.Lock()
+    defer targetLock.Unlock()
+    srcLock.RLock()
+    defer srcLock.RUnlock()
+}
+```
+
+All fork operations record audit events (`repo.fork`, `repo.fork_sync`) and emit webhook events for connected CI/CD pipelines.
