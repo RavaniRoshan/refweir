@@ -4128,6 +4128,12 @@ func Open(cfg config.Config) (*App, error) {
 
 	metricsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		metrics.DefaultRegistry.IncHTTPRequests()
+		if strings.HasPrefix(r.URL.Path, "/repos/") {
+			r2 := r.Clone(r.Context())
+			r2.URL.Path = "/api/v1" + r.URL.Path
+			mux.ServeHTTP(w, r2)
+			return
+		}
 		mux.ServeHTTP(w, r)
 	})
 

@@ -82,6 +82,8 @@ func (c *CLI) Run(args []string) error {
 		return c.runRepo(args[1:])
 	case "pr":
 		return c.runPR(args[1:])
+	case "issue":
+		return c.runIssue(args[1:])
 	case "lease":
 		return c.runLease(args[1:])
 	case "app":
@@ -102,6 +104,7 @@ Commands:
   refweir auth               Manage authentication
   refweir repo               Manage repositories
   refweir pr                 Manage pull requests
+  refweir issue              Manage issues (list, view, create, close, comment)
   refweir lease              Manage agent capability leases (issue, revoke)
   refweir app                Manage apps
   refweir api <endpoint>     Make an authenticated request to REST API
@@ -528,6 +531,229 @@ func (c *CLI) runPR(args []string) error {
 
 	default:
 		return fmt.Errorf("unknown pr subcommand %q", args[0])
+	}
+}
+
+// Issue commands
+func (c *CLI) runIssue(args []string) error {
+	if len(args) == 0 {
+		return errors.New("usage: refweir issue <list|view|create|close|comment>")
+	}
+	switch args[0] {
+	case "list":
+		fs := flag.NewFlagSet("issue list", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		state := fs.String("state", "open", "Filter by state: open, closed, all")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/issues?state=%s", owner, name, *state)
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var resp struct {
+			Issues []struct {
+				Number    int    `json:"number"`
+				Title     string `json:"title"`
+				State     string `json:"state"`
+				Author    string `json:"author"`
+				Comments  int    `json:"comments"`
+				CreatedAt string `json:"createdAt"`
+			} `json:"issues"`
+		}
+		if err := json.Unmarshal(data, &resp); err == nil && len(resp.Issues) > 0 {
+			for _, iss := range resp.Issues {
+				fmt.Fprintf(c.Stdout, "#%-4d  %-8s  %-50s  (%s)\n", iss.Number, iss.State, iss.Title, iss.Author)
+			}
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "view":
+		fs := flag.NewFlagSet("issue view", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir issue view <number> [-R owner/name]")
+		}
+		num := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%s", owner, name, num)
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var iss struct {
+			Number int    `json:"number"`
+			Title  string `json:"title"`
+			Body   string `json:"body"`
+			State  string `json:"state"`
+			Author string `json:"author"`
+		}
+		if err := json.Unmarshal(data, &iss); err == nil && iss.Title != "" {
+			fmt.Fprintf(c.Stdout, "#%d %s [%s]\nAuthor: %s\n\n%s\n", iss.Number, iss.Title, iss.State, iss.Author, iss.Body)
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "create":
+		fs := flag.NewFlagSet("issue create", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		title := fs.String("title", "", "Issue title")
+		body := fs.String("body", "", "Issue body")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if *title == "" {
+			return errors.New("flag --title is required")
+		}
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		reqBody := map[string]any{
+			"title": *title,
+			"body":  *body,
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/issues", owner, name)
+		data, code, err := c.doRequest(http.MethodPost, path, reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var resp struct {
+			Issue struct {
+				Number int    `json:"number"`
+				Title  string `json:"title"`
+			} `json:"issue"`
+		}
+		if err := json.Unmarshal(data, &resp); err == nil && resp.Issue.Number > 0 {
+			fmt.Fprintf(c.Stdout, "Created issue #%d: %s\n", resp.Issue.Number, resp.Issue.Title)
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "close":
+		fs := flag.NewFlagSet("issue close", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir issue close <number> [-R owner/name]")
+		}
+		num := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%s", owner, name, num)
+		reqBody := map[string]any{"state": "closed"}
+		data, code, err := c.doRequest(http.MethodPatch, path, reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		fmt.Fprintf(c.Stdout, "Closed issue #%s\n", num)
+		return nil
+
+	case "comment":
+		fs := flag.NewFlagSet("issue comment", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		body := fs.String("body", "", "Comment body")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 || *body == "" {
+			return errors.New("usage: refweir issue comment <number> -R owner/name --body <body>")
+		}
+		num := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%s/comments", owner, name, num)
+		reqBody := map[string]any{"body": *body}
+		data, code, err := c.doRequest(http.MethodPost, path, reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		fmt.Fprintf(c.Stdout, "Added comment to issue #%s\n", num)
+		return nil
+
+	default:
+		return fmt.Errorf("unknown issue subcommand %q", args[0])
 	}
 }
 

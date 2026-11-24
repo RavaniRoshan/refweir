@@ -69,7 +69,28 @@ refweir pr merge -R <owner>/<repo> <pr-number> [--merge|--squash] [--commit-mess
 refweir pr close -R <owner>/<repo> <pr-number>
 ```
 
-### 3. `refweir auth`
+### 3. `refweir issue`
+
+List, inspect, create, close, and comment on repository issues.
+
+```bash
+# List repository issues
+refweir issue list -R <owner>/<repo> [--state open|closed|all]
+
+# View an issue and its discussion comments
+refweir issue view <number> -R <owner>/<repo>
+
+# Create a new issue
+refweir issue create -R <owner>/<repo> --title "<title>" [--body "<description>"]
+
+# Close an issue
+refweir issue close <number> -R <owner>/<repo>
+
+# Add a comment to an issue
+refweir issue comment <number> -R <owner>/<repo> --body "<comment-text>"
+```
+
+### 4. `refweir auth`
 
 Manage authentication status and credentials.
 
@@ -84,7 +105,7 @@ refweir auth login --token <api-token>
 refweir auth logout
 ```
 
-### 4. `refweir app`
+### 5. `refweir app`
 
 Manage apps and installations.
 
@@ -96,7 +117,7 @@ refweir app list
 refweir app get <app-slug-or-id>
 ```
 
-### 5. `refweir api`
+### 6. `refweir api`
 
 Execute authenticated HTTP requests against any endpoint of the refweir.dev REST API.
 
@@ -108,7 +129,7 @@ refweir api repos/acme/my-service/pulls
 refweir api repos/acme/my-service/labels --method POST --body '{"name": "bug", "color": "d73a4a"}'
 ```
 
-### 6. `refweir lease`
+### 7. `refweir lease`
 
 Issue and revoke cryptographically signed agent capability leases for automated workflows.
 

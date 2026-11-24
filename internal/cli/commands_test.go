@@ -291,3 +291,113 @@ func TestCLI_LeaseCommands(t *testing.T) {
 		t.Errorf("expected reason 'security rotation', got: %v", revokeBody["reason"])
 	}
 }
+
+func TestCLI_IssueCommands(t *testing.T) {
+	var requestedPath, requestedMethod string
+	var requestedBody []byte
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		requestedMethod = r.Method
+		requestedBody, _ = io.ReadAll(r.Body)
+
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/issues") {
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"ok": true, "issue": {"number": 1, "title": "Bug: Buffer overflow"}}`))
+			return
+		}
+		if r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/api/v1/repos/acme/rocket/issues/") {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok": true, "state": "closed"}`))
+			return
+		}
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/comments") {
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"ok": true, "comment": {"id": "c1", "body": "Fixed in commit abc"}}`))
+			return
+		}
+		if r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/issues/1") {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"number": 1, "title": "Bug: Buffer overflow", "body": "Details here", "state": "open", "author": "alice"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"issues": [{"number": 1, "title": "Bug: Buffer overflow", "state": "open", "author": "alice", "comments": 2}]}`))
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "tok_issue",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. issue list
+	if err := c.Run([]string{"issue", "list", "-R", "acme/rocket", "--state", "open"}); err != nil {
+		t.Fatalf("issue list: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/issues" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/repos/acme/rocket/issues, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "#1") {
+		t.Errorf("expected issue #1 in stdout: %s", stdout.String())
+	}
+
+	// 2. issue create
+	stdout.Reset()
+	if err := c.Run([]string{"issue", "create", "-R", "acme/rocket", "--title", "Bug: Buffer overflow", "--body", "Details here"}); err != nil {
+		t.Fatalf("issue create: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/issues" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/acme/rocket/issues, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Created issue #1") {
+		t.Errorf("expected created message in stdout: %s", stdout.String())
+	}
+	var createBody map[string]any
+	_ = json.Unmarshal(requestedBody, &createBody)
+	if createBody["title"] != "Bug: Buffer overflow" {
+		t.Errorf("expected title 'Bug: Buffer overflow', got: %v", createBody["title"])
+	}
+
+	// 3. issue view
+	stdout.Reset()
+	if err := c.Run([]string{"issue", "view", "1", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("issue view: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/issues/1" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/repos/acme/rocket/issues/1, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "#1 Bug: Buffer overflow") {
+		t.Errorf("expected issue title in stdout: %s", stdout.String())
+	}
+
+	// 4. issue comment
+	stdout.Reset()
+	if err := c.Run([]string{"issue", "comment", "1", "-R", "acme/rocket", "--body", "Fixed in commit abc"}); err != nil {
+		t.Fatalf("issue comment: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/issues/1/comments" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/acme/rocket/issues/1/comments, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Added comment to issue #1") {
+		t.Errorf("expected comment confirmation in stdout: %s", stdout.String())
+	}
+
+	// 5. issue close
+	stdout.Reset()
+	if err := c.Run([]string{"issue", "close", "1", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("issue close: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/issues/1" || requestedMethod != http.MethodPatch {
+		t.Errorf("expected PATCH /api/v1/repos/acme/rocket/issues/1, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Closed issue #1") {
+		t.Errorf("expected closed message in stdout: %s", stdout.String())
+	}
+}
