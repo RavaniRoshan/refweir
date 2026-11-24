@@ -11,8 +11,8 @@ vi.mock('@/lib/api', async () => {
     getReleases: vi.fn().mockResolvedValue([
       {
         id: 'rel-1',
-        tagName: 'v0.4.0-enterprise',
-        name: 'v0.4.0 Sovereign Enterprise',
+        tagName: 'v0.6.0-beta',
+        name: 'v0.6.0-beta Autonomous Agent Platform',
         body: 'Enterprise Git and MCP agent bridge release notes.',
         author: 'shiva',
         isDraft: false,
@@ -60,8 +60,8 @@ describe('ReleasesView', () => {
     render(<ReleasesView />)
 
     await waitFor(() => {
-      expect(screen.getByText('v0.4.0-enterprise')).toBeInTheDocument()
-      expect(screen.getByText('v0.4.0 Sovereign Enterprise')).toBeInTheDocument()
+      expect(screen.getByText('v0.6.0-beta')).toBeInTheDocument()
+      expect(screen.getByText('v0.6.0-beta Autonomous Agent Platform')).toBeInTheDocument()
     })
     expect(screen.getByText('Latest')).toBeInTheDocument()
     expect(screen.getByText('5c92f55')).toBeInTheDocument()
@@ -87,7 +87,7 @@ describe('ReleasesView', () => {
     render(<ReleasesView />)
 
     await waitFor(() => {
-      expect(screen.getByText('v0.4.0-enterprise')).toBeInTheDocument()
+      expect(screen.getByText('v0.6.0-beta')).toBeInTheDocument()
     })
 
     const tagsTab = screen.getByRole('button', { name: /tags/i })
@@ -103,7 +103,7 @@ describe('ReleasesView', () => {
     render(<ReleasesView />)
 
     await waitFor(() => {
-      expect(screen.getByText('v0.4.0-enterprise')).toBeInTheDocument()
+      expect(screen.getByText('v0.6.0-beta')).toBeInTheDocument()
     })
 
     const draftBtn = screen.getByRole('button', { name: /draft a new release/i })

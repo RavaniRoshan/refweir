@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-VERSION="${VERSION:-v0.5.0-beta}"
+VERSION="${VERSION:-v0.6.0-beta}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_DIR="$ROOT_DIR/dist/releases"
 

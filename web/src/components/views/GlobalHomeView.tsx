@@ -66,7 +66,7 @@ const enterpriseFeed: ActivityEvent[] = [
     type: 'release',
     actor: 'shiva',
     action: 'published enterprise release',
-    target: 'v0.4.0-enterprise',
+    target: 'v0.6.0-beta',
     timestamp: '2 hours ago',
     details: 'Includes Sovereign Git Server, SQLite WAL Engine, MCP Protocol Bridge, and Primer Design System.',
   },

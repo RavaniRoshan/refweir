@@ -158,7 +158,7 @@ export const DocsView: React.FC<DocsViewProps> = ({
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold tracking-tight text-foreground">Refweir Documentation</h1>
                 <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider">
-                  v0.2.0-enterprise
+                  v0.6.0-beta
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">

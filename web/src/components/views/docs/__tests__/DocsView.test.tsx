@@ -21,7 +21,7 @@ describe('DocsView Component (GitHub Docs Architecture)', () => {
     render(<DocsView />)
 
     expect(screen.getByText('Refweir Documentation')).toBeInTheDocument()
-    expect(screen.getByText(/v0.2.0-enterprise/i)).toBeInTheDocument()
+    expect(screen.getByText(/v0.6.0-beta/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Search docs or articles/i)).toBeInTheDocument()
     expect(screen.getByText('Refweir Docs')).toBeInTheDocument()
   })

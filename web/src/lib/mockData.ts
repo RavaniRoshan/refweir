@@ -273,7 +273,7 @@ export const mockAuditEvents: AuditEvent[] = [
 export const mockClusterMetrics: ClusterMetrics = {
   serverStatus: 'healthy',
   uptime: '4 days, 16 hours, 22 minutes',
-  version: 'refweird v0.2.0-enterprise (linux/amd64)',
+  version: 'refweird v0.6.0-beta (linux/amd64)',
   activeGitSessions: 2,
   sqliteWalSizeBytes: 14680064, // ~14MB
   databasePath: '/var/lib/refweir/meta.db (WAL mode, SQLite 3.44+)',
@@ -507,8 +507,8 @@ export const mockSampleIssues: import('./types').Issue[] = [
 export const mockSampleReleases: import('./types').ReleaseItem[] = [
   {
     id: 'rel-1',
-    tagName: 'v0.4.0-enterprise',
-    name: 'v0.4.0 Sovereign Enterprise & AI Agent Bridge',
+    tagName: 'v0.6.0-beta',
+    name: 'v0.6.0-beta Autonomous Agent Platform & Git Forge',
     body: `### What's Changed\n- **Sovereign Git Engine**: Pure-Go Smart-HTTP and Git SSH daemon on port 2222.\n- **Model Context Protocol**: 35 native tools mounted at \`/mcp\` for autonomous agents.\n- **SQLite WAL Ledger**: Transactional ref storage, cryptographic commit signing, and audit logging.\n- **GitHub Primer UI**: Pixel-accurate Primer design system with 6px squircle radius and OKLCH color theme.\n- **Enterprise Identity**: SAML 2.0, OIDC SSO, SCIM 2.0 user directory, and SSH CA enrollment.`,
     author: 'shiva',
     isDraft: false,
@@ -521,7 +521,7 @@ export const mockSampleReleases: import('./types').ReleaseItem[] = [
       { name: 'refweird-linux-arm64.tar.gz', size: 32800000, downloadCount: 289, sha256: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b' },
       { name: 'refweird-darwin-arm64.tar.gz', size: 33100000, downloadCount: 351, sha256: '4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e' },
       { name: 'refweir-iac-terraform.zip', size: 1420000, downloadCount: 198, sha256: '3e2f1a0b9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d' },
-      { name: 'v0.4.0-enterprise.sig', size: 512, downloadCount: 140, sha256: '0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e4f3a2b1c' },
+      { name: 'v0.6.0-beta.sig', size: 512, downloadCount: 140, sha256: '0d9e8f7a6b5c4d3e2f1a0b9a8b7c6d5e4f3a2b1c' },
     ],
   },
   {

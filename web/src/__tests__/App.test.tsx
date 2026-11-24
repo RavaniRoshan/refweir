@@ -155,7 +155,9 @@ describe('App End-to-End Navigation', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Cluster Health & Metrics')).toBeInTheDocument()
-      expect(screen.getByText('Single Sign-On (SAML/OIDC)')).toBeInTheDocument()
+      expect(screen.getByText('Audit Log & Security')).toBeInTheDocument()
+      expect(screen.queryByText('Single Sign-On (SAML/OIDC)')).not.toBeInTheDocument()
+      expect(screen.queryByText('User Directory & SCIM')).not.toBeInTheDocument()
     })
   })
 

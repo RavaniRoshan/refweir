@@ -84,11 +84,11 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-foreground">refweir.dev User Manual & Architecture Guide</h2>
                 <Badge variant="outline" className="text-[10px] font-mono">
-                  {clusterInfo?.version || 'v0.4.0-enterprise'}
+                  {clusterInfo?.version || 'v0.6.0-beta'}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Sovereign Git forge, autonomous MCP agent bridge, and SQLite WAL engine
+                Self-hosted Git forge, autonomous MCP agent bridge, and SQLite WAL engine
               </p>
             </div>
           </div>

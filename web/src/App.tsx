@@ -3,8 +3,6 @@ import {
   Activity,
   Server,
   ShieldAlert,
-  KeyRound,
-  Users,
   Loader2,
 } from 'lucide-react'
 import { Header } from '@/components/views/Header'
@@ -59,12 +57,6 @@ const ClusterHealth = lazy(() =>
 )
 const AuditLogs = lazy(() =>
   import('@/components/views/admin/AuditLogs').then((m) => ({ default: m.AuditLogs }))
-)
-const SsoConfig = lazy(() =>
-  import('@/components/views/admin/SsoConfig').then((m) => ({ default: m.SsoConfig }))
-)
-const EnterpriseUsers = lazy(() =>
-  import('@/components/views/admin/EnterpriseUsers').then((m) => ({ default: m.EnterpriseUsers }))
 )
 
 export const ViewFallback = () => (
@@ -198,8 +190,6 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
 
   const adminNavItems = [
     { id: 'cluster', label: 'Cluster Health & Metrics', icon: <Server className="w-4 h-4" /> },
-    { id: 'users', label: 'User Directory & SCIM', icon: <Users className="w-4 h-4" /> },
-    { id: 'sso', label: 'Single Sign-On (SAML/OIDC)', icon: <KeyRound className="w-4 h-4" /> },
     { id: 'audit', label: 'Audit Log & Security', icon: <ShieldAlert className="w-4 h-4" /> },
   ] as const
 
@@ -393,8 +383,6 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
             <section className="md:col-span-3">
               <Suspense fallback={<ViewFallback />}>
                 {adminSection === 'cluster' && <ClusterHealth />}
-                {adminSection === 'users' && <EnterpriseUsers />}
-                {adminSection === 'sso' && <SsoConfig />}
                 {adminSection === 'audit' && <AuditLogs />}
               </Suspense>
             </section>

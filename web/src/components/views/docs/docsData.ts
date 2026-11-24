@@ -123,7 +123,7 @@ export const DOCS_ARTICLES: Record<string, DocArticle> = {
         label: 'CLI',
         code: `# Check cluster status and version
 refweird version
-# Output: refweird v0.2.0-enterprise (linux/amd64)`,
+# Output: refweird v0.6.0-beta (linux/amd64)`,
       },
       {
         language: 'curl',
@@ -131,8 +131,8 @@ refweird version
         code: `curl -s http://localhost:8080/healthz | jq .
 # {
 #   "status": "healthy",
-#   "version": "refweird v0.2.0-enterprise",
-#   "mcp_tools": 55
+#   "version": "refweird v0.6.0-beta",
+#   "mcp_tools": 35
 # }`,
       },
     ],

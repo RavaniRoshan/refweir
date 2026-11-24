@@ -27,7 +27,7 @@ vi.mock('@/lib/api', async () => {
       { number: 1, title: 'Test PR', state: 'open' },
     ]),
     getReleases: vi.fn().mockResolvedValue([
-      { id: 'rel-1', tagName: 'v0.4.6-enterprise' },
+      { id: 'rel-1', tagName: 'v0.6.0-beta' },
     ]),
     isDemoModeActive: vi.fn().mockReturnValue(false),
   }

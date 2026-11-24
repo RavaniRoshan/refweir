@@ -311,7 +311,7 @@ export async function fetchClusterInfo(signal?: AbortSignal): Promise<ClusterSys
     if (res.ok) return await res.json()
   } catch {}
   return {
-    version: 'v0.4.0-enterprise',
+    version: 'v0.6.0-beta',
     publicUrl: `http://${window.location.host}`,
     gitHttpUrl: `${window.location.host}`,
     sshAddr: `${window.location.hostname}:2222`,
@@ -1014,7 +1014,7 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
       return {
         serverStatus: data.serverStatus || 'healthy',
         uptime: data.uptime || 'Active',
-        version: data.version || 'refweird v0.2.0-enterprise',
+        version: data.version || 'refweird v0.6.0-beta',
         activeGitSessions: data.activeGitSessions || 0,
         sqliteWalSizeBytes: data.sqliteWalSizeBytes || 1048576,
         databasePath: data.databasePath || 'SQLite WAL storage',
@@ -1035,7 +1035,7 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
   return {
     serverStatus: liveStatus.ok ? 'healthy' : 'degraded',
     uptime: 'Active session',
-    version: 'refweird v0.2.0-enterprise',
+    version: 'refweird v0.6.0-beta',
     activeGitSessions: 0,
     sqliteWalSizeBytes: 1048576,
     databasePath: 'Local bare repository storage (SQLite WAL enabled)',
