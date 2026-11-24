@@ -3,7 +3,7 @@
 **Status:** Research input for Phase 3 (agents-first frontend redesign)
 **Owner:** Frontend / Design
 **Created:** 2026-11-09
-**Companion:** [`plan.md`](../../plan.md) §3, [`AGENTS.md`](../../AGENTS.md) §2/§4
+**Companion:** [`plan.md`](../internal/plan.md) §3, [`AGENTS.md`](../../AGENTS.md) §2/§4
 
 This document captures the research the launch plan asked for: what the best
 launching products in 2026 actually ship for their marketing site and their app

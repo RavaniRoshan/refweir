@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16.4.4, React 19.3.1, TypeScript, Tailwind CSS 4, Fumadocs 16, motion 14, react-aria-components 1.22, class-variance-authority, clsx, tailwind-merge.
 
-**Spec:** `research/full-frontend-launch.md` (comprehensive research), `docs/launch/FRONTEND_TEMPLATES.md` (free template research), `docs/launch/POSITIONING.md` (copy source of truth), `CLAIMS.md` (claims ledger), `AGENTS.md` §2 (design system invariants).
+**Spec:** `docs/internal/research/full-frontend-launch.md` (comprehensive research), `docs/launch/FRONTEND_TEMPLATES.md` (free template research), `docs/launch/POSITIONING.md` (copy source of truth), `CLAIMS.md` (claims ledger), `AGENTS.md` §2 (design system invariants).
 
 ## Global Constraints
 

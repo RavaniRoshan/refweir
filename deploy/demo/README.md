@@ -3,7 +3,7 @@
 **Status:** Scaffolding complete; **public URL not deployed yet.**
 **Owner:** Backend + Security/Infra
 **Gate:** G1 — hosted demo live (blocked on infrastructure + DNS/TLS)
-**Plan:** [`plan.md`](../../plan.md) §1.4
+**Plan:** [`plan.md`](../../docs/internal/plan.md) §1.4
 
 This directory runs a public, single-tenant Refweir instance for the launch. It
 is a **real** instance: a real Git forge, a real repository, real leases, real

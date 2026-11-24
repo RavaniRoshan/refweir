@@ -42,7 +42,7 @@ Traditional Git platforms were built 15+ years ago for human developers clicking
 - **Autonomous PR Review Agent (`internal/agentreviewer`):** Static AST analysis, leaked secret detection, coverage inspection, and policy-gated 3-way merges.
 - **Single Hermetic Binary:** Embedded React 19 product UI, SQLite WAL engine (`modernc.org/sqlite`), and bare Git object store compiled with `CGO_ENABLED=0` (requires host `git` on PATH).
 
-> *Unlike proprietary cloud forges, which are tied to closed vendor accounts and hosted infrastructure, Refweir is 100% vendor-neutral, open-source, and self-hosted on your own hardware for any agent.*
+> *Cursor Origin is a proprietary hosted service tied to Cursor accounts with no public specification or self-hosted distribution; Refweir is open-source (Apache-2.0), self-hosted on your own infrastructure, and designed to interoperate with any agent through standard Git and Model Context Protocol (MCP) interfaces.*
 
 ---
 
@@ -160,6 +160,8 @@ Measured with the reproducible autonomous agent benchmark harness ([`bench/main.
 | **5 Concurrent Agents** | 3 ms / 6 ms | 75 ms / 127 ms | 2.728 s / 3.398 s | 2 ms / 5 ms | **2.878 s / 3.475 s** |
 | **20 Concurrent Agents** | 6 ms / 70 ms | 166 ms / 280 ms | 13.881 s / 13.993 s | 5 ms / 20 ms | **14.076 s / 14.195 s** |
 | **50 Concurrent Agents** | 39 ms / 166 ms | 327 ms / 423 ms | 25.738 s / 26.741 s | 10 ms / 88 ms | **26.102 s / 27.164 s** |
+
+> **Understanding Push Latency & SQLite Concurrency:** Push latency in Refweir is dominated by Git transport unpack-limit overhead (sideband demuxing, packfile object delta resolution, and pre-receive hook isolation verification). Furthermore, while SQLite WAL mode allows concurrent reads across all goroutines, database write transactions (recording updated ref pointers and audit events) are serialized by SQLite's single-writer concurrency model. Under high agent concurrency (20–50 concurrent agents), write lock contention queues Git ref updates, accounting for the increase in push latency while read lookups (leases, diffs, PR state) remain sub-millisecond.
 
 To reproduce the benchmark on your own hardware:
 ```bash

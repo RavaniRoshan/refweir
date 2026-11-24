@@ -20,7 +20,7 @@ The product cannot launch as `exist.io`.
 | The Go module path is literally `exist.io` | `go.mod:1` |
 | Every user who types the product name as a URL reaches the life tracker, not the forge | `https://exist.io` |
 
-The legal picture is nuanced, but the *practical* block is not: domain ownership, 13 years of SEO, and app-store identity. Renaming is cheapest now; every star, backlink, and press mention raises the cost. See `research/exist-io-ph-launch-frontend-redesign.md` §"The name is a launch blocker".
+The legal picture is nuanced, but the *practical* block is not: domain ownership, 13 years of SEO, and app-store identity. Renaming is cheapest now; every star, backlink, and press mention raises the cost. See `docs/internal/research/exist-io-ph-launch-frontend-redesign.md` §"The name is a launch blocker".
 
 ---
 
@@ -211,7 +211,7 @@ Recruit 5 developers who use Claude Code, Codex, Cursor, or Cline weekly.
 
 ## 10. Rename surfaces (execution checklist)
 
-Once the name is chosen, Phase 0.2 applies. Full checklist is in `plan.md` §0.2. Summary:
+Once the name is chosen, Phase 0.2 applies. Full checklist is in `docs/internal/plan.md` §0.2. Summary:
 
 - `go.mod` module path and every import.
 - `cmd/exist`, `cmd/existd` → `cmd/<new>`, `cmd/<new>d`.

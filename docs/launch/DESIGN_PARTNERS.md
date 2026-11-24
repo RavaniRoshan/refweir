@@ -2,7 +2,7 @@
 
 **Status:** Phase 2.1/2.2 working document (draft, in progress)
 **Owner:** Founder/PM + DevRel
-**Plan:** [`plan.md`](../../plan.md) §2.1–2.2
+**Plan:** [`plan.md`](../internal/plan.md) §2.1–2.2
 **Created:** 2026-11-09
 
 This is the living CRM for design-partner outreach. Names are organizations and

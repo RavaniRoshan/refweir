@@ -51,7 +51,7 @@ default:
 ### 1.2 Subprocess Pre-Receive Hook Latency Escalation
 Git Push operations (`git-receive-pack`) execute `internal/gitstore/gitstore.go:EnsureHooks`, which writes an executable shell script that spawns `refweird hook pre-receive` as a new operating system subprocess. 
 
-According to verified performance baseline metrics (`plans/2026-11-09-refweir-performance-baseline.md` lines 120–135):
+According to verified performance baseline metrics (`docs/internal/plans/2026-11-09-refweir-performance-baseline.md` lines 120–135):
 - At **1 agent**, Git push p50 is **3.32s** (total loop 3.42s).
 - At **20 agents**, Git push p50 is **21.53s** (total loop 21.91s).
 - At **50 agents**, Git push p50 is **54.67s** (total loop 56.09s).
