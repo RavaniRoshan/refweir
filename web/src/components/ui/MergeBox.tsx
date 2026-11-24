@@ -23,7 +23,7 @@ export interface MergeBoxProps {
 }
 
 /**
- * GitHub Canonical Pull Request Merge Box.
+ * Refweir Canonical Pull Request Merge Box.
  * Replaces gimmicky touch-sliders with the authentic developer workflow:
  * Status summary, merge strategy selection, commit title/message editing, and confirmation.
  */
