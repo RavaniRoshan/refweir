@@ -2,6 +2,7 @@ package security
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +21,9 @@ var revRegex = regexp.MustCompile(`^[0-9a-fA-F]{40,64}$`)
 // <old-rev> <new-rev> <ref-name>
 // It diffs commits and rejects any push containing detected secrets.
 func PreReceiveHook(r io.Reader, stderr io.Writer) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	scanner := bufio.NewScanner(r)
 	var allViolations []SecretViolation
 
@@ -137,7 +141,7 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 
 		// Force-push detection (non-fast-forward) on protected default branches
 		if strings.Trim(oldRev, "0") != "" && (refName == "refs/heads/main" || refName == "refs/heads/master") {
-			ancestorCheck := exec.Command("git", "merge-base", "--is-ancestor", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+			ancestorCheck := exec.CommandContext(ctx, "git", "merge-base", "--is-ancestor", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 			if err := ancestorCheck.Run(); err != nil {
 				auditRejection("security.protected_branch_blocked", refName, "Non-fast-forward update to protected default branch was blocked")
 				fmt.Fprintf(stderr, "remote: error: GH006: Protected branch update failed for %s\n", refName)
@@ -149,15 +153,15 @@ func PreReceiveHook(r io.Reader, stderr io.Writer) error {
 		var cmd *exec.Cmd
 		if strings.Trim(oldRev, "0") == "" {
 			// New branch/ref: diff against Git's canonical empty tree hash
-			cmd = exec.Command("git", "diff", "--", "4b825dc642cb6eb9a060e54bf8d69288fbee4904", newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+			cmd = exec.CommandContext(ctx, "git", "diff", "--", "4b825dc642cb6eb9a060e54bf8d69288fbee4904", newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 		} else {
-			cmd = exec.Command("git", "diff", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+			cmd = exec.CommandContext(ctx, "git", "diff", "--", oldRev, newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 		}
 
 		diffOut, err := cmd.Output()
 		if err != nil {
 			// Fallback to git log -p if diff against empty tree fails
-			cmd = exec.Command("git", "log", "-p", "-n", "25", newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
+			cmd = exec.CommandContext(ctx, "git", "log", "-p", "-n", "25", newRev) // #nosec G204 -- git subprocess invoked with repository-scoped, validated paths
 			diffOut, _ = cmd.Output()
 		}
 

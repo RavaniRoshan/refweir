@@ -1,6 +1,7 @@
 package agentlease
 
 import (
+	"crypto/ed25519"
 	"testing"
 	"time"
 )
@@ -105,5 +106,53 @@ func TestAgentLease_RefTraversalAndIsolation(t *testing.T) {
 	// Legitimate child branch must succeed
 	if !lease.CanPushRef("refs/heads/agent/task-123") {
 		t.Errorf("expected CanPushRef(refs/heads/agent/task-123) = true, got false")
+	}
+}
+
+func TestAgentLease_Ed25519(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("GenerateKey: %v", err)
+	}
+
+	agentID := "agent_asymmetric_1"
+	repoID := "repo_asymmetric_123"
+	allowedRefs := []string{"refs/heads/agent/"}
+	disallowedRefs := []string{"refs/heads/main"}
+
+	// 1. Issue with private key
+	token, lease, err := IssueEd25519(priv, agentID, repoID, allowedRefs, disallowedRefs, 15*time.Minute)
+	if err != nil {
+		t.Fatalf("IssueEd25519 failed: %v", err)
+	}
+
+	// 2. Verify with public key
+	verified, err := VerifyEd25519(pub, token)
+	if err != nil {
+		t.Fatalf("VerifyEd25519 failed: %v", err)
+	}
+	if verified.AgentID != agentID || verified.RepoID != repoID {
+		t.Errorf("verified lease mismatch: %+v", verified)
+	}
+
+	// 3. Verify via polymorphic Verify(pub, token)
+	verifiedPoly, err := Verify(pub, token)
+	if err != nil {
+		t.Fatalf("Verify with public key failed: %v", err)
+	}
+	if verifiedPoly.ID != lease.ID {
+		t.Errorf("Verify polymorphic ID mismatch: %s != %s", verifiedPoly.ID, lease.ID)
+	}
+
+	// 4. Verify tampering is rejected
+	tampered := token + "bad"
+	if _, err := VerifyEd25519(pub, tampered); err == nil {
+		t.Errorf("expected tampered token to fail verification")
+	}
+
+	// 5. Verify wrong public key is rejected
+	wrongPub, _, _ := ed25519.GenerateKey(nil)
+	if _, err := VerifyEd25519(wrongPub, token); err == nil {
+		t.Errorf("expected wrong public key to fail verification")
 	}
 }
