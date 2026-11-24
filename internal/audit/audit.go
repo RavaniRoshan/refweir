@@ -2,6 +2,8 @@
 package audit
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -205,4 +207,116 @@ func (l *Logger) Filter(actor, action string, limit int) []Event {
 		result = append(result, ev)
 	}
 	return result
+}
+
+// FilterAdvanced returns events matching actor, action, severity, and temporal boundaries (since <= Timestamp <= until).
+// Returns results ordered newest-first.
+func (l *Logger) FilterAdvanced(actor, action string, severity Severity, since, until time.Time, limit int) []Event {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	n := len(l.events)
+	if limit <= 0 {
+		limit = 1000
+	}
+
+	result := make([]Event, 0, min(limit, n))
+	for i := n - 1; i >= 0 && len(result) < limit; i-- {
+		ev := l.events[i]
+		if actor != "" && ev.Actor != actor {
+			continue
+		}
+		if action != "" && ev.Action != action {
+			continue
+		}
+		if severity != "" && ev.Severity != severity {
+			continue
+		}
+		if !since.IsZero() && ev.Timestamp.Before(since) {
+			continue
+		}
+		if !until.IsZero() && ev.Timestamp.After(until) {
+			continue
+		}
+		result = append(result, ev)
+	}
+	return result
+}
+
+// ReadLogFile reads an append-only JSON-lines audit log from disk and returns matching events,
+// ordered newest-first.
+func ReadLogFile(filePath string, actor, action string, severity Severity, since, until time.Time, limit int) ([]Event, error) {
+	f, err := os.Open(filePath) // #nosec G304 -- path comes from operator configuration
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	if limit <= 0 {
+		limit = 10000
+	}
+
+	var events []Event
+	scanner := bufio.NewScanner(f)
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, 2*1024*1024)
+
+	for scanner.Scan() {
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
+		var ev Event
+		if err := json.Unmarshal(line, &ev); err != nil {
+			continue
+		}
+		if actor != "" && ev.Actor != actor {
+			continue
+		}
+		if action != "" && ev.Action != action {
+			continue
+		}
+		if severity != "" && ev.Severity != severity {
+			continue
+		}
+		if !since.IsZero() && ev.Timestamp.Before(since) {
+			continue
+		}
+		if !until.IsZero() && ev.Timestamp.After(until) {
+			continue
+		}
+		events = append(events, ev)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	// Reverse to order newest-first
+	for i, j := 0, len(events)-1; i < j; i, j = i+1, j-1 {
+		events[i], events[j] = events[j], events[i]
+	}
+
+	if len(events) > limit {
+		events = events[:limit]
+	}
+	return events, nil
+}
+
+// Export returns events from disk log (if configured via REFWEIR_AUDIT_LOG and file exists)
+// or from the DefaultLogger in-memory buffer.
+func Export(actor, action string, severity Severity, since, until time.Time, limit int) []Event {
+	logPath := os.Getenv("REFWEIR_AUDIT_LOG")
+	if logPath != "" {
+		if evs, err := ReadLogFile(logPath, actor, action, severity, since, until, limit); err == nil && len(evs) > 0 {
+			return evs
+		}
+	}
+
+	defaultLoggerMu.RLock()
+	l := DefaultLogger
+	defaultLoggerMu.RUnlock()
+	if l == nil {
+		return nil
+	}
+	return l.FilterAdvanced(actor, action, severity, since, until, limit)
 }

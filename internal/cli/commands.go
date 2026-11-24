@@ -116,7 +116,7 @@ Commands:
   refweir app                Manage apps
   refweir doctor             Diagnose daemon connectivity, auth, and local environment
   refweir completion <shell> Generate shell autocompletion script (bash, zsh, fish)
-  refweir audit              Inspect administrative audit trail (list)
+  refweir audit              Inspect and export administrative audit trail (list, export) (list)
   refweir cluster            Manage cluster replication and disaster recovery (status, checkpoint, snapshot, promote)
   refweir api <endpoint>     Make an authenticated request to REST API
   refweir conformance        Run API conformance test suite against refweird
@@ -1797,7 +1797,7 @@ _refweir_completion() {
             COMPREPLY=( $(compgen -W "bash zsh fish" -- "$cur") )
             ;;
         audit)
-            COMPREPLY=( $(compgen -W "list" -- "$cur") )
+            COMPREPLY=( $(compgen -W "list export" -- "$cur") )
             ;;
         cluster)
             COMPREPLY=( $(compgen -W "status checkpoint snapshot promote" -- "$cur") )
@@ -1950,8 +1950,69 @@ func (c *CLI) runAudit(args []string) error {
 		}
 		return nil
 
+	case "export":
+		fs := flag.NewFlagSet("audit export", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		since := fs.String("since", "", "Filter events after duration (e.g. 24h, 7d) or RFC3339 timestamp")
+		until := fs.String("until", "", "Filter events before RFC3339 timestamp")
+		actor := fs.String("actor", "", "Filter by actor identifier")
+		action := fs.String("action", "", "Filter by action name")
+		severity := fs.String("severity", "", "Filter by severity (info, warning, critical)")
+		format := fs.String("format", "ndjson", "Export format: ndjson, csv, or json")
+		output := fs.String("output", "", "Output file path (defaults to stdout)")
+		oShort := fs.String("o", "", "Output file path shorthand")
+		limit := fs.Int("limit", 10000, "Maximum number of events to export (0 for unlimited)")
+
+		if err := fs.Parse(reorderFlags(subArgs)); err != nil {
+			return err
+		}
+
+		outPath := *output
+		if *oShort != "" {
+			outPath = *oShort
+		}
+
+		path := fmt.Sprintf("/api/v1/admin/audit-logs/export?format=%s&limit=%d", *format, *limit)
+		if *since != "" {
+			path += "&since=" + *since
+		}
+		if *until != "" {
+			path += "&until=" + *until
+		}
+		if *actor != "" {
+			path += "&actor=" + *actor
+		}
+		if *action != "" {
+			path += "&action=" + *action
+		}
+		if *severity != "" {
+			path += "&severity=" + *severity
+		}
+
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+
+		if outPath != "" {
+			if err := os.WriteFile(outPath, data, 0o644); err != nil {
+				return fmt.Errorf("write export file: %w", err)
+			}
+			fmt.Fprintf(c.Stdout, "Exported audit logs to %s (%d bytes)\n", outPath, len(data))
+			return nil
+		}
+
+		_, _ = c.Stdout.Write(data)
+		if *format == "json" && !bytes.HasSuffix(data, []byte("\n")) {
+			fmt.Fprintln(c.Stdout)
+		}
+		return nil
+
 	default:
-		return fmt.Errorf("unknown audit subcommand %q. Run 'refweir audit list' for usage", sub)
+		return fmt.Errorf("unknown audit subcommand %q. Run 'refweir audit <list|export>' for usage", sub)
 	}
 }
 

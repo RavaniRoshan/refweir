@@ -206,7 +206,7 @@ refweir completion fish > ~/.config/fish/completions/refweir.fish
 
 ### 11. `refweir audit`
 
-Inspect and filter the administrative audit trail directly from the terminal.
+Inspect, filter, and stream enterprise compliance audit trails for SIEM integration directly from the terminal.
 
 ```bash
 # List recent audit events (default limit: 30)
@@ -217,6 +217,15 @@ refweir audit list --actor alice --action agent.lease_issued --limit 50
 
 # Output audit trail as JSON
 refweir audit list --json
+
+# Export audit trail to newline-delimited JSON (NDJSON) for SIEM ingest (Splunk, Datadog)
+refweir audit export --since 24h --format ndjson -o audit_24h.ndjson
+
+# Export critical and warning events as CSV for compliance reporting
+refweir audit export --severity warning --format csv -o security_audit.csv
+
+# Stream recent audit events as JSON to stdout
+refweir audit export --since 7d --format json
 ```
 
 ### 12. `refweir cluster`

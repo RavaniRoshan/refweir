@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestAuditLoggerRecordsEvents(t *testing.T) {
@@ -144,5 +145,46 @@ func TestAuditLoggerFilterAndSync(t *testing.T) {
 	}
 	if actionFiltered[0].Actor != "user-1" {
 		t.Errorf("expected actor 'user-1', got %s", actionFiltered[0].Actor)
+	}
+}
+
+func TestAuditLoggerFilterAdvancedAndReadLogFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "audit_advanced.log")
+	logger, err := NewFileLogger(path)
+	if err != nil {
+		t.Fatalf("NewFileLogger: %v", err)
+	}
+	defer logger.Close()
+
+	t1 := time.Date(2026, 11, 20, 10, 0, 0, 0, time.UTC)
+	t2 := time.Date(2026, 11, 21, 10, 0, 0, 0, time.UTC)
+	t3 := time.Date(2026, 11, 22, 10, 0, 0, 0, time.UTC)
+
+	_ = logger.Record(Event{Timestamp: t1, Actor: "agent-1", Action: "git.push", Resource: "repo-a", Severity: SeverityInfo})
+	_ = logger.Record(Event{Timestamp: t2, Actor: "user-admin", Action: "security.token_revoke", Resource: "user-1", Severity: SeverityWarning})
+	_ = logger.Record(Event{Timestamp: t3, Actor: "agent-2", Action: "security.secret_push_blocked", Resource: "repo-b", Severity: SeverityCritical})
+
+	// 1. FilterAdvanced in-memory
+	since := time.Date(2026, 11, 21, 0, 0, 0, 0, time.UTC)
+	filtered := logger.FilterAdvanced("", "", SeverityWarning, since, time.Time{}, 10)
+	if len(filtered) != 1 || filtered[0].Action != "security.token_revoke" {
+		t.Fatalf("expected 1 warning event, got %+v", filtered)
+	}
+
+	criticals := logger.FilterAdvanced("", "", SeverityCritical, time.Time{}, time.Time{}, 10)
+	if len(criticals) != 1 || criticals[0].Actor != "agent-2" {
+		t.Fatalf("expected 1 critical event, got %+v", criticals)
+	}
+
+	// 2. ReadLogFile from disk
+	diskEvents, err := ReadLogFile(path, "", "", "", since, time.Time{}, 50)
+	if err != nil {
+		t.Fatalf("ReadLogFile: %v", err)
+	}
+	if len(diskEvents) != 2 {
+		t.Fatalf("expected 2 disk events since 2026-11-21, got %d", len(diskEvents))
+	}
+	if diskEvents[0].Timestamp.Before(diskEvents[1].Timestamp) {
+		t.Errorf("expected newest-first ordering from ReadLogFile")
 	}
 }

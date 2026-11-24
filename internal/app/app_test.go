@@ -105,6 +105,39 @@ func TestAppLifecycle(t *testing.T) {
 		t.Fatalf("GET /api/v1/admin/audit-logs status = %d, want 200", recAudit.Code)
 	}
 
+	// 5a-1. Admin audit logs export endpoint (NDJSON format)
+	reqExportNDJSON := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs/export?format=ndjson", nil)
+	recExportNDJSON := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recExportNDJSON, reqExportNDJSON)
+	if recExportNDJSON.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/audit-logs/export ndjson status = %d, want 200", recExportNDJSON.Code)
+	}
+	if ct := recExportNDJSON.Header().Get("Content-Type"); !strings.Contains(ct, "ndjson") {
+		t.Errorf("expected Content-Type containing ndjson, got: %s", ct)
+	}
+
+	// 5a-2. Admin audit logs export endpoint (CSV format)
+	reqExportCSV := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs/export?format=csv", nil)
+	recExportCSV := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recExportCSV, reqExportCSV)
+	if recExportCSV.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/audit-logs/export csv status = %d, want 200", recExportCSV.Code)
+	}
+	if ct := recExportCSV.Header().Get("Content-Type"); !strings.Contains(ct, "csv") {
+		t.Errorf("expected Content-Type containing csv, got: %s", ct)
+	}
+	if !strings.Contains(recExportCSV.Body.String(), "id,timestamp,actor") {
+		t.Errorf("expected CSV header row in audit export")
+	}
+
+	// 5a-3. Admin audit logs export endpoint (JSON format)
+	reqExportJSON := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs/export?format=json", nil)
+	recExportJSON := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recExportJSON, reqExportJSON)
+	if recExportJSON.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/audit-logs/export json status = %d, want 200", recExportJSON.Code)
+	}
+
 	// 5b. Cluster replication status endpoint returns valid JSON
 	reqRepl := httptest.NewRequest(http.MethodGet, "/api/v1/cluster/replication", nil)
 	recRepl := httptest.NewRecorder()

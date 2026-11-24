@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -701,6 +703,18 @@ func TestCLI_Audit(t *testing.T) {
 	var requestedPath string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestedPath = r.URL.RequestURI()
+		if strings.Contains(r.URL.Path, "/export") {
+			if strings.Contains(r.URL.RawQuery, "format=csv") {
+				w.Header().Set("Content-Type", "text/csv")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte("id,timestamp,actor,action\naud_01,2026-11-24T06:00:00Z,alice,agent.lease_issued\n"))
+				return
+			}
+			w.Header().Set("Content-Type", "application/x-ndjson")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("{\"id\":\"aud_01\",\"actor\":\"alice\",\"action\":\"agent.lease_issued\"}\n"))
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{
@@ -751,6 +765,26 @@ func TestCLI_Audit(t *testing.T) {
 	events, ok := auditResp["events"].([]any)
 	if !ok || len(events) != 1 {
 		t.Errorf("expected 1 audit event, got: %+v", auditResp)
+	}
+
+	// 3. audit export ndjson
+	stdout.Reset()
+	requestedPath = ""
+	if err := c.Run([]string{"audit", "export", "--format", "ndjson", "--since", "24h"}); err != nil {
+		t.Fatalf("audit export: %v", err)
+	}
+	if !strings.Contains(requestedPath, "/api/v1/admin/audit-logs/export") || !strings.Contains(requestedPath, "format=ndjson") {
+		t.Errorf("expected export path and format=ndjson, got: %s", requestedPath)
+	}
+
+	// 4. audit export to file
+	outFile := filepath.Join(t.TempDir(), "exported_audit.log")
+	stdout.Reset()
+	if err := c.Run([]string{"audit", "export", "-o", outFile}); err != nil {
+		t.Fatalf("audit export -o: %v", err)
+	}
+	if _, err := os.Stat(outFile); err != nil {
+		t.Errorf("expected export output file to exist: %v", err)
 	}
 }
 

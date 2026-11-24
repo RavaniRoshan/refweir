@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -456,6 +457,101 @@ func Open(cfg config.Config) (*App, error) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"events": events,
 		})
+	})
+
+	mux.HandleFunc("GET /api/v1/admin/audit-logs/export", func(w http.ResponseWriter, r *http.Request) {
+		if count, err := db.CountUsers(r.Context()); err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "Failed to verify administrator")
+			return
+		} else if count > 0 {
+			caller, err := auth.ResolveUser(r.Context(), db, r)
+			if err != nil {
+				writeAPIError(w, http.StatusUnauthorized, "Unauthorized: Administrator authentication required")
+				return
+			}
+			if caller.Role != "admin" {
+				writeAPIError(w, http.StatusForbidden, "Forbidden: Administrator role required")
+				return
+			}
+		}
+
+		limit := 10000
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			if l, err := strconv.Atoi(lStr); err == nil && l >= 0 {
+				limit = l
+			}
+		}
+		actor := r.URL.Query().Get("actor")
+		action := r.URL.Query().Get("action")
+		severity := audit.Severity(r.URL.Query().Get("severity"))
+
+		var sinceTime, untilTime time.Time
+		if sStr := r.URL.Query().Get("since"); sStr != "" {
+			if d, err := time.ParseDuration(sStr); err == nil {
+				sinceTime = time.Now().UTC().Add(-d)
+			} else if t, err := time.Parse(time.RFC3339, sStr); err == nil {
+				sinceTime = t
+			}
+		}
+		if uStr := r.URL.Query().Get("until"); uStr != "" {
+			if t, err := time.Parse(time.RFC3339, uStr); err == nil {
+				untilTime = t
+			}
+		}
+
+		events := audit.Export(actor, action, severity, sinceTime, untilTime, limit)
+		if events == nil {
+			events = []audit.Event{}
+		}
+
+		format := strings.ToLower(r.URL.Query().Get("format"))
+		if format == "" {
+			format = "ndjson"
+		}
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		switch format {
+		case "csv":
+			w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+			w.Header().Set("Content-Disposition", "attachment; filename=\"audit-logs.csv\"")
+			csvWriter := csv.NewWriter(w)
+			_ = csvWriter.Write([]string{"id", "timestamp", "actor", "actor_type", "action", "resource", "severity", "client_ip", "details"})
+			for _, ev := range events {
+				_ = csvWriter.Write([]string{
+					ev.ID,
+					ev.Timestamp.Format(time.RFC3339),
+					ev.Actor,
+					ev.ActorType,
+					ev.Action,
+					ev.Resource,
+					string(ev.Severity),
+					ev.ClientIP,
+					ev.Details,
+				})
+			}
+			csvWriter.Flush()
+			return
+
+		case "json":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"events": events,
+				"count":  len(events),
+			})
+			return
+
+		default: // "ndjson"
+			w.Header().Set("Content-Type", "application/x-ndjson")
+			for _, ev := range events {
+				b, err := json.Marshal(ev)
+				if err == nil {
+					b = append(b, '\n')
+					_, _ = w.Write(b)
+				}
+			}
+			return
+		}
 	})
 
 	// Autonomous Agent Activity Stream & Capability Leases

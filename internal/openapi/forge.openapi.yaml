@@ -607,6 +607,115 @@ paths:
         '200':
           description: Historical telemetry samples
 
+  /api/v1/admin/audit-logs:
+    get:
+      summary: Query security audit logs
+      description: Returns recent security, governance, and Git transport audit events with actor and action filtering (admin only).
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: actor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of audit log events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator privileges required
+
+  /api/v1/admin/audit-logs/export:
+    get:
+      summary: Export security audit logs
+      description: Streams enterprise compliance audit logs in NDJSON, CSV, or JSON format with time-range and severity filtering (admin only).
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ndjson, csv, json]
+            default: ndjson
+        - name: since
+          in: query
+          required: false
+          description: Duration (e.g. 24h, 7d) or RFC3339 timestamp
+          schema:
+            type: string
+        - name: until
+          in: query
+          required: false
+          description: RFC3339 timestamp
+          schema:
+            type: string
+        - name: actor
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: severity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [info, warning, critical]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10000
+      responses:
+        '200':
+          description: Streamed audit log export
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+            text/csv:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+                  count:
+                    type: integer
+        '401':
+          description: Authentication required
+        '403':
+          description: Administrator privileges required
+
   /api/v1/repos/{owner}/{name}/contents:
     post:
       summary: Direct file commit
@@ -992,3 +1101,34 @@ components:
           type: integer
         createdAt:
           type: string
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: aud_01M86861XTMQ32CASRTMNJW51K
+        timestamp:
+          type: string
+          format: date-time
+        actor:
+          type: string
+          example: alice
+        actorType:
+          type: string
+          enum: [user, agent, system]
+        action:
+          type: string
+          example: agent.lease_issued
+        resource:
+          type: string
+          example: acme/rocket
+        clientIp:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        details:
+          type: string
+        metadata:
+          type: object
