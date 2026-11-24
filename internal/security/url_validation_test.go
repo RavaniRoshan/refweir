@@ -1,7 +1,9 @@
 package security
 
 import (
+	"net/http"
 	"testing"
+	"time"
 )
 
 func TestValidateWebhookURL(t *testing.T) {
@@ -61,6 +63,31 @@ func TestValidateWebhookURL(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "rfc1918 10.0.0.0/8 rejected",
+			url:     "http://10.0.0.1:8080/webhook",
+			wantErr: true,
+		},
+		{
+			name:    "rfc1918 172.16.0.0/12 rejected",
+			url:     "http://172.16.0.1:8080/webhook",
+			wantErr: true,
+		},
+		{
+			name:    "rfc1918 192.168.0.0/16 rejected",
+			url:     "http://192.168.1.1:8080/webhook",
+			wantErr: true,
+		},
+		{
+			name:    "carrier-grade nat 100.64.0.0/10 rejected",
+			url:     "http://100.64.0.1:8080/webhook",
+			wantErr: true,
+		},
+		{
+			name:    "ipv6 unique local address (ULA) rejected",
+			url:     "http://[fd00::1]:8080/webhook",
+			wantErr: true,
+		},
+		{
 			name:    "ipv6 link local unicast metadata rejected",
 			url:     "http://[fe80::1]/test",
 			wantErr: true,
@@ -114,5 +141,25 @@ func TestValidateWebhookURL(t *testing.T) {
 				t.Errorf("ValidateWebhookURL(%q) err = %v, wantErr %v", tt.url, err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestSafeTransport_BlocksPrivateNetwork(t *testing.T) {
+	transport := NewSafeTransport(false)
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   2 * time.Second,
+	}
+
+	// Dialing an RFC 1918 private IP should be blocked by DialContext immediately without network wait
+	_, err := client.Get("http://10.255.255.1:8080/events")
+	if err == nil {
+		t.Errorf("expected error connecting to private network, got nil")
+	}
+
+	// Dialing loopback should also be blocked by default
+	_, err = client.Get("http://127.0.0.1:8080/events")
+	if err == nil {
+		t.Errorf("expected error connecting to loopback, got nil")
 	}
 }

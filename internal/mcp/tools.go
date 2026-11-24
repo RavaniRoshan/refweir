@@ -615,7 +615,9 @@ func BuiltinTools() []ToolDef {
 				if err != nil {
 					return nil, fmt.Errorf("failed to list check runs for merge evaluation: %w", err)
 				}
-				evalRes := engine.EvaluateMerge(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns)
+				evalRes := engine.EvaluateMergeWithOptions(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns, engine.MergeEvaluationOptions{
+					MergeMethod: method,
+				})
 				if !evalRes.Allowed {
 					var msgs []string
 					for _, b := range evalRes.Blockers {
@@ -1550,7 +1552,9 @@ func BuiltinTools() []ToolDef {
 				if err != nil {
 					return nil, fmt.Errorf("failed to list check runs for merge evaluation: %w", err)
 				}
-				evalRes := engine.EvaluateMerge(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns)
+				evalRes := engine.EvaluateMergeWithOptions(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "agent", "", approvedCount, checkRuns, engine.MergeEvaluationOptions{
+					MergeMethod: method,
+				})
 				if !evalRes.Allowed {
 					var msgs []string
 					for _, b := range evalRes.Blockers {

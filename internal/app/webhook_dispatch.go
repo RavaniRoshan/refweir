@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -76,11 +75,7 @@ func DispatchRepoWebhookWithGUID(ctx context.Context, db *store.DB, hook *store.
 			}
 			return security.ValidateWebhookURL(req.URL.String())
 		},
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: hook.InsecureSSL, // #nosec G402 -- controlled by repo webhook setting
-			},
-		},
+		Transport: security.NewSafeTransport(hook.InsecureSSL),
 	}
 
 	start := time.Now()

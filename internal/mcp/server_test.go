@@ -603,6 +603,124 @@ func TestMCP_CanonicalAgentLoopTools(t *testing.T) {
 	}
 }
 
+func TestMCP_MergePullRequest_LinearHistoryRuleset(t *testing.T) {
+	srv, db, git := setupTestMCP(t)
+	rwHandler := srv.Handler(false)
+	ctx := context.Background()
+
+	nsID := idgen.NewNS()
+	_ = db.CreateNamespace(ctx, store.Namespace{ID: nsID, Slug: "linearcorp", Name: "LinearCorp"})
+	repoID := idgen.NewRepo()
+	repo := store.Repo{
+		ID:               repoID,
+		NamespaceID:      nsID,
+		Name:             "linear-repo",
+		FullName:         "linearcorp/linear-repo",
+		DefaultBranch:    "main",
+		AllowMergeCommit: true,
+		AllowSquashMerge: true,
+	}
+	_ = db.CreateRepo(ctx, repo)
+
+	if _, err := git.Init("linearcorp", "linear-repo", "main"); err != nil {
+		t.Fatal(err)
+	}
+	sig := object.Signature{Name: "Linear Agent", Email: "agent@linear.dev", When: time.Now().UTC()}
+	c1, err := git.WriteFiles("linearcorp", "linear-repo", "main", []gitstore.FileChange{
+		{Path: "README.md", Content: "# Linear Repo\n"},
+	}, sig, "Initial commit")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create ruleset requiring linear history
+	_, _ = db.CreateRuleset(ctx, store.Ruleset{
+		ID:               idgen.New("rs"),
+		RepoID:           repoID,
+		Name:             "require-linear-history",
+		Kind:             "merge_branch",
+		Enforcement:      "active",
+		IncludedRefNames: []string{"~DEFAULT_BRANCH"},
+		Rules: []store.RulesetRule{
+			{
+				RuleType:   "require_linear_history",
+				Parameters: map[string]any{},
+			},
+		},
+	})
+
+	// Create branch
+	if _, err := git.CreateBranchRef("linearcorp", "linear-repo", "refs/heads/agent/patch", c1.String()); err != nil {
+		t.Fatal(err)
+	}
+	headSHA, err := git.WriteFiles("linearcorp", "linear-repo", "agent/patch", []gitstore.FileChange{
+		{Path: "patch.txt", Content: "Linear patch\n"},
+	}, sig, "Add patch")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create PR
+	pr := store.PullRequest{
+		ID:        idgen.New("pr"),
+		RepoID:    repoID,
+		Number:    1,
+		Title:     "Linear Patch PR",
+		HeadRef:   "agent/patch",
+		HeadSHA:   headSHA.String(),
+		BaseRef:   "main",
+		State:     "open",
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	if err := db.CreatePullRequest(ctx, &pr); err != nil {
+		t.Fatal(err)
+	}
+
+	// 1. Try merge with method: "merge" -> MUST FAIL because linear history prohibits merge commits!
+	rec := callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      101,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "merge_pull_request",
+			"arguments": map[string]any{
+				"ownerSlug":   "linearcorp",
+				"repoName":    "linear-repo",
+				"pullNumber":  1,
+				"mergeMethod": "merge",
+			},
+		},
+	})
+	var resp rpcResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	res := resp.Result.(map[string]any)
+	if res["isError"] != true {
+		t.Fatalf("expected merge to be blocked by linear history ruleset, got success: %+v", res)
+	}
+
+	// 2. Try merge with method: "squash" -> MUST SUCCEED because squash preserves linear history!
+	rec = callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      102,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "merge_pull_request",
+			"arguments": map[string]any{
+				"ownerSlug":   "linearcorp",
+				"repoName":    "linear-repo",
+				"pullNumber":  1,
+				"mergeMethod": "squash",
+			},
+		},
+	})
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	res = resp.Result.(map[string]any)
+	if res["isError"] == true {
+		t.Fatalf("expected squash merge to succeed under linear history ruleset: %+v", res)
+	}
+}
+
 func TestMCP_IssueTools(t *testing.T) {
 	srv, db, _ := setupTestMCP(t)
 	h := srv.Handler(false)
