@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Search,
   CheckCheck,
+  X,
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { Button } from '@/components/ui/Button'
@@ -830,8 +831,19 @@ git push origin feature/agent-capabilities`
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter pull requests..."
-                  className="w-full h-8 pl-9 pr-3 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
+                  className="w-full h-8 pl-9 pr-8 text-xs bg-input border border-border rounded-md text-foreground placeholder:text-muted-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title="Clear search"
+                    aria-label="Clear search input"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -903,48 +915,61 @@ git push origin feature/agent-capabilities`
 
                     <div className="max-w-md mx-auto space-y-1">
                       <h3 className="text-sm font-semibold text-foreground">
-                        {activeFilter === 'open'
+                        {searchQuery
+                          ? 'No pull requests match your search'
+                          : activeFilter === 'open'
                           ? 'No open pull requests'
                           : activeFilter === 'merged'
                           ? 'No closed pull requests'
                           : 'No pull requests found'}
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Pull requests allow team members and autonomous AI agents to propose features and enforce enterprise branch protection rulesets.
+                        {searchQuery
+                          ? 'Try adjusting your search terms or filters.'
+                          : 'Pull requests allow team members and autonomous AI agents to propose features and enforce enterprise branch protection rulesets.'}
                       </p>
                     </div>
 
-                    {/* Push branch command box */}
-                    <div className="max-w-md mx-auto text-left bg-secondary/40 border border-border rounded-md p-3 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1.5 font-mono">
-                          <Terminal className="w-3.5 h-3.5 text-primary" />
-                          <span>Push a branch to open a pull request</span>
-                        </span>
-                        <button
-                          onClick={handleCopyCli}
-                          className="hover:text-foreground transition-colors flex items-center gap-1 text-[10px] text-primary"
-                        >
-                          {copiedCli ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedCli ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                      <pre className="font-mono text-xs text-foreground leading-relaxed overflow-x-auto whitespace-pre p-2 bg-background rounded border border-border">
-                        {samplePushCommand}
-                      </pre>
-                    </div>
-
-                    <div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="gap-1.5 text-xs mx-auto"
-                      >
-                        <GitPullRequest className="w-3.5 h-3.5" />
-                        <span>Create pull request</span>
+                    {searchQuery ? (
+                      <Button variant="outline" size="sm" onClick={() => setSearchQuery('')} className="gap-1.5 text-xs mx-auto">
+                        <X className="w-3 h-3" />
+                        <span>Clear search query</span>
                       </Button>
-                    </div>
+                    ) : (
+                      <>
+                        {/* Push branch command box */}
+                        <div className="max-w-md mx-auto text-left bg-secondary/40 border border-border rounded-md p-3 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-1.5 font-mono">
+                              <Terminal className="w-3.5 h-3.5 text-primary" />
+                              <span>Push a branch to open a pull request</span>
+                            </span>
+                            <button
+                              onClick={handleCopyCli}
+                              className="hover:text-foreground transition-colors flex items-center gap-1 text-[10px] text-primary"
+                            >
+                              {copiedCli ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
+                              <span>{copiedCli ? 'Copied' : 'Copy'}</span>
+                            </button>
+                          </div>
+                          <pre className="font-mono text-xs text-foreground leading-relaxed overflow-x-auto whitespace-pre p-2 bg-background rounded border border-border">
+                            {samplePushCommand}
+                          </pre>
+                        </div>
+
+                        <div>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="gap-1.5 text-xs mx-auto"
+                          >
+                            <GitPullRequest className="w-3.5 h-3.5" />
+                            <span>Create pull request</span>
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   filteredPrs.map((pr) => (

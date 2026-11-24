@@ -95,4 +95,20 @@ describe('PullRequestsView Component', () => {
     expect(screen.getByText('Assignees')).toBeInTheDocument()
     expect(screen.getByText('Ruleset Protection')).toBeInTheDocument()
   })
+
+  it('allows filtering pull requests by search query and clearing the search', async () => {
+    render(<PullRequestsView />)
+
+    expect(await screen.findByText('feat: add capability lease protocol')).toBeInTheDocument()
+
+    const searchInput = screen.getByPlaceholderText(/filter pull requests/i)
+    fireEvent.change(searchInput, { target: { value: 'nonexistent-pr-xyz' } })
+
+    expect(screen.getByText('No pull requests match your search')).toBeInTheDocument()
+
+    const clearBtn = screen.getByRole('button', { name: 'Clear search query' })
+    fireEvent.click(clearBtn)
+
+    expect(await screen.findByText('feat: add capability lease protocol')).toBeInTheDocument()
+  })
 })
