@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// CLI is the runner for the origin CLI client.
+// CLI is the runner for the refweir CLI client.
 type CLI struct {
 	Endpoint    string
 	Token       string
@@ -28,7 +28,7 @@ type CLI struct {
 func New() *CLI {
 	endpoint := os.Getenv("REFWEIR_ENDPOINT")
 	if endpoint == "" {
-		endpoint = "http://localhost:8080/v1/origin"
+		endpoint = "http://localhost:8080"
 	}
 	endpoint = strings.TrimRight(endpoint, "/")
 
@@ -110,7 +110,11 @@ Options:
 
 // Request helper
 func (c *CLI) doRequest(method, path string, body any) ([]byte, int, error) {
-	url := c.Endpoint + path
+	base := strings.TrimRight(c.Endpoint, "/")
+	if strings.HasPrefix(path, "/api/") {
+		base = strings.TrimSuffix(base, "/v1/origin")
+	}
+	url := base + path
 	var bodyReader io.Reader
 	if body != nil {
 		raw, err := json.Marshal(body)

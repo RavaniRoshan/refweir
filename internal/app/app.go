@@ -4207,6 +4207,12 @@ func Open(cfg config.Config) (*App, error) {
 			mux.ServeHTTP(w, r2)
 			return
 		}
+		if strings.HasPrefix(r.URL.Path, "/namespaces/") {
+			r2 := r.Clone(r.Context())
+			r2.URL.Path = "/v1/origin" + r.URL.Path
+			mux.ServeHTTP(w, r2)
+			return
+		}
 		mux.ServeHTTP(w, r)
 	})
 
