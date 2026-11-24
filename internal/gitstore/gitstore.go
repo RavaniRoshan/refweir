@@ -109,7 +109,24 @@ func EnsureHooks(repoPath string) error {
 		}
 	}
 
-	content := fmt.Sprintf("#!/bin/sh\nif command -v \"%s\" >/dev/null 2>&1; then\n  exec \"%s\" hook pre-receive\nfi\nexit 0\n", exe, exe)
+	content := fmt.Sprintf(`#!/bin/sh
+# Refweir Enterprise Pre-Receive Hook
+# Multi-tier fallback binary detection
+
+if [ -n "$REFWEIRD_BIN" ] && [ -x "$REFWEIRD_BIN" ]; then
+  exec "$REFWEIRD_BIN" hook pre-receive
+elif [ -n "%s" ] && [ -x "%s" ]; then
+  exec "%s" hook pre-receive
+elif command -v "%s" >/dev/null 2>&1; then
+  exec "%s" hook pre-receive
+elif command -v refweird >/dev/null 2>&1; then
+  exec refweird hook pre-receive
+elif command -v refweir >/dev/null 2>&1; then
+  exec refweir hook pre-receive
+fi
+
+exit 0
+`, exe, exe, exe, exe, exe)
 	return os.WriteFile(preReceive, []byte(content), 0o750) // #nosec G306,G703 -- pre-receive hook script must be executable; path is validated
 }
 

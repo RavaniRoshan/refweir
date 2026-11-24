@@ -869,3 +869,23 @@ func TestCLI_ClusterCommands(t *testing.T) {
 		t.Errorf("expected promoted in stdout: %s", stdout.String())
 	}
 }
+
+func TestCLI_HookCommand(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Stdin:  strings.NewReader(""),
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	// 1. Valid hook invocation with empty stdin (no refs to process)
+	if err := c.Run([]string{"hook", "pre-receive"}); err != nil {
+		t.Fatalf("hook pre-receive: %v", err)
+	}
+
+	// 2. Unknown hook subcommand
+	if err := c.Run([]string{"hook", "unknown"}); err == nil {
+		t.Fatal("expected error for unknown hook subcommand")
+	}
+}
+

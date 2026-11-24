@@ -3,6 +3,7 @@ package gitstore
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	git "github.com/go-git/go-git/v6"
@@ -213,3 +214,41 @@ func TestStore_Delete_Rename_Locks(t *testing.T) {
 		t.Fatal("expected project-b to be removed after Delete")
 	}
 }
+
+func TestEnsureHooks_ScriptAndPermissions(t *testing.T) {
+	tmpDir := t.TempDir()
+	if err := EnsureHooks(tmpDir); err != nil {
+		t.Fatalf("EnsureHooks: %v", err)
+	}
+
+	hookPath := filepath.Join(tmpDir, "hooks", "pre-receive")
+	info, err := os.Stat(hookPath)
+	if err != nil {
+		t.Fatalf("Stat hooks/pre-receive: %v", err)
+	}
+	if info.Mode()&0o111 == 0 {
+		t.Errorf("expected hook to be executable, got mode: %v", info.Mode())
+	}
+
+	content, err := os.ReadFile(hookPath)
+	if err != nil {
+		t.Fatalf("ReadFile hooks/pre-receive: %v", err)
+	}
+	str := string(content)
+	if !strings.Contains(str, "#!/bin/sh") {
+		t.Error("expected shebang in hook script")
+	}
+	if !strings.Contains(str, "REFWEIRD_BIN") {
+		t.Error("expected REFWEIRD_BIN in hook script")
+	}
+	if !strings.Contains(str, "hook pre-receive") {
+		t.Error("expected 'hook pre-receive' invocation in hook script")
+	}
+	if !strings.Contains(str, "command -v refweird") {
+		t.Error("expected command -v refweird in hook script")
+	}
+	if !strings.Contains(str, "command -v refweir") {
+		t.Error("expected command -v refweir in hook script")
+	}
+}
+

@@ -162,7 +162,7 @@ Issue, revoke, and verify cryptographically signed agent capability leases suppo
 refweir lease issue --agent agent:worker-1 -R acme/rocket --prefix refs/heads/agent/* --ttl 30m
 
 # Issue an asymmetric Ed25519 capability lease (generates keypair and signs locally)
-refweir lease issue --agent agent:cursor -R acme/rocket --algorithm ed25519 --ttl 15m
+refweir lease issue --agent agent:builder -R acme/rocket --algorithm ed25519 --ttl 15m
 
 # Issue an Ed25519 lease using a designated private key file
 refweir lease issue --agent agent:claude -R acme/rocket --algorithm ed25519 --key-file ~/.refweir/agent_ed25519.key
@@ -245,3 +245,13 @@ refweir cluster snapshot [--json]
 # Promote a standby replica to cluster primary during planned failover or disaster recovery
 refweir cluster promote --yes
 ```
+
+### 13. `refweir hook`
+
+Run internal Git hook handlers invoked during Git transport operations (such as Smart-HTTP and SSH push enforcement).
+
+```bash
+# Execute Git pre-receive verification against standard input ref updates
+refweir hook pre-receive
+```
+

@@ -20,6 +20,7 @@ import (
 	"strings"
 	"time"
 
+	"refweir.dev/internal/security"
 	"refweir.dev/pkg/agentlease"
 )
 
@@ -29,6 +30,7 @@ type CLI struct {
 	Token       string
 	DefaultRepo string
 	HTTPClient  *http.Client
+	Stdin       io.Reader
 	Stdout      io.Writer
 	Stderr      io.Writer
 }
@@ -49,6 +51,7 @@ func New() *CLI {
 		Token:       token,
 		DefaultRepo: defaultRepo,
 		HTTPClient:  http.DefaultClient,
+		Stdin:       os.Stdin,
 		Stdout:      os.Stdout,
 		Stderr:      os.Stderr,
 	}
@@ -94,6 +97,8 @@ func (c *CLI) Run(args []string) error {
 		return c.runAudit(args[1:])
 	case "cluster":
 		return c.runCluster(args[1:])
+	case "hook":
+		return c.runHook(args[1:])
 	case "api":
 		return c.runAPI(args[1:])
 	case "conformance":
@@ -116,8 +121,9 @@ Commands:
   refweir app                Manage apps
   refweir doctor             Diagnose daemon connectivity, auth, and local environment
   refweir completion <shell> Generate shell autocompletion script (bash, zsh, fish)
-  refweir audit              Inspect and export administrative audit trail (list, export) (list)
+  refweir audit              Inspect and export administrative audit trail (list, export)
   refweir cluster            Manage cluster replication and disaster recovery (status, checkpoint, snapshot, promote)
+  refweir hook <action>      Run Git hook handler (pre-receive)
   refweir api <endpoint>     Make an authenticated request to REST API
   refweir conformance        Run API conformance test suite against refweird
 
@@ -1770,7 +1776,7 @@ _refweir_completion() {
     local cur prev words cword
     _init_completion || return
 
-    local commands="auth repo pr issue webhook lease app doctor completion audit api conformance --version --help"
+    local commands="auth repo pr issue webhook lease app doctor completion audit cluster hook api conformance --version --help"
 
     if [ $cword -eq 1 ]; then
         COMPREPLY=( $(compgen -W "${commands}" -- "$cur") )
@@ -1802,6 +1808,9 @@ _refweir_completion() {
         cluster)
             COMPREPLY=( $(compgen -W "status checkpoint snapshot promote" -- "$cur") )
             ;;
+        hook)
+            COMPREPLY=( $(compgen -W "pre-receive" -- "$cur") )
+            ;;
         doctor)
             COMPREPLY=( $(compgen -W "--json" -- "$cur") )
             ;;
@@ -1830,6 +1839,7 @@ _refweir() {
         'completion:Generate shell completion script'
         'audit:Inspect administrative audit trail'
         'cluster:Manage cluster replication and disaster recovery'
+        'hook:Run Git hook handler'
         'api:Make authenticated request to REST API'
         'conformance:Run API conformance test suite'
     )
@@ -1867,11 +1877,27 @@ complete -c refweir -n "__fish_use_subcommand" -a "doctor" -d "Diagnose daemon c
 complete -c refweir -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
 complete -c refweir -n "__fish_use_subcommand" -a "audit" -d "Inspect administrative audit trail"
 complete -c refweir -n "__fish_use_subcommand" -a "cluster" -d "Manage cluster replication and disaster recovery"
+complete -c refweir -n "__fish_use_subcommand" -a "hook" -d "Run Git hook handler"
 complete -c refweir -n "__fish_use_subcommand" -a "api" -d "Make authenticated REST request"
 complete -c refweir -n "__fish_use_subcommand" -a "conformance" -d "Run API conformance suite"
 `
 	fmt.Fprint(c.Stdout, script)
 	return nil
+}
+
+func (c *CLI) runHook(args []string) error {
+	if len(args) > 0 && args[0] == "pre-receive" {
+		in := c.Stdin
+		if in == nil {
+			in = os.Stdin
+		}
+		errOut := c.Stderr
+		if errOut == nil {
+			errOut = os.Stderr
+		}
+		return security.PreReceiveHook(in, errOut)
+	}
+	return errors.New("usage: refweir hook pre-receive")
 }
 
 func (c *CLI) runAudit(args []string) error {

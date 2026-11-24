@@ -1261,7 +1261,7 @@ paths:
                                               createdAt: "2026-08-01T09:30:00Z"
                                               updatedAt: "2026-08-02T14:45:00Z"
                                               pushedAt: "2026-08-02T14:45:00Z"
-                                              cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                              cloneUrl: https://refweir.dev/git/acme/rocket.git
                                         repoSelectionMode: selected
                 "400":
                     description: Bad Request
@@ -3184,7 +3184,7 @@ paths:
                                               createdAt: "2026-08-01T09:30:00Z"
                                               updatedAt: "2026-08-02T14:45:00Z"
                                               pushedAt: "2026-08-02T14:45:00Z"
-                                              cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                              cloneUrl: https://refweir.dev/git/acme/rocket.git
                 "400":
                     description: Bad Request
                     content:
@@ -3271,7 +3271,7 @@ paths:
                                         createdAt: "2026-08-01T09:30:00Z"
                                         updatedAt: "2026-08-02T14:45:00Z"
                                         pushedAt: "2026-08-02T14:45:00Z"
-                                        cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                        cloneUrl: https://refweir.dev/git/acme/rocket.git
                 "400":
                     description: Bad Request
                     content:
@@ -3360,7 +3360,7 @@ paths:
                                         createdAt: "2026-08-01T09:30:00Z"
                                         updatedAt: "2026-08-02T14:45:00Z"
                                         pushedAt: "2026-08-02T14:45:00Z"
-                                        cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                        cloneUrl: https://refweir.dev/git/acme/rocket.git
                 "400":
                     description: Bad Request
                     content:
@@ -3499,7 +3499,7 @@ paths:
                                         createdAt: "2026-08-01T09:30:00Z"
                                         updatedAt: "2026-08-02T14:45:00Z"
                                         pushedAt: "2026-08-02T14:45:00Z"
-                                        cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                        cloneUrl: https://refweir.dev/git/acme/rocket.git
                                         visibility: private
                                         allowMergeCommit: false
                                         allowSquashMerge: true
@@ -8095,7 +8095,7 @@ paths:
                                             createdAt: "2026-08-01T09:30:00Z"
                                             updatedAt: "2026-08-02T15:00:00Z"
                                             pushedAt: "2026-08-02T14:45:00Z"
-                                            cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                                            cloneUrl: https://refweir.dev/git/acme/rocket.git
                                             mirror:
                                                 source: github
                                                 sourceId: R_kgDOAbc123
@@ -12668,7 +12668,7 @@ paths:
                             examples:
                                 getRepoTarball:
                                     value:
-                                        downloadUrl: https://artifacts.origin.cursor.com/tarballs/0192f7a4-6c1e-7b3a-9f21-3d54c9a7e6b0/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4.tar.gz?Expires=1767225600&Signature=EXAMPLE&Key-Pair-Id=KEXAMPLE123
+                                        downloadUrl: https://artifacts.refweir.dev/tarballs/0192f7a4-6c1e-7b3a-9f21-3d54c9a7e6b0/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4.tar.gz?Expires=1767225600&Signature=EXAMPLE&Key-Pair-Id=KEXAMPLE123
                                         sha: 9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                 "400":
                     description: Bad Request
@@ -12768,7 +12768,7 @@ paths:
                             examples:
                                 getRepoTarball:
                                     value:
-                                        downloadUrl: https://artifacts.origin.cursor.com/tarballs/0192f7a4-6c1e-7b3a-9f21-3d54c9a7e6b0/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4.tar.gz?Expires=1767225600&Signature=EXAMPLE&Key-Pair-Id=KEXAMPLE123
+                                        downloadUrl: https://artifacts.refweir.dev/tarballs/0192f7a4-6c1e-7b3a-9f21-3d54c9a7e6b0/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4.tar.gz?Expires=1767225600&Signature=EXAMPLE&Key-Pair-Id=KEXAMPLE123
                                         sha: 9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                 "400":
                     description: Bad Request
@@ -19427,7 +19427,7 @@ components:
                     defaultBranch: main
                     createdAt: "2026-08-01T09:30:00Z"
                     updatedAt: "2026-08-01T09:30:00Z"
-                    cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                    cloneUrl: https://refweir.dev/git/acme/rocket.git
         RepositoryDeletedWebhookPayload:
             type: object
             properties:
@@ -19496,7 +19496,7 @@ components:
                     defaultBranch: release
                     createdAt: "2026-08-01T09:30:00Z"
                     updatedAt: "2026-08-03T08:15:00Z"
-                    cloneUrl: https://origin.cursor.com/git/acme/rocket.git
+                    cloneUrl: https://refweir.dev/git/acme/rocket.git
                     pushedAt: "2026-08-02T14:45:00Z"
         RepositoryMirror:
             type: object
