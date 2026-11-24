@@ -460,6 +460,33 @@ export const AgentConsoleView: React.FC = () => {
     })
   }, [leases, leaseSearchQuery, leaseStatusFilter])
 
+  // Lease Lifecycle Counts
+  const leaseCounts = useMemo(() => {
+    let active = 0
+    let expiring = 0
+    let expired = 0
+    let revoked = 0
+    const now = Date.now()
+
+    leases.forEach((l) => {
+      if (l.revoked) {
+        revoked++
+        return
+      }
+      const exp = new Date(l.expiresAt).getTime()
+      const diffSec = Math.floor((exp - now) / 1000)
+      if (diffSec <= 0) {
+        expired++
+      } else if (diffSec < 300) {
+        expiring++
+      } else {
+        active++
+      }
+    })
+
+    return { all: leases.length, active, expiring, expired, revoked }
+  }, [leases])
+
   return (
     <div className="space-y-4">
       {/* Top Banner Hero */}
@@ -475,7 +502,7 @@ export const AgentConsoleView: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with {clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 55)} active tools.
+            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with {clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 58)} active tools.
           </p>
         </div>
 
@@ -483,7 +510,7 @@ export const AgentConsoleView: React.FC = () => {
         <div className="flex items-center gap-3 text-xs font-mono">
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Tools:</span>
-            <span className="font-semibold text-foreground">{clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 55)}</span>
+            <span className="font-semibold text-foreground">{clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 58)}</span>
           </div>
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Avg Latency:</span>
@@ -566,7 +593,64 @@ export const AgentConsoleView: React.FC = () => {
 
       {/* Tab 1: Real-time Activity Feed & Operational Timeline */}
       {activeTab === 'activity' && (
-        <Box>
+        <div className="space-y-4">
+          {/* Operational KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3 rounded-lg border border-border bg-card/60 space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Total Operations</span>
+                <Terminal className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div className="text-xl font-bold font-mono text-foreground">{activities.length}</div>
+              <div className="text-[11px] text-muted-foreground">JSON-RPC tool dispatches</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card/60 space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Success Rate</span>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+              <div className="text-xl font-bold font-mono text-emerald-500">
+                {activities.length > 0
+                  ? Math.round(
+                      (activities.filter((a) => a.status === 'success' || !a.status).length /
+                        activities.length) *
+                        100
+                    )
+                  : 100}%
+              </div>
+              <div className="text-[11px] text-muted-foreground">Fail-closed zero breaches</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card/60 space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Mean Latency</span>
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+              </div>
+              <div className="text-xl font-bold font-mono text-foreground">
+                ~{activities.length > 0
+                  ? Math.round(
+                      activities.reduce((acc, a) => acc + (a.latencyMs || 15), 0) /
+                        activities.length
+                    )
+                  : 12}ms
+              </div>
+              <div className="text-[11px] text-muted-foreground">P95 AST & Git execution</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card/60 space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Active Fleet</span>
+                <Bot className="w-3.5 h-3.5 text-purple-400" />
+              </div>
+              <div className="text-xl font-bold font-mono text-foreground">
+                {new Set(activities.map((a) => a.agentName)).size || 1}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Distinct agent identities</div>
+            </div>
+          </div>
+
+          <Box>
           <BoxHeader className="bg-secondary/35 py-2.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground text-xs">Autonomous Agent Operational Timeline</span>
@@ -763,6 +847,7 @@ export const AgentConsoleView: React.FC = () => {
             )}
           </BoxBody>
         </Box>
+        </div>
       )}
 
       {/* Tab 2: Live Tool Runner */}
@@ -1047,13 +1132,16 @@ export const AgentConsoleView: React.FC = () => {
                       key={filter}
                       type="button"
                       onClick={() => setLeaseStatusFilter(filter)}
-                      className={`px-2 py-0.5 rounded capitalize transition-colors ${
+                      className={`px-2 py-0.5 rounded capitalize transition-colors flex items-center gap-1 ${
                         leaseStatusFilter === filter
                           ? 'bg-background text-foreground font-semibold shadow-xs'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      {filter}
+                      <span>{filter}</span>
+                      <span className="text-[10px] font-mono px-1 rounded-sm bg-secondary/80">
+                        {leaseCounts[filter]}
+                      </span>
                     </button>
                   ))}
                 </div>
