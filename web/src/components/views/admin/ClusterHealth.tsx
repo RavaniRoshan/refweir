@@ -16,6 +16,9 @@ import {
   TrendingUp,
   BarChart3,
   Clock,
+  ShieldCheck,
+  Archive,
+  AlertCircle,
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -30,11 +33,19 @@ import {
 import { Box, BoxHeader, BoxBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { getClusterMetrics, type ClusterMetrics } from '@/lib/api'
+import {
+  getClusterMetrics,
+  triggerClusterCheckpoint,
+  triggerClusterSnapshot,
+  type ClusterMetrics,
+} from '@/lib/api'
 
 export const ClusterHealth: React.FC = () => {
   const [metrics, setMetrics] = useState<ClusterMetrics | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [checkpointing, setCheckpointing] = useState(false)
+  const [snapshotting, setSnapshotting] = useState(false)
+  const [actionStatus, setActionStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [copiedAction, setCopiedAction] = useState<string | null>(null)
   const [chartMode, setChartMode] = useState<'throughput' | 'resources'>('throughput')
 
@@ -45,6 +56,46 @@ export const ClusterHealth: React.FC = () => {
       setMetrics(data)
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const handleCheckpoint = async () => {
+    setCheckpointing(true)
+    setActionStatus(null)
+    try {
+      const res = await triggerClusterCheckpoint()
+      setActionStatus({
+        type: 'success',
+        message: `WAL Checkpointed (${res.mode || 'PASSIVE'}). In-memory transactions safely flushed to disk.`,
+      })
+      await loadMetrics()
+    } catch (err: any) {
+      setActionStatus({
+        type: 'error',
+        message: err?.message || 'Failed to trigger WAL checkpoint',
+      })
+    } finally {
+      setCheckpointing(false)
+    }
+  }
+
+  const handleSnapshot = async () => {
+    setSnapshotting(true)
+    setActionStatus(null)
+    try {
+      const snap = await triggerClusterSnapshot()
+      setActionStatus({
+        type: 'success',
+        message: `Snapshot created: ${snap.filename} (${formatBytes(snap.sizeBytes)}) at WAL seq ${snap.walSequence}.`,
+      })
+      await loadMetrics()
+    } catch (err: any) {
+      setActionStatus({
+        type: 'error',
+        message: err?.message || 'Failed to capture atomic snapshot',
+      })
+    } finally {
+      setSnapshotting(false)
     }
   }
 
@@ -396,7 +447,7 @@ export const ClusterHealth: React.FC = () => {
               <Bot className="w-4 h-4 text-primary" />
               <span className="text-xs font-semibold text-foreground">MCP Agent Runtime</span>
             </div>
-            <Badge variant="agent" className="text-[10px] font-mono py-0">34 Tools</Badge>
+            <Badge variant="agent" className="text-[10px] font-mono py-0">55 Tools</Badge>
           </BoxHeader>
           <BoxBody className="p-3.5 space-y-2.5">
             <p className="text-xs text-muted-foreground">
@@ -452,6 +503,72 @@ export const ClusterHealth: React.FC = () => {
         </Box>
       </div>
 
+      {/* Subsystem 4: High Availability & Disaster Recovery Controls */}
+      <Box>
+        <BoxHeader className="bg-secondary/35 py-2.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Disaster Recovery & Cluster Operations</span>
+            <Badge variant="outline" className="text-[10px] font-mono">
+              Live WAL & Snapshot Engine
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCheckpoint}
+              disabled={checkpointing || snapshotting}
+              className="gap-1.5 text-xs"
+            >
+              <Database className={`w-3.5 h-3.5 ${checkpointing ? 'animate-spin' : ''}`} />
+              <span>{checkpointing ? 'Checkpointing...' : 'Run WAL Checkpoint'}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSnapshot}
+              disabled={checkpointing || snapshotting}
+              className="gap-1.5 text-xs"
+            >
+              <Archive className={`w-3.5 h-3.5 ${snapshotting ? 'animate-spin' : ''}`} />
+              <span>{snapshotting ? 'Snapshotting...' : 'Capture Atomic Snapshot'}</span>
+            </Button>
+          </div>
+        </BoxHeader>
+        {actionStatus && (
+          <div
+            className={`px-4 py-2.5 text-xs border-b border-border flex items-center justify-between gap-2 ${
+              actionStatus.type === 'success'
+                ? 'bg-success/10 text-success border-success/20'
+                : 'bg-destructive/10 text-destructive border-destructive/20'
+            }`}
+          >
+            <div className="flex items-center gap-2 font-mono">
+              {actionStatus.type === 'success' ? (
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              )}
+              <span>{actionStatus.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActionStatus(null)}
+              className="text-xs hover:opacity-80 transition-opacity"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+        <BoxBody className="p-3.5 text-xs text-muted-foreground space-y-1">
+          <p>
+            Trigger on-demand passive WAL checkpoints to consolidate storage without blocking active readers or capability leases.
+            Capturing an atomic snapshot uses SQLite <code className="text-foreground">VACUUM INTO</code> with SHA-256 integrity verification for zero-downtime backups.
+          </p>
+        </BoxBody>
+      </Box>
+
       {/* Operator Scrape & Quick Actions Bar */}
       <Box>
         <BoxHeader className="bg-secondary/35 py-2.5">
@@ -502,7 +619,7 @@ export const ClusterHealth: React.FC = () => {
                 <span className="text-muted-foreground text-[11px]">OpenAPI 3.1 Contract</span>
               </div>
               <Badge variant="outline" className="text-[10px] py-0 font-mono">
-                34 Routes
+                123 Operations
               </Badge>
             </div>
           </div>

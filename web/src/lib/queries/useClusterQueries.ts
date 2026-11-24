@@ -1,5 +1,14 @@
-import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { fetchClusterInfo, getClusterMetrics, fetchLiveServerStatus } from '@/lib/api';
+import { useQuery, useMutation, type QueryClient, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
+import {
+  fetchClusterInfo,
+  getClusterMetrics,
+  fetchLiveServerStatus,
+  fetchClusterReplication,
+  triggerClusterCheckpoint,
+  triggerClusterSnapshot,
+  type ClusterSnapshotMetadata,
+  type ClusterReplicationStatus,
+} from '@/lib/api';
 import type { ClusterSystemInfo, ClusterMetrics } from '@/lib/types';
 import { useSafeQueryClient } from './useRepoQueries';
 import { queryKeys } from './queryKeys';
@@ -43,6 +52,55 @@ export function useServerStatusQuery(
     {
       queryKey: queryKeys.cluster.status,
       queryFn: ({ signal }) => fetchLiveServerStatus(signal),
+      ...options,
+    },
+    queryClient
+  );
+}
+
+export function useClusterReplicationQuery(
+  options?: Partial<UseQueryOptions<ClusterReplicationStatus, Error>>,
+  client?: QueryClient
+) {
+  const queryClient = useSafeQueryClient(client);
+  return useQuery(
+    {
+      queryKey: ['cluster', 'replication'],
+      queryFn: ({ signal }) => fetchClusterReplication(signal),
+      ...options,
+    },
+    queryClient
+  );
+}
+
+export function useClusterCheckpointMutation(
+  options?: UseMutationOptions<{ status: string; mode?: string }, Error, void>,
+  client?: QueryClient
+) {
+  const queryClient = useSafeQueryClient(client);
+  return useMutation(
+    {
+      mutationFn: () => triggerClusterCheckpoint(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.cluster.metrics });
+      },
+      ...options,
+    },
+    queryClient
+  );
+}
+
+export function useClusterSnapshotMutation(
+  options?: UseMutationOptions<ClusterSnapshotMetadata, Error, void>,
+  client?: QueryClient
+) {
+  const queryClient = useSafeQueryClient(client);
+  return useMutation(
+    {
+      mutationFn: () => triggerClusterSnapshot(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.cluster.metrics });
+      },
       ...options,
     },
     queryClient

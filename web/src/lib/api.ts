@@ -1062,6 +1062,72 @@ export async function getMetricsHistory(signal?: AbortSignal): Promise<import('.
   return mockClusterMetrics.history || []
 }
 
+export interface ClusterSnapshotMetadata {
+  filename: string
+  walSequence: number
+  checksum: string
+  sizeBytes: number
+  createdAt: string
+}
+
+export interface ClusterReplicationStatus {
+  role: 'primary' | 'standby'
+  nodeId?: string
+  term?: number
+  peers?: string[]
+  walSequence?: number
+  lastSync?: string
+  inSync?: boolean
+}
+
+export async function triggerClusterCheckpoint(signal?: AbortSignal): Promise<{ status: string; mode?: string }> {
+  if (isDemoModeActive()) {
+    return { status: 'checkpointed', mode: 'PASSIVE' }
+  }
+  const res = await fetch('/api/v1/cluster/checkpoint', {
+    method: 'POST',
+    signal,
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => res.statusText)
+    throw new Error(`WAL checkpoint failed (${res.status}): ${errText}`)
+  }
+  return res.json()
+}
+
+export async function triggerClusterSnapshot(signal?: AbortSignal): Promise<ClusterSnapshotMetadata> {
+  if (isDemoModeActive()) {
+    return {
+      filename: `snapshot_000001_${Math.floor(Date.now() / 1000)}.db`,
+      walSequence: 100,
+      checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      sizeBytes: 823296,
+      createdAt: new Date().toISOString(),
+    }
+  }
+  const res = await fetch('/api/v1/cluster/snapshot', {
+    method: 'POST',
+    signal,
+  })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => res.statusText)
+    throw new Error(`Cluster snapshot failed (${res.status}): ${errText}`)
+  }
+  return res.json()
+}
+
+export async function fetchClusterReplication(signal?: AbortSignal): Promise<ClusterReplicationStatus> {
+  if (isDemoModeActive()) {
+    return { role: 'primary', nodeId: 'node-primary-1', term: 1, peers: [], inSync: true }
+  }
+  const res = await fetch('/api/v1/cluster/replication', { signal })
+  if (!res.ok) {
+    const errText = await res.text().catch(() => res.statusText)
+    throw new Error(`Replication status failed (${res.status}): ${errText}`)
+  }
+  return res.json()
+}
+
 export async function getSsoProviders(): Promise<SsoProvider[]> {
   if (isDemoModeActive()) {
     return mockSsoProviders

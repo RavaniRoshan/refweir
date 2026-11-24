@@ -8,6 +8,8 @@ vi.mock('@/lib/api', async () => {
   return {
     ...actual,
     getClusterMetrics: vi.fn(),
+    triggerClusterCheckpoint: vi.fn(),
+    triggerClusterSnapshot: vi.fn(),
   }
 })
 
@@ -101,5 +103,48 @@ describe('ClusterHealth Admin View', () => {
     const throughputBtn = screen.getByRole('button', { name: /Throughput/i })
     fireEvent.click(throughputBtn)
     expect(screen.getByTestId('telemetry-chart')).toBeInTheDocument()
+  })
+
+  it('triggers on-demand WAL checkpoint and displays confirmation badge', async () => {
+    vi.mocked(api.triggerClusterCheckpoint).mockResolvedValueOnce({
+      status: 'checkpointed',
+      mode: 'PASSIVE',
+    })
+
+    render(<ClusterHealth />)
+    await waitFor(() => {
+      expect(screen.getByText('Primary Forge Leader')).toBeInTheDocument()
+    })
+
+    const checkpointBtn = screen.getByRole('button', { name: /Run WAL Checkpoint/i })
+    fireEvent.click(checkpointBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText(/WAL Checkpointed/i)).toBeInTheDocument()
+    })
+    expect(api.triggerClusterCheckpoint).toHaveBeenCalledTimes(1)
+  })
+
+  it('triggers atomic snapshot and displays filename and size', async () => {
+    vi.mocked(api.triggerClusterSnapshot).mockResolvedValueOnce({
+      filename: 'snapshot_000001_1795504266.db',
+      walSequence: 42,
+      checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      sizeBytes: 823296,
+      createdAt: '2026-11-24T07:11:06Z',
+    })
+
+    render(<ClusterHealth />)
+    await waitFor(() => {
+      expect(screen.getByText('Primary Forge Leader')).toBeInTheDocument()
+    })
+
+    const snapshotBtn = screen.getByRole('button', { name: /Capture Atomic Snapshot/i })
+    fireEvent.click(snapshotBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText(/snapshot_000001_1795504266.db/i)).toBeInTheDocument()
+    })
+    expect(api.triggerClusterSnapshot).toHaveBeenCalledTimes(1)
   })
 })
