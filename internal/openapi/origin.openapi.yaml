@@ -3,11 +3,11 @@
 
 openapi: 3.1.0
 info:
-    title: Cursor Origin API
-    description: Public third-party-facing Origin API. Each operation's `x-origin-scopes` extension lists the credential types that can call it in `tokenTypes` (`app`, `installation`, or `user`) and the scopes it requires in `scopes`; `ambient` set to true means every listed scope comes with the credential itself, so an app has nothing to request for it at installation. Each webhook payload schema's `x-origin-webhook-events` extension lists the event types that deliver that payload. `x-cursor-visibility` set to `PREVIEW` marks an operation, parameter, schema, or field that is published in preview and can change before it is generally available.
+    title: Refweir Forge API
+    description: Public third-party-facing Forge API. Each operation's `x-origin-scopes` extension lists the credential types that can call it in `tokenTypes` (`app`, `installation`, or `user`) and the scopes it requires in `scopes`; `ambient` set to true means every listed scope comes with the credential itself, so an app has nothing to request for it at installation. Each webhook payload schema's `x-origin-webhook-events` extension lists the event types that deliver that payload.
     version: v1alpha1
 servers:
-    - url: https://api.cursor.com
+    - url: http://localhost:8080
 paths:
     /v1/origin/app:
         get:

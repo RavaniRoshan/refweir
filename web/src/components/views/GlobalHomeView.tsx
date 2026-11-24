@@ -109,7 +109,7 @@ const defaultDemoRepos: RepositoryRecord[] = [
     is_private: false,
     clone_url: 'http://localhost:8080/shiva/refweir.dev.git',
     web_url: 'http://localhost:8080/shiva/refweir.dev',
-    description: 'Sovereign GitHub Enterprise alternative with MCP',
+    description: 'Sovereign Git forge for agents and teams with MCP',
     updated_at: 'Just now',
   },
   {
@@ -374,7 +374,7 @@ export const GlobalHomeView: React.FC<GlobalHomeViewProps> = ({
                 variant="outline"
                 className="gap-1 text-xs"
                 onClick={() => setIsMigrateModalOpen(true)}
-                title="Import repository from GitHub or Git"
+                title="Import repository from remote Git"
               >
                 <GitFork className="w-3.5 h-3.5" />
                 <span>Import</span>

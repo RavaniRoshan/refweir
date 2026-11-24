@@ -69,7 +69,7 @@ func TestOpenAPI_Handler(t *testing.T) {
 	if !strings.Contains(body, "openapi: 3.1.0") {
 		t.Errorf("expected openapi 3.1.0 declaration in body")
 	}
-	if !strings.Contains(body, "Cursor Origin API") {
+	if !strings.Contains(body, "Refweir Forge API") {
 		t.Errorf("expected title in body")
 	}
 }

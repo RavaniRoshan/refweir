@@ -149,7 +149,7 @@ export const MigrateRepoModal: React.FC<MigrateRepoModalProps> = ({
       case 'cloning':
         return 'Cloning Git objects, branches, and commit tree...'
       case 'importing_issues':
-        return 'Importing GitHub issues, labels, and discussion comments...'
+        return 'Importing repository issues, labels, and discussion comments...'
       case 'importing_prs':
         return 'Importing pull requests, reviews, and diff annotations...'
       case 'complete':

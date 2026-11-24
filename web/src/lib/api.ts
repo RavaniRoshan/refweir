@@ -175,7 +175,7 @@ export async function getRepositories(signal?: AbortSignal): Promise<RepositoryR
         is_private: false,
         clone_url: 'http://localhost:8080/shiva/refweir.dev.git',
         web_url: 'http://localhost:8080/shiva/refweir.dev',
-        description: 'Sovereign GitHub Enterprise alternative with MCP and SQLite WAL engine',
+        description: 'Sovereign Git forge for agents and teams with MCP and SQLite WAL engine',
         stars: 284,
         forks: 36,
         language: 'Go',
@@ -1307,7 +1307,7 @@ export async function fetchUserTokens(): Promise<PersonalAccessToken[]> {
     return [
       {
         id: 'pat_live_1',
-        name: 'CI/CD GitHub Actions & refweir-agent',
+        name: 'CI/CD Pipeline & refweir-agent',
         token_prefix: 'ghp_7a9B',
         scopes: ['repo', 'workflow', 'write:packages'],
         expires_at: '2027-10-15T00:00:00Z',

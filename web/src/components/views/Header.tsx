@@ -307,7 +307,7 @@ export const Header: React.FC<HeaderProps> = ({
                 target="_blank"
                 rel="noreferrer"
                 className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors"
-                title="GitHub Repository"
+                title="Source Repository"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>

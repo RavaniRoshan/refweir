@@ -433,7 +433,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
               rel="noreferrer"
               className="hover:text-primary transition-colors hover:underline"
             >
-              GitHub
+              Source Code
             </a>
             <span className="text-border">|</span>
             <span className="text-foreground font-semibold">

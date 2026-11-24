@@ -62,7 +62,7 @@ const pinnedReposData: PinnedRepo[] = [
   {
     name: 'refweir.dev',
     owner: 'shiva',
-    description: 'Autonomous Git server, MCP agent bridge, and sovereign enterprise GitHub alternative powered by SQLite WAL.',
+    description: 'Autonomous Git server, MCP agent bridge, and sovereign Git forge powered by SQLite WAL.',
     language: 'Go',
     languageColor: '#00ADD8',
     stars: 284,
@@ -688,7 +688,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
                     variant="outline"
                     className="gap-1.5"
                     onClick={() => setIsMigrateRepoModalOpen(true)}
-                    title="Import repository from GitHub or Git"
+                    title="Import repository from remote Git"
                   >
                     <GitFork className="w-3.5 h-3.5" />
                     <span>Import</span>
@@ -1077,7 +1077,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({ onSelectRepo }
               <div className="space-y-2 border border-border rounded-md p-3 bg-secondary/30">
                 {[
                   { id: 'repo', label: 'repo', desc: 'Full control of private repositories' },
-                  { id: 'workflow', label: 'workflow', desc: 'Update GitHub Action workflows' },
+                  { id: 'workflow', label: 'workflow', desc: 'Update CI/CD workflows' },
                   { id: 'write:packages', label: 'write:packages', desc: 'Upload packages to Registry' },
                   { id: 'admin:org', label: 'admin:org', desc: 'Full control of orgs and teams, read and write org projects' },
                   { id: 'mcp:invoke', label: 'mcp:invoke', desc: 'Execute autonomous Model Context Protocol tools' },

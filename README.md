@@ -36,7 +36,7 @@ Traditional Git platforms were built 15+ years ago for human developers clicking
 - **Autonomous PR Review Agent (`internal/agentreviewer`):** Static AST analysis, leaked secret detection, coverage inspection, and policy-gated 3-way merges.
 - **Single Hermetic Binary:** Embedded React 19 product UI, SQLite WAL engine (`modernc.org/sqlite`), and bare Git object store compiled with `CGO_ENABLED=0` (requires host `git` on PATH).
 
-> *Unlike Cursor Origin, which is tied to Cursor accounts and proprietary cloud infrastructure, Refweir is 100% vendor-neutral, open-source, and self-hosted on your own hardware for any agent.*
+> *Unlike proprietary cloud forges, which are tied to closed vendor accounts and hosted infrastructure, Refweir is 100% vendor-neutral, open-source, and self-hosted on your own hardware for any agent.*
 
 ---
 

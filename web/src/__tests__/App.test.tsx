@@ -24,7 +24,7 @@ vi.mock('@/lib/api', async () => {
     getRepoInfo: vi.fn().mockResolvedValue({
       ownerSlug: 'shiva',
       name: 'refweir.dev',
-      description: 'Sovereign GitHub Enterprise alternative with MCP',
+      description: 'Sovereign Git forge for agents and teams with MCP',
       defaultBranch: 'main',
       isPrivate: false,
       starsCount: 284,
@@ -37,7 +37,7 @@ vi.mock('@/lib/api', async () => {
       { name: 'cmd', path: 'cmd', type: 'tree', size: 0, lastCommitMessage: 'refactor cmd', lastCommitDate: '2 hours ago' },
       { name: 'README.md', path: 'README.md', type: 'blob', size: 1024, lastCommitMessage: 'update docs', lastCommitDate: '1 hour ago' },
     ]),
-    getFileContent: vi.fn().mockResolvedValue('# refweir.dev\nSovereign GitHub alternative.'),
+    getFileContent: vi.fn().mockResolvedValue('# refweir.dev\nSovereign Git forge for agents.'),
     getCommits: vi.fn().mockResolvedValue([
       {
         sha: '5c92f551234567890abcdef',

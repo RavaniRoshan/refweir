@@ -37,7 +37,7 @@ describe('Header Component', () => {
   const mockRepo = {
     ownerSlug: 'shiva',
     name: 'refweir.dev',
-    description: 'Sovereign GitHub Enterprise alternative',
+    description: 'Sovereign Git forge for agents and teams',
     defaultBranch: 'main',
     isPrivate: false,
     starsCount: 42,

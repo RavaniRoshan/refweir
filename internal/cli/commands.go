@@ -28,25 +28,12 @@ type CLI struct {
 func New() *CLI {
 	endpoint := os.Getenv("REFWEIR_ENDPOINT")
 	if endpoint == "" {
-		endpoint = os.Getenv("CURSOR_ORIGIN_ENDPOINT")
-	}
-	if endpoint == "" {
 		endpoint = "http://localhost:8080/v1/origin"
 	}
 	endpoint = strings.TrimRight(endpoint, "/")
 
 	token := os.Getenv("REFWEIR_TOKEN")
-	if token == "" {
-		token = os.Getenv("CURSOR_AUTH_TOKEN")
-	}
-	if token == "" {
-		token = os.Getenv("CURSOR_API_KEY")
-	}
-
 	defaultRepo := os.Getenv("REFWEIR_REPO")
-	if defaultRepo == "" {
-		defaultRepo = os.Getenv("ORIGIN_REPO")
-	}
 
 	return &CLI{
 		Endpoint:    endpoint,
@@ -173,7 +160,7 @@ func (c *CLI) runAuth(args []string) error {
 		}
 		return errors.New("no auth token configured")
 	case "login":
-		fmt.Fprintln(c.Stdout, "Set CURSOR_AUTH_TOKEN or CURSOR_API_KEY in your environment.")
+		fmt.Fprintln(c.Stdout, "Set REFWEIR_TOKEN in your environment.")
 		return nil
 	case "logout":
 		c.Token = ""

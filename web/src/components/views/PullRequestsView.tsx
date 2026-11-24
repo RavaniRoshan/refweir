@@ -679,7 +679,7 @@ git push origin feature/agent-capabilities`
                             <div>
                               <div className="font-semibold text-foreground">{chk.name}</div>
                               <div className="text-muted-foreground text-[11px]">
-                                Completed in {chk.duration} • GitHub Actions Enterprise Agent
+                                Completed in {chk.duration} • Enterprise CI Agent
                               </div>
                             </div>
                           </div>
