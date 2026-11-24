@@ -9,7 +9,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // CLI is the runner for the origin CLI client.
@@ -80,6 +82,8 @@ func (c *CLI) Run(args []string) error {
 		return c.runRepo(args[1:])
 	case "pr":
 		return c.runPR(args[1:])
+	case "lease":
+		return c.runLease(args[1:])
 	case "app":
 		return c.runApp(args[1:])
 	case "api":
@@ -98,6 +102,7 @@ Commands:
   refweir auth               Manage authentication
   refweir repo               Manage repositories
   refweir pr                 Manage pull requests
+  refweir lease              Manage agent capability leases (issue, revoke)
   refweir app                Manage apps
   refweir api <endpoint>     Make an authenticated request to REST API
   refweir conformance        Run API conformance test suite against refweird
@@ -622,6 +627,131 @@ func (c *CLI) runAPI(args []string) error {
 	}
 	fmt.Fprintln(c.Stdout, string(res))
 	return nil
+}
+
+// Lease commands
+func (c *CLI) runLease(args []string) error {
+	if len(args) == 0 {
+		return errors.New("usage: refweir lease <issue|revoke>")
+	}
+	switch args[0] {
+	case "issue":
+		fs := flag.NewFlagSet("lease issue", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		agent := fs.String("agent", "agent:cli", "Agent identifier (e.g. agent:cursor, agent:claude)")
+		repoFlag := fs.String("R", c.DefaultRepo, "Target repository owner/name")
+		repoLong := fs.String("repo", "", "Target repository owner/name")
+		prefix := fs.String("prefix", "refs/heads/agent/*", "Comma-separated allowed ref prefixes")
+		ttlStr := fs.String("ttl", "30m", "TTL duration (e.g. 30m, 1h, 900s)")
+		jsonOut := fs.Bool("json", false, "Output response in JSON format")
+
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+
+		repoTarget := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoTarget = *repoLong
+		}
+		if repoTarget == "" {
+			repoTarget = "acme/rocket"
+		}
+
+		ttlSeconds := 1800
+		if d, err := time.ParseDuration(*ttlStr); err == nil {
+			ttlSeconds = int(d.Seconds())
+		} else if s, err := strconv.Atoi(*ttlStr); err == nil {
+			ttlSeconds = s
+		}
+
+		var prefixes []string
+		for _, p := range strings.Split(*prefix, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				prefixes = append(prefixes, p)
+			}
+		}
+		if len(prefixes) == 0 {
+			prefixes = []string{"refs/heads/agent/*"}
+		}
+
+		reqBody := map[string]any{
+			"agentId":         *agent,
+			"repoId":          repoTarget,
+			"allowedPrefixes": prefixes,
+			"ttlSeconds":      ttlSeconds,
+		}
+
+		data, code, err := c.doRequest(http.MethodPost, "/api/v1/agent/leases", reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		var resp struct {
+			Token     string `json:"token"`
+			ID        string `json:"id"`
+			AgentID   string `json:"agentId"`
+			RepoID    string `json:"repoId"`
+			ExpiresAt string `json:"expiresAt"`
+		}
+		if err := json.Unmarshal(data, &resp); err != nil {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		fmt.Fprintf(c.Stdout, "Capability Lease Issued: %s\n", resp.ID)
+		fmt.Fprintf(c.Stdout, "Agent:     %s\n", resp.AgentID)
+		fmt.Fprintf(c.Stdout, "Repo:      %s\n", resp.RepoID)
+		fmt.Fprintf(c.Stdout, "Expires:   %s\n", resp.ExpiresAt)
+		fmt.Fprintf(c.Stdout, "Token:     %s\n", resp.Token)
+		return nil
+
+	case "revoke":
+		fs := flag.NewFlagSet("lease revoke", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		reason := fs.String("reason", "operator CLI revocation", "Reason for revoking capability lease")
+		jsonOut := fs.Bool("json", false, "Output response in JSON format")
+
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+
+		if fs.NArg() == 0 {
+			return errors.New("lease ID is required: refweir lease revoke <lease-id>")
+		}
+		leaseID := fs.Arg(0)
+
+		reqBody := map[string]any{
+			"reason": *reason,
+		}
+
+		data, code, err := c.doRequest(http.MethodPost, fmt.Sprintf("/api/v1/agent/leases/%s/revoke", leaseID), reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		fmt.Fprintf(c.Stdout, "Revoked capability lease %s\n", leaseID)
+		return nil
+
+	default:
+		return fmt.Errorf("unknown lease subcommand %q", args[0])
+	}
 }
 
 func splitRepo(repo string) (string, string, error) {

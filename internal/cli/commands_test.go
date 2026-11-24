@@ -216,3 +216,78 @@ func TestCLI_APICommand(t *testing.T) {
 		t.Errorf("expected bearer token header, got: %s", requestedHeader)
 	}
 }
+
+func TestCLI_LeaseCommands(t *testing.T) {
+	var requestedPath, requestedMethod string
+	var requestedBody []byte
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		requestedMethod = r.Method
+		requestedBody, _ = io.ReadAll(r.Body)
+
+		w.Header().Set("Content-Type", "application/json")
+		if strings.HasSuffix(r.URL.Path, "/revoke") {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok": true}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"id": "lease_cli_123",
+			"token": "signed_token_abc",
+			"agentId": "agent:test-worker",
+			"repoId": "acme/rocket",
+			"issuedAt": "2026-11-24T00:00:00Z",
+			"expiresAt": "2026-11-24T00:30:00Z"
+		}`))
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "tok_123",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. lease issue formatted
+	if err := c.Run([]string{"lease", "issue", "--agent", "agent:test-worker", "-R", "acme/rocket", "--ttl", "30m"}); err != nil {
+		t.Fatalf("lease issue: %v", err)
+	}
+	if requestedPath != "/api/v1/agent/leases" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/agent/leases, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Capability Lease Issued: lease_cli_123") {
+		t.Errorf("expected lease ID in stdout, got: %s", stdout.String())
+	}
+
+	// 2. lease issue json
+	stdout.Reset()
+	if err := c.Run([]string{"lease", "issue", "--agent", "agent:test-worker", "-R", "acme/rocket", "--json"}); err != nil {
+		t.Fatalf("lease issue --json: %v", err)
+	}
+	if !strings.Contains(stdout.String(), `"lease_cli_123"`) {
+		t.Errorf("expected raw json output, got: %s", stdout.String())
+	}
+
+	// 3. lease revoke
+	stdout.Reset()
+	if err := c.Run([]string{"lease", "revoke", "lease_cli_123", "--reason", "security rotation"}); err != nil {
+		t.Fatalf("lease revoke: %v", err)
+	}
+	if requestedPath != "/api/v1/agent/leases/lease_cli_123/revoke" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/agent/leases/lease_cli_123/revoke, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Revoked capability lease lease_cli_123") {
+		t.Errorf("expected revoked message in stdout, got: %s", stdout.String())
+	}
+	var revokeBody map[string]any
+	_ = json.Unmarshal(requestedBody, &revokeBody)
+	if revokeBody["reason"] != "security rotation" {
+		t.Errorf("expected reason 'security rotation', got: %v", revokeBody["reason"])
+	}
+}

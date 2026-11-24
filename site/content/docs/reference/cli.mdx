@@ -107,3 +107,18 @@ refweir api repos/acme/my-service/pulls
 # POST request with JSON payload
 refweir api repos/acme/my-service/labels --method POST --body '{"name": "bug", "color": "d73a4a"}'
 ```
+
+### 6. `refweir lease`
+
+Issue and revoke cryptographically signed agent capability leases for automated workflows.
+
+```bash
+# Issue an HMAC-SHA256 capability lease
+refweir lease issue --agent agent:cursor -R acme/rocket --prefix refs/heads/agent/* --ttl 30m
+
+# Issue lease with raw JSON response for script automation
+refweir lease issue --agent agent:claude -R acme/rocket --ttl 1h --json
+
+# Revoke an active capability lease immediately
+refweir lease revoke lease_cli_123 --reason "operator manual revocation"
+```
