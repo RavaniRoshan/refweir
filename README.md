@@ -40,6 +40,18 @@ Traditional Git platforms were built 15+ years ago for human developers clicking
 
 ---
 
+## 🎬 30-Second Explainer
+
+<p align="center">
+  <a href="assets/readme/explainer.mp4">
+    <img src="assets/readme/explainer.gif" alt="Refweir Architectural Explainer: Cryptographic Leases, 3-Dot Diffing, and Hermetic Binary" width="580" style="border-radius: 14px; box-shadow: 0 16px 36px rgba(30, 43, 250, 0.12);" />
+  </a>
+  <br />
+  <sub><em>Refweir in 30 seconds: Ephemeral capability leases, 3-dot merge-base diffing, real-time webhooks & hermetic single-binary architecture. (Watch / download full 1080p: <a href="assets/readme/explainer.mp4">assets/readme/explainer.mp4</a>)</em></sub>
+</p>
+
+---
+
 ## ⚡ The Agent Loop
 
 Refweir enforces a strict containment model: agents never receive root credentials or direct push access to `main`. Every change traverses a cryptographic lease cycle:
