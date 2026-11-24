@@ -90,7 +90,31 @@ refweir issue close <number> -R <owner>/<repo>
 refweir issue comment <number> -R <owner>/<repo> --body "<comment-text>"
 ```
 
-### 4. `refweir auth`
+### 4. `refweir webhook`
+
+Manage repository webhooks, inspect delivery logs, test endpoints, and redeliver failed payloads.
+
+```bash
+# List webhooks configured for a repository
+refweir webhook list -R <owner>/<repo> [--json]
+
+# Create a new repository webhook
+refweir webhook create -R <owner>/<repo> --url <payload-url> [--secret <secret>] [--events push,pull_request] [--insecure-ssl]
+
+# Test a webhook with a ping payload
+refweir webhook ping <webhook-id> -R <owner>/<repo>
+
+# View recent webhook deliveries
+refweir webhook deliveries <webhook-id> -R <owner>/<repo>
+
+# Redeliver a past delivery attempt
+refweir webhook redeliver <webhook-id> <delivery-id> -R <owner>/<repo>
+
+# Delete a webhook
+refweir webhook delete <webhook-id> -R <owner>/<repo>
+```
+
+### 5. `refweir auth`
 
 Manage authentication status and credentials.
 
@@ -105,7 +129,7 @@ refweir auth login --token <api-token>
 refweir auth logout
 ```
 
-### 5. `refweir app`
+### 6. `refweir app`
 
 Manage apps and installations.
 
@@ -117,7 +141,7 @@ refweir app list
 refweir app get <app-slug-or-id>
 ```
 
-### 6. `refweir api`
+### 7. `refweir api`
 
 Execute authenticated HTTP requests against any endpoint of the refweir.dev REST API.
 
@@ -129,7 +153,7 @@ refweir api repos/acme/my-service/pulls
 refweir api repos/acme/my-service/labels --method POST --body '{"name": "bug", "color": "d73a4a"}'
 ```
 
-### 7. `refweir lease`
+### 8. `refweir lease`
 
 Issue and revoke cryptographically signed agent capability leases for automated workflows.
 

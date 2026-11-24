@@ -84,6 +84,8 @@ func (c *CLI) Run(args []string) error {
 		return c.runPR(args[1:])
 	case "issue":
 		return c.runIssue(args[1:])
+	case "webhook":
+		return c.runWebhook(args[1:])
 	case "lease":
 		return c.runLease(args[1:])
 	case "app":
@@ -105,6 +107,7 @@ Commands:
   refweir repo               Manage repositories
   refweir pr                 Manage pull requests
   refweir issue              Manage issues (list, view, create, close, comment)
+  refweir webhook            Manage webhooks (list, create, delete, ping, deliveries, redeliver)
   refweir lease              Manage agent capability leases (issue, revoke)
   refweir app                Manage apps
   refweir api <endpoint>     Make an authenticated request to REST API
@@ -977,6 +980,312 @@ func (c *CLI) runLease(args []string) error {
 
 	default:
 		return fmt.Errorf("unknown lease subcommand %q", args[0])
+	}
+}
+
+func (c *CLI) runWebhook(args []string) error {
+	if len(args) == 0 {
+		return errors.New("usage: refweir webhook <list|create|delete|ping|deliveries|redeliver>")
+	}
+	switch args[0] {
+	case "list":
+		fs := flag.NewFlagSet("webhook list", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks", owner, name)
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var hooks []struct {
+			ID          string `json:"id"`
+			URL         string `json:"url"`
+			Events      string `json:"events"`
+			Active      bool   `json:"active"`
+			InsecureSSL bool   `json:"insecure_ssl"`
+			CreatedAt   string `json:"created_at"`
+		}
+		if err := json.Unmarshal(data, &hooks); err == nil && len(hooks) > 0 {
+			for _, h := range hooks {
+				status := "active"
+				if !h.Active {
+					status = "inactive"
+				}
+				fmt.Fprintf(c.Stdout, "%-16s  %-8s  %-24s  %s\n", h.ID, status, h.Events, h.URL)
+			}
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "create":
+		fs := flag.NewFlagSet("webhook create", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		targetURL := fs.String("url", "", "Webhook target payload URL")
+		secret := fs.String("secret", "", "Webhook HMAC secret")
+		events := fs.String("events", "push", "Comma-separated list of events or *")
+		insecureSSL := fs.Bool("insecure-ssl", false, "Skip SSL verification")
+		active := fs.Bool("active", true, "Whether the webhook is active")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if *targetURL == "" {
+			return errors.New("--url is required")
+		}
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		var evList []string
+		for _, e := range strings.Split(*events, ",") {
+			e = strings.TrimSpace(e)
+			if e != "" {
+				evList = append(evList, e)
+			}
+		}
+		if len(evList) == 0 {
+			evList = []string{"push"}
+		}
+		reqBody := map[string]any{
+			"url":          *targetURL,
+			"secret":       *secret,
+			"content_type": "json",
+			"events":       evList,
+			"insecure_ssl": *insecureSSL,
+			"active":       active,
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks", owner, name)
+		data, code, err := c.doRequest(http.MethodPost, path, reqBody)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var created struct {
+			ID  string `json:"id"`
+			URL string `json:"url"`
+		}
+		if err := json.Unmarshal(data, &created); err == nil && created.ID != "" {
+			fmt.Fprintf(c.Stdout, "Created webhook %s -> %s\n", created.ID, created.URL)
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "delete":
+		fs := flag.NewFlagSet("webhook delete", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir webhook delete <id> [-R owner/name]")
+		}
+		hookID := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks/%s", owner, name, hookID)
+		data, code, err := c.doRequest(http.MethodDelete, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		fmt.Fprintf(c.Stdout, "Deleted webhook %s\n", hookID)
+		return nil
+
+	case "ping", "test":
+		fs := flag.NewFlagSet("webhook ping", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir webhook ping <id> [-R owner/name]")
+		}
+		hookID := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks/%s/tests", owner, name, hookID)
+		data, code, err := c.doRequest(http.MethodPost, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var resp struct {
+			OK         bool   `json:"ok"`
+			DeliveryID string `json:"delivery_id"`
+			Status     string `json:"status"`
+		}
+		if err := json.Unmarshal(data, &resp); err == nil && resp.DeliveryID != "" {
+			fmt.Fprintf(c.Stdout, "Ping dispatched (delivery %s, status: %s)\n", resp.DeliveryID, resp.Status)
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "deliveries":
+		fs := flag.NewFlagSet("webhook deliveries", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 1 {
+			return errors.New("usage: refweir webhook deliveries <id> [-R owner/name]")
+		}
+		hookID := fs.Arg(0)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks/%s/deliveries", owner, name, hookID)
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var dels []struct {
+			ID                 string `json:"id"`
+			Event              string `json:"event"`
+			Delivered          bool   `json:"delivered"`
+			ResponseStatusCode int    `json:"response_status_code"`
+			DurationMs         int    `json:"duration_ms"`
+			CreatedAt          string `json:"created_at"`
+		}
+		if err := json.Unmarshal(data, &dels); err == nil && len(dels) > 0 {
+			for _, d := range dels {
+				status := fmt.Sprintf("%d", d.ResponseStatusCode)
+				if d.Delivered {
+					status = fmt.Sprintf("%d OK", d.ResponseStatusCode)
+				}
+				fmt.Fprintf(c.Stdout, "%-16s  %-12s  %-10s  %dms  %s\n", d.ID, d.Event, status, d.DurationMs, d.CreatedAt)
+			}
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	case "redeliver":
+		fs := flag.NewFlagSet("webhook redeliver", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		repoFlag := fs.String("R", c.DefaultRepo, "Repository (owner/name)")
+		repoLong := fs.String("repo", c.DefaultRepo, "Repository (owner/name)")
+		jsonOut := fs.Bool("json", false, "Output as JSON")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		if fs.NArg() < 2 {
+			return errors.New("usage: refweir webhook redeliver <id> <delivery-id> [-R owner/name]")
+		}
+		hookID := fs.Arg(0)
+		delID := fs.Arg(1)
+		repoStr := *repoFlag
+		if *repoLong != "" && *repoLong != c.DefaultRepo {
+			repoStr = *repoLong
+		}
+		owner, name, err := splitRepo(repoStr)
+		if err != nil {
+			return err
+		}
+		path := fmt.Sprintf("/api/v1/repos/%s/%s/hooks/%s/deliveries/%s/redeliver", owner, name, hookID, delID)
+		data, code, err := c.doRequest(http.MethodPost, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var resp struct {
+			OK           bool   `json:"ok"`
+			RedeliveryID string `json:"redelivery_id"`
+		}
+		if err := json.Unmarshal(data, &resp); err == nil && resp.RedeliveryID != "" {
+			fmt.Fprintf(c.Stdout, "Redelivery triggered successfully (new delivery ID: %s)\n", resp.RedeliveryID)
+			return nil
+		}
+		fmt.Fprintln(c.Stdout, string(data))
+		return nil
+
+	default:
+		return fmt.Errorf("unknown webhook subcommand %q. Run 'refweir webhook' for usage", args[0])
 	}
 }
 

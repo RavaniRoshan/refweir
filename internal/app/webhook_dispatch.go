@@ -134,9 +134,17 @@ func DispatchRepoEvent(ctx context.Context, db *store.DB, repoID string, event s
 		}
 
 		go func(h *store.RepoWebhook) {
-			dispatchCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			dispatchCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
-			_, _ = DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
+			del, err := DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
+			// If initial attempt failed or returned a 5xx server error, retry once after short backoff
+			if (err != nil || (del != nil && !del.Delivered && del.ResponseStatusCode >= 500)) && dispatchCtx.Err() == nil {
+				select {
+				case <-time.After(500 * time.Millisecond):
+					_, _ = DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
+				case <-dispatchCtx.Done():
+				}
+			}
 		}(hook)
 	}
 }

@@ -401,3 +401,125 @@ func TestCLI_IssueCommands(t *testing.T) {
 		t.Errorf("expected closed message in stdout: %s", stdout.String())
 	}
 }
+
+func TestCLI_WebhookCommands(t *testing.T) {
+	var requestedPath, requestedMethod string
+	var requestedBody []byte
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		requestedMethod = r.Method
+		requestedBody, _ = io.ReadAll(r.Body)
+
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/hooks") && r.Method == http.MethodGet:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[{"id":"whk_01","url":"https://ci.example.com","events":"[\"push\"]","active":true,"insecure_ssl":false}]`))
+		case strings.HasSuffix(r.URL.Path, "/hooks") && r.Method == http.MethodPost:
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"id":"whk_02","url":"https://ci.example.com/deploy"}`))
+		case strings.HasSuffix(r.URL.Path, "/tests") && r.Method == http.MethodPost:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok":true,"delivery_id":"del_01","status":"delivered"}`))
+		case strings.HasSuffix(r.URL.Path, "/deliveries") && r.Method == http.MethodGet:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`[{"id":"del_01","event":"push","delivered":true,"response_status_code":200,"duration_ms":42,"created_at":"2026-11-24T00:00:00Z"}]`))
+		case strings.Contains(r.URL.Path, "/redeliver") && r.Method == http.MethodPost:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok":true,"redelivery_id":"del_02"}`))
+		case strings.Contains(r.URL.Path, "/hooks/") && r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"ok":true,"deleted":"whk_01"}`))
+		default:
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{}`))
+		}
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "test_tok_whk",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. webhook list
+	if err := c.Run([]string{"webhook", "list", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("webhook list: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/repos/acme/rocket/hooks, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "whk_01") {
+		t.Errorf("expected whk_01 in stdout: %s", stdout.String())
+	}
+
+	// 2. webhook create
+	stdout.Reset()
+	if err := c.Run([]string{"webhook", "create", "-R", "acme/rocket", "--url", "https://ci.example.com/deploy", "--secret", "supersecret", "--events", "push,pull_request"}); err != nil {
+		t.Fatalf("webhook create: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/acme/rocket/hooks, got %s %s", requestedMethod, requestedPath)
+	}
+	var createdReq map[string]any
+	_ = json.Unmarshal(requestedBody, &createdReq)
+	if createdReq["url"] != "https://ci.example.com/deploy" {
+		t.Errorf("unexpected url in body: %v", createdReq["url"])
+	}
+	if !strings.Contains(stdout.String(), "Created webhook whk_02") {
+		t.Errorf("expected creation confirmation in stdout: %s", stdout.String())
+	}
+
+	// 3. webhook ping
+	stdout.Reset()
+	if err := c.Run([]string{"webhook", "ping", "whk_01", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("webhook ping: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks/whk_01/tests" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/acme/rocket/hooks/whk_01/tests, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Ping dispatched") {
+		t.Errorf("expected ping confirmation in stdout: %s", stdout.String())
+	}
+
+	// 4. webhook deliveries
+	stdout.Reset()
+	if err := c.Run([]string{"webhook", "deliveries", "whk_01", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("webhook deliveries: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks/whk_01/deliveries" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/repos/acme/rocket/hooks/whk_01/deliveries, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "del_01") {
+		t.Errorf("expected del_01 in stdout: %s", stdout.String())
+	}
+
+	// 5. webhook redeliver
+	stdout.Reset()
+	if err := c.Run([]string{"webhook", "redeliver", "whk_01", "del_01", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("webhook redeliver: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks/whk_01/deliveries/del_01/redeliver" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/acme/rocket/hooks/whk_01/deliveries/del_01/redeliver, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Redelivery triggered successfully") {
+		t.Errorf("expected redelivery confirmation in stdout: %s", stdout.String())
+	}
+
+	// 6. webhook delete
+	stdout.Reset()
+	if err := c.Run([]string{"webhook", "delete", "whk_01", "-R", "acme/rocket"}); err != nil {
+		t.Fatalf("webhook delete: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/acme/rocket/hooks/whk_01" || requestedMethod != http.MethodDelete {
+		t.Errorf("expected DELETE /api/v1/repos/acme/rocket/hooks/whk_01, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Deleted webhook whk_01") {
+		t.Errorf("expected delete confirmation in stdout: %s", stdout.String())
+	}
+}
