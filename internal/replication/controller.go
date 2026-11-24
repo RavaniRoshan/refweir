@@ -144,7 +144,9 @@ func (c *Controller) Status() ReplicationStatus {
 	return s
 }
 
-// Checkpoint forces an immediate SQLite WAL truncate checkpoint.
+// Checkpoint forces a non-blocking SQLite WAL checkpoint using PASSIVE mode.
+// PASSIVE mode checkpoints available WAL frames without waiting for concurrent
+// readers or blocking incoming concurrent writers, preventing lock convoys.
 func (c *Controller) Checkpoint(ctx context.Context) error {
 	if c.db == nil || c.db.SQL() == nil {
 		return nil
@@ -152,7 +154,7 @@ func (c *Controller) Checkpoint(ctx context.Context) error {
 
 	_ = c.db.IncrementalVacuum(ctx, 1000)
 
-	_, err := c.db.SQL().ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
+	_, err := c.db.SQL().ExecContext(ctx, "PRAGMA wal_checkpoint(PASSIVE)")
 	if err != nil {
 		return fmt.Errorf("replication: wal checkpoint: %w", err)
 	}

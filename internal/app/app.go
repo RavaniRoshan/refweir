@@ -4,11 +4,13 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -406,12 +408,59 @@ func Open(cfg config.Config) (*App, error) {
 	})
 	mux.HandleFunc("POST /api/v1/agent/leases", func(w http.ResponseWriter, r *http.Request) {
 		count, _ := db.CountUsers(r.Context())
+		var caller *store.User
 		if count > 0 {
-			if _, err := auth.ResolveUser(r.Context(), db, r); err != nil {
+			var err error
+			caller, err = auth.ResolveUser(r.Context(), db, r)
+			if err != nil || caller == nil {
 				http.Error(w, "Unauthorized: Authentication required to issue agent capability leases", http.StatusUnauthorized)
 				return
 			}
 		}
+
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Failed to read request body: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+		var req struct {
+			RepoID             string   `json:"repoId"`
+			AllowedRefPrefixes []string `json:"allowedRefPrefixes"`
+		}
+		if err := json.Unmarshal(bodyBytes, &req); err == nil && caller != nil && caller.Role != "admin" {
+			if req.RepoID != "" && req.RepoID != "*" {
+				var repo store.Repo
+				var rErr error
+				if strings.Contains(req.RepoID, "/") {
+					parts := strings.Split(req.RepoID, "/")
+					repo, rErr = db.GetRepo(r.Context(), parts[0], parts[1])
+				} else {
+					repo, rErr = db.GetRepoByID(r.Context(), req.RepoID)
+				}
+				if rErr != nil {
+					http.Error(w, "Repository not found", http.StatusNotFound)
+					return
+				}
+				allowed, err := db.CheckRepoAccess(r.Context(), repo, caller.ID, true)
+				if err != nil || !allowed {
+					http.Error(w, "Forbidden: Write permission required to issue capability lease for repository", http.StatusForbidden)
+					return
+				}
+			}
+
+			for _, prefix := range req.AllowedRefPrefixes {
+				clean := strings.TrimPrefix(prefix, "refs/heads/")
+				clean = strings.TrimSuffix(clean, "/*")
+				clean = strings.TrimSuffix(clean, "/")
+				if clean == "main" || clean == "master" || prefix == "refs/heads/main" || prefix == "refs/heads/master" {
+					http.Error(w, "Forbidden: Administrator privileges required to issue capability lease with direct main/master access", http.StatusForbidden)
+					return
+				}
+			}
+		}
+
 		baseLeaseHandler(w, r)
 	})
 	mux.HandleFunc("POST /api/v1/agent/leases/{id}/revoke", func(w http.ResponseWriter, r *http.Request) {

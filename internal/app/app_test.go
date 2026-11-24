@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v6/plumbing/object"
+	"refweir.dev/internal/auth"
 	"refweir.dev/internal/config"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/store"
@@ -303,4 +304,132 @@ func TestRESTCommit_PushProtection(t *testing.T) {
 		t.Fatalf("expected 403 for direct commit to protected branch, got status %d: %s", recDirect.Code, recDirect.Body.String())
 	}
 }
+
+func TestCapabilityLease_AuthorizationGating(t *testing.T) {
+	ctx := context.Background()
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:8080",
+		DataDir:    t.TempDir(),
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+		JWTSecret:  "test-lease-jwt-secret-key-12345",
+	}
+	app, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer app.Close()
+
+	// 1. Create admin and member users
+	adminUser := store.User{
+		ID:        idgen.NewUser(),
+		Login:     "admincorp",
+		Email:     "admin@corp.dev",
+		Role:      "admin",
+		Status:    "active",
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	_ = app.Store.CreateUserWithPassword(ctx, adminUser)
+	rawAdminKey, adminPfx, adminHash, _ := auth.GenerateAPIKey()
+	_ = app.Store.CreateAPIKey(ctx, store.APIKey{
+		ID:        idgen.New("key"),
+		UserID:    adminUser.ID,
+		KeyHash:   adminHash,
+		KeyPrefix: adminPfx,
+		Name:      "admin-key",
+		Scopes:    "*",
+	})
+
+	memberUser := store.User{
+		ID:        idgen.NewUser(),
+		Login:     "memberbob",
+		Email:     "bob@corp.dev",
+		Role:      "member",
+		Status:    "active",
+		CreatedAt: time.Now().UTC().Format(time.RFC3339),
+	}
+	_ = app.Store.CreateUserWithPassword(ctx, memberUser)
+	rawMemberKey, memberPfx, memberHash, _ := auth.GenerateAPIKey()
+	_ = app.Store.CreateAPIKey(ctx, store.APIKey{
+		ID:        idgen.New("key"),
+		UserID:    memberUser.ID,
+		KeyHash:   memberHash,
+		KeyPrefix: memberPfx,
+		Name:      "member-key",
+		Scopes:    "repo,write",
+	})
+
+	// 2. Create namespace and private repo owned by admin
+	ns := store.Namespace{
+		ID:          idgen.NewNS(),
+		Slug:        "privcorp",
+		Type:        "team",
+		Name:        "Private Corp",
+		OwnerUserID: adminUser.ID,
+	}
+	_ = app.Store.CreateNamespace(ctx, ns)
+	repo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   ns.ID,
+		Name:          "vault",
+		FullName:      "privcorp/vault",
+		DefaultBranch: "main",
+		Visibility:    "private",
+	}
+	_ = app.Store.CreateRepo(ctx, repo)
+
+	// A. Unauthenticated request when users exist -> 401 Unauthorized
+	reqUnauth := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", strings.NewReader(`{"agentId":"bot","repoId":"privcorp/vault"}`))
+	recUnauth := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recUnauth, reqUnauth)
+	if recUnauth.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for unauthenticated lease request, got %d", recUnauth.Code)
+	}
+
+	// B. Member user attempts to grant capability lease on private repo without access -> 403 Forbidden
+	reqMemberNoAccess := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", strings.NewReader(`{"agentId":"bot","repoId":"privcorp/vault","allowedRefPrefixes":["refs/heads/agent/"]}`))
+	reqMemberNoAccess.Header.Set("Authorization", "Bearer "+rawMemberKey)
+	recMemberNoAccess := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recMemberNoAccess, reqMemberNoAccess)
+	if recMemberNoAccess.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for member without repo access, got %d", recMemberNoAccess.Code)
+	}
+
+	// C. Grant member write access to repo, but member tries to grant direct refs/heads/main access -> 403 Forbidden
+	_, _ = app.Store.UpsertGrant(ctx, store.Grant{
+		ID:            idgen.New("grant"),
+		Scope:         "repository",
+		RepoID:        repo.ID,
+		NamespaceID:   ns.ID,
+		PrincipalKind: "user",
+		UserID:        memberUser.ID,
+		Permission:    "write",
+	})
+	reqMemberEscalate := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", strings.NewReader(`{"agentId":"bot","repoId":"privcorp/vault","allowedRefPrefixes":["refs/heads/main"]}`))
+	reqMemberEscalate.Header.Set("Authorization", "Bearer "+rawMemberKey)
+	recMemberEscalate := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recMemberEscalate, reqMemberEscalate)
+	if recMemberEscalate.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for member attempting to grant main access directly, got %d", recMemberEscalate.Code)
+	}
+
+	// D. Member issues scoped lease to refs/heads/agent/ -> 200 OK
+	reqMemberOk := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", strings.NewReader(`{"agentId":"bot","repoId":"privcorp/vault","allowedRefPrefixes":["refs/heads/agent/"]}`))
+	reqMemberOk.Header.Set("Authorization", "Bearer "+rawMemberKey)
+	recMemberOk := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recMemberOk, reqMemberOk)
+	if recMemberOk.Code != http.StatusOK {
+		t.Fatalf("expected 200 for member scoped lease, got %d: %s", recMemberOk.Code, recMemberOk.Body.String())
+	}
+
+	// E. Admin issues lease granting refs/heads/main -> 200 OK
+	reqAdminMain := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", strings.NewReader(`{"agentId":"admin-bot","repoId":"privcorp/vault","allowedRefPrefixes":["refs/heads/main"]}`))
+	reqAdminMain.Header.Set("Authorization", "Bearer "+rawAdminKey)
+	recAdminMain := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recAdminMain, reqAdminMain)
+	if recAdminMain.Code != http.StatusOK {
+		t.Fatalf("expected 200 for admin lease to main, got %d: %s", recAdminMain.Code, recAdminMain.Body.String())
+	}
+}
+
 
