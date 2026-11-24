@@ -35,6 +35,8 @@ export interface CommandPaletteProps {
   onOpenTour?: () => void
   onOpenManual?: () => void
   onToggleDemoMode?: () => void
+  onOpenShortcuts?: () => void
+  onIssueLease?: () => void
   isDemo?: boolean
 }
 
@@ -55,6 +57,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenTour,
   onOpenManual,
   onToggleDemoMode,
+  onOpenShortcuts,
+  onIssueLease,
   isDemo = false,
 }) => {
   const close = () => onOpenChange(false)
@@ -80,10 +84,29 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     { id: 'webhooks', label: 'Webhooks', icon: Webhook, keywords: 'integrations ci delivery', run: go('webhooks') },
     { id: 'settings', label: 'Repository settings', icon: Settings, keywords: 'config admin', run: go('settings') },
     { id: 'admin', label: 'Admin console', icon: Server, keywords: 'cluster enterprise scim', run: go('admin') },
+    { id: 'diagnostics', label: 'Cluster Pre-flight Diagnostics', icon: ShieldCheck, keywords: 'health self-host wal db status', run: go('admin') },
     { id: 'docs', label: 'Documentation & Architecture', icon: BookOpen, keywords: 'docs manual guide api mcp architecture', run: go('docs') },
   ]
 
   const actions: PaletteItem[] = [
+    {
+      id: 'issue-lease',
+      label: 'Agent: Issue Capability Lease',
+      icon: Bot,
+      keywords: 'agent token lease capability ed25519 hmac permission',
+      hint: 'C L',
+      run: trigger(onIssueLease || go('agents')),
+    },
+    ...(onOpenShortcuts
+      ? [{
+          id: 'shortcuts',
+          label: 'Keyboard Shortcuts Cheat Sheet',
+          icon: BookOpen,
+          keywords: 'shortcuts help cheat sheet keybindings',
+          hint: '?',
+          run: trigger(onOpenShortcuts),
+        }]
+      : []),
     ...(onOpenTour
       ? [{ id: 'tour', label: 'Take the guided tour', icon: Sparkles, keywords: 'onboarding help', run: trigger(onOpenTour) }]
       : []),

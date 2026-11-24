@@ -31,6 +31,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { CommandPalette } from '@/components/CommandPalette'
+import { KeyboardShortcutsModal } from './KeyboardShortcutsModal'
 import { Kbd } from '@/components/primitives/kbd'
 import { Dialog } from '@/components/ui/Dialog'
 import { UnderlineNav, type NavTabItem } from '@/components/ui/UnderlineNav'
@@ -76,6 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [cloneType, setCloneType] = useState<'http' | 'ssh' | 'mcp'>('http')
   const [copied, setCopied] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [isDemo, setIsDemo] = useState(isDemoModeActive())
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -149,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({
     setUserMenuOpen(false)
   }
 
-  // Global shortcut: "/" or Ctrl/Cmd+K toggles the command palette
+  // Global shortcut: "/" or Ctrl/Cmd+K toggles the command palette; "?" toggles shortcuts modal
   useEffect(() => {
     if (suppressCommandPalette) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -159,6 +161,12 @@ export const Header: React.FC<HeaderProps> = ({
       if (event.key === '/' || ((event.metaKey || event.ctrlKey) && key === 'k')) {
         event.preventDefault()
         setPaletteOpen((open) => !open)
+      } else if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
+        const enabled = localStorage.getItem('refweir.character_shortcuts_enabled') !== 'false'
+        if (enabled) {
+          event.preventDefault()
+          setShortcutsOpen((open) => !open)
+        }
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -596,17 +604,24 @@ export const Header: React.FC<HeaderProps> = ({
         onSuccess={(user) => setCurrentUser(user)}
       />
 
-      {/* Command Palette (Ctrl/Cmd+K or /) */}
+      {/* Command Palette (Ctrl/Cmd+K or /) & Shortcuts Modal (?) */}
       {!suppressCommandPalette && (
-        <CommandPalette
-          open={paletteOpen}
-          onOpenChange={setPaletteOpen}
-          onTabChange={onTabChange}
-          onOpenTour={onOpenTour}
-          onOpenManual={onOpenManual}
-          onToggleDemoMode={toggleDemoMode}
-          isDemo={isDemo}
-        />
+        <>
+          <CommandPalette
+            open={paletteOpen}
+            onOpenChange={setPaletteOpen}
+            onTabChange={onTabChange}
+            onOpenTour={onOpenTour}
+            onOpenManual={onOpenManual}
+            onToggleDemoMode={toggleDemoMode}
+            onOpenShortcuts={() => setShortcutsOpen(true)}
+            isDemo={isDemo}
+          />
+          <KeyboardShortcutsModal
+            open={shortcutsOpen}
+            onOpenChange={setShortcutsOpen}
+          />
+        </>
       )}
     </>
   )

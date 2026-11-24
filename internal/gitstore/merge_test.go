@@ -167,3 +167,58 @@ func TestGitstore_MergeConflict(t *testing.T) {
 		t.Fatalf("expected ErrMergeConflict, got %v", err)
 	}
 }
+
+func TestGitstore_DiffCommitsThreeDotMergeBase(t *testing.T) {
+	s := newStore(t)
+	owner, repo := "acme", "threedot"
+	if _, err := s.Init(owner, repo, "main"); err != nil {
+		t.Fatalf("init repo: %v", err)
+	}
+
+	// 1. Initial commit c1 on main
+	c1, err := s.WriteFiles(owner, repo, "main", []FileChange{
+		{Path: "base.txt", Content: "base content\n"},
+		{Path: "shared.txt", Content: "line 1\nline 2\n"},
+	}, author(), "initial commit")
+	if err != nil {
+		t.Fatalf("commit 1: %v", err)
+	}
+
+	// 2. Create feature branch off c1
+	if _, err := s.CreateBranchRef(owner, repo, "refs/heads/feature", c1.String()); err != nil {
+		t.Fatalf("create branch: %v", err)
+	}
+
+	// 3. Commit c2 on feature branch (adds feature.txt)
+	c2, err := s.WriteFiles(owner, repo, "feature", []FileChange{
+		{Path: "feature.txt", Content: "feature code\n"},
+	}, author(), "feature commit")
+	if err != nil {
+		t.Fatalf("feature commit: %v", err)
+	}
+
+	// 4. Concurrent commit c3 on main (adds main_only.txt and edits shared.txt)
+	c3, err := s.WriteFiles(owner, repo, "main", []FileChange{
+		{Path: "main_only.txt", Content: "concurrent main commit\n"},
+		{Path: "shared.txt", Content: "line 1\nline 2 modified on main\n"},
+	}, author(), "main concurrent commit")
+	if err != nil {
+		t.Fatalf("main concurrent commit: %v", err)
+	}
+
+	// 5. DiffCommits between main (c3) and feature (c2)
+	// Under 3-dot diffing, only feature.txt should appear as changed!
+	// main_only.txt should NOT appear as removed.
+	diff, err := s.DiffCommits(owner, repo, c3.String(), c2.String())
+	if err != nil {
+		t.Fatalf("diff commits: %v", err)
+	}
+
+	if diff.ChangedFiles != 1 || len(diff.Files) != 1 {
+		t.Fatalf("expected exactly 1 changed file in 3-dot diff, got %d files: %+v", len(diff.Files), diff.Files)
+	}
+
+	if diff.Files[0].Filename != "feature.txt" || diff.Files[0].Status != "added" {
+		t.Fatalf("expected feature.txt added, got %+v", diff.Files[0])
+	}
+}

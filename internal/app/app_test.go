@@ -96,6 +96,27 @@ func TestAppLifecycle(t *testing.T) {
 		t.Fatalf("GET /api/v1/admin/metrics/history status = %d, want 200", recHistory.Code)
 	}
 
+	// 4c. Admin preflight endpoint returns diagnostic checks
+	reqPreflight := httptest.NewRequest(http.MethodGet, "/api/v1/admin/preflight", nil)
+	recPreflight := httptest.NewRecorder()
+	application.Handler().ServeHTTP(recPreflight, reqPreflight)
+	if recPreflight.Code != http.StatusOK {
+		t.Fatalf("GET /api/v1/admin/preflight status = %d, want 200", recPreflight.Code)
+	}
+	var preflightData struct {
+		Status string `json:"status"`
+		Checks []struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"checks"`
+	}
+	if err := json.Unmarshal(recPreflight.Body.Bytes(), &preflightData); err != nil {
+		t.Fatalf("failed to decode preflight response: %v", err)
+	}
+	if len(preflightData.Checks) == 0 {
+		t.Fatalf("expected preflight checks to be populated")
+	}
+
 	// 5. Admin audit logs endpoint returns json log records (no users yet, so
 	// the fresh-install bootstrap path is allowed)
 	reqAudit := httptest.NewRequest(http.MethodGet, "/api/v1/admin/audit-logs", nil)

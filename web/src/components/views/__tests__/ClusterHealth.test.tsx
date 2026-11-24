@@ -10,6 +10,7 @@ vi.mock('@/lib/api', async () => {
     getClusterMetrics: vi.fn(),
     triggerClusterCheckpoint: vi.fn(),
     triggerClusterSnapshot: vi.fn(),
+    getAdminPreflight: vi.fn(),
   }
 })
 
@@ -29,9 +30,29 @@ describe('ClusterHealth Admin View', () => {
     mcpMountedToolsCount: 35,
   }
 
+  const mockPreflight: api.PreflightReport = {
+    status: 'healthy',
+    evaluated_at: '2026-11-24T12:00:00Z',
+    checks: [
+      {
+        id: 'sqlite_wal_mode',
+        name: 'SQLite WAL Journal Mode',
+        status: 'pass',
+        message: 'WAL journal mode active for concurrent reader/writer operations',
+      },
+      {
+        id: 'sqlite_integrity',
+        name: 'Database Structural Integrity',
+        status: 'pass',
+        message: 'PRAGMA quick_check passed: 0 B-tree corruptions detected',
+      },
+    ],
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(api.getClusterMetrics).mockResolvedValue(mockMetrics)
+    vi.mocked(api.getAdminPreflight).mockResolvedValue(mockPreflight)
   })
 
   it('renders loading state then displays cluster telemetry metrics', async () => {
@@ -146,5 +167,21 @@ describe('ClusterHealth Admin View', () => {
       expect(screen.getByText(/snapshot_000001_1795504266.db/i)).toBeInTheDocument()
     })
     expect(api.triggerClusterSnapshot).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders self-host production pre-flight diagnostics and re-evaluates on click', async () => {
+    render(<ClusterHealth />)
+    await waitFor(() => {
+      expect(screen.getByText('Self-Host Production Pre-flight Diagnostics')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('SQLite WAL Journal Mode')).toBeInTheDocument()
+    expect(screen.getByText('Database Structural Integrity')).toBeInTheDocument()
+    expect(screen.getByText('ALL CHECKS PASSED')).toBeInTheDocument()
+
+    const diagBtn = screen.getByRole('button', { name: /Run Diagnostics/i })
+    fireEvent.click(diagBtn)
+
+    expect(api.getAdminPreflight).toHaveBeenCalledTimes(2)
   })
 })

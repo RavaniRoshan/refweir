@@ -60,7 +60,17 @@ func (s *Store) DiffCommits(namespaceSlug, repoName, baseSHA, headSHA string) (*
 		return nil, err
 	}
 
-	changes, err := baseTree.Diff(headTree)
+	// 3-dot diff: compare the common ancestor (merge-base) against headCommit,
+	// ensuring concurrent commits landed on the base branch do not falsely appear
+	// as deletions introduced by the PR author.
+	diffBaseTree := baseTree
+	if bases, err := baseCommit.MergeBase(headCommit); err == nil && len(bases) > 0 {
+		if mbTree, err := bases[0].Tree(); err == nil {
+			diffBaseTree = mbTree
+		}
+	}
+
+	changes, err := diffBaseTree.Diff(headTree)
 	if err != nil {
 		return nil, err
 	}

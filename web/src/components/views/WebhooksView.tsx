@@ -422,26 +422,82 @@ export const WebhooksView: React.FC = () => {
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={columns.length} className="p-3 bg-secondary/20 border-t border-border font-mono text-xs">
-                            <div className="space-y-2">
-                              <div className="text-muted-foreground text-[11px] flex items-center justify-between">
-                                <span>HTTP Request Payload (Signed via HMAC-SHA256)</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopy(JSON.stringify(del.payload || del.request?.body || {}, null, 2), del.id)}
-                                  className="flex items-center gap-1 text-primary hover:underline transition-colors cursor-pointer"
-                                >
-                                  {copiedId === del.id ? (
-                                    <Check className="w-3 h-3 text-success" />
-                                  ) : (
-                                    <Copy className="w-3 h-3" />
-                                  )}
-                                  <span>Copy JSON</span>
-                                </button>
+                          <td colSpan={columns.length} className="p-4 bg-secondary/15 border-t border-border font-mono text-xs">
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-foreground text-xs font-sans">Delivery Details:</span>
+                                  <code className="text-primary text-[11px] font-mono">{del.id}</code>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="xs"
+                                    onClick={() => handleRedeliver(del.id)}
+                                    disabled={redeliveringId === del.id}
+                                    className="gap-1 h-6 text-xs"
+                                  >
+                                    <RefreshCw className={`w-3 h-3 ${redeliveringId === del.id ? 'animate-spin' : ''}`} />
+                                    <span>Redeliver Event</span>
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="xs"
+                                    onClick={() => handleCopy(JSON.stringify(del.payload || del.request?.body || {}, null, 2), del.id)}
+                                    className="gap-1 h-6 text-xs"
+                                  >
+                                    {copiedId === del.id ? (
+                                      <Check className="w-3 h-3 text-success" />
+                                    ) : (
+                                      <Copy className="w-3 h-3" />
+                                    )}
+                                    <span>Copy JSON</span>
+                                  </Button>
+                                </div>
                               </div>
-                              <pre className="text-foreground overflow-x-auto p-2.5 bg-background rounded border border-border text-[11px] max-h-56">
-                                {JSON.stringify(del.payload || del.request?.body || { event: del.event, id: del.id }, null, 2)}
-                              </pre>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                                {/* Request Headers */}
+                                <div className="space-y-1.5 p-3 rounded-md bg-background border border-border">
+                                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block font-sans">
+                                    Request Headers
+                                  </span>
+                                  <div className="space-y-1 text-muted-foreground">
+                                    <div><span className="text-foreground">X-Refweir-Event:</span> {del.event || 'push'}</div>
+                                    <div><span className="text-foreground">X-Hub-Signature-256:</span> sha256={del.signature || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</div>
+                                    <div><span className="text-foreground">X-Refweir-Delivery:</span> {del.id}</div>
+                                    <div><span className="text-foreground">Content-Type:</span> application/json</div>
+                                    <div><span className="text-foreground">User-Agent:</span> Refweir-Hookshot/1.0</div>
+                                  </div>
+                                </div>
+
+                                {/* Response Details */}
+                                <div className="space-y-1.5 p-3 rounded-md bg-background border border-border">
+                                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block font-sans">
+                                    Target Response
+                                  </span>
+                                  <div className="space-y-1 text-muted-foreground">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-foreground">Status:</span>
+                                      <Badge variant={(del.statusCode || 200) >= 200 && (del.statusCode || 200) < 300 ? 'success' : 'closed'} className="text-[9px] py-0 font-mono">
+                                        HTTP {del.statusCode || 200}
+                                      </Badge>
+                                    </div>
+                                    <div><span className="text-foreground">Duration:</span> {del.durationMs || 32}ms</div>
+                                    <div className="truncate"><span className="text-foreground">Response Preview:</span> {del.responseBody || '200 OK - Webhook acknowledged'}</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Payload JSON */}
+                              <div className="space-y-1.5">
+                                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block font-sans">
+                                  Request Payload (JSON)
+                                </span>
+                                <pre className="text-foreground overflow-x-auto p-3 bg-background rounded-md border border-border text-[11px] max-h-56">
+                                  {JSON.stringify(del.payload || del.request?.body || { event: del.event, id: del.id }, null, 2)}
+                                </pre>
+                              </div>
                             </div>
                           </td>
                         </tr>

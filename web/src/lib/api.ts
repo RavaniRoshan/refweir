@@ -1063,6 +1063,42 @@ export async function getMetricsHistory(signal?: AbortSignal): Promise<import('.
   return mockClusterMetrics.history || []
 }
 
+export interface PreflightCheck {
+  id: string
+  name: string
+  status: 'pass' | 'warn' | 'fail'
+  message: string
+}
+
+export interface PreflightReport {
+  status: 'healthy' | 'degraded'
+  evaluated_at: string
+  checks: PreflightCheck[]
+}
+
+export async function getAdminPreflight(signal?: AbortSignal): Promise<PreflightReport> {
+  if (isDemoModeActive()) {
+    return {
+      status: 'healthy',
+      evaluated_at: new Date().toISOString(),
+      checks: [
+        { id: 'sqlite_wal_mode', name: 'SQLite WAL Journal Mode', status: 'pass', message: 'WAL journal mode active for concurrent reader/writer operations' },
+        { id: 'sqlite_integrity', name: 'Database Structural Integrity', status: 'pass', message: 'PRAGMA quick_check passed: 0 B-tree corruptions detected' },
+        { id: 'git_storage_writable', name: 'Data & Git Storage Headroom', status: 'pass', message: 'Data directory verified with read/write permissions' },
+        { id: 'lease_signing_keys', name: 'Agent Capability Lease Keys', status: 'pass', message: 'Cryptographic signing key configured and active' },
+        { id: 'event_bus_workers', name: 'Asynchronous Event Dispatcher', status: 'pass', message: '16 bounded background workers initialized with backpressure protection' },
+        { id: 'ssrf_guard', name: 'SSRF & Webhook Egress Protection', status: 'pass', message: 'Strict dial-time DNS and private IP blocking active' },
+      ],
+    }
+  }
+
+  const res = await fetch('/api/v1/admin/preflight', { signal })
+  if (!res.ok) {
+    throw new Error(`Failed to fetch preflight status: ${res.statusText}`)
+  }
+  return res.json()
+}
+
 export interface ClusterSnapshotMetadata {
   filename: string
   walSequence: number

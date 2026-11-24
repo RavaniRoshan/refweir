@@ -61,4 +61,16 @@ describe('CommandPalette', () => {
     renderPalette({ isDemo: true })
     expect(screen.getByText('Switch to Live Production')).toBeInTheDocument()
   })
+
+  it('runs agent capability lease quick action', () => {
+    const handleIssueLease = vi.fn()
+    const props = renderPalette({ onIssueLease: handleIssueLease })
+
+    expect(screen.getByText('Agent: Issue Capability Lease')).toBeInTheDocument()
+    expect(screen.getByText('Cluster Pre-flight Diagnostics')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Agent: Issue Capability Lease'))
+    expect(handleIssueLease).toHaveBeenCalled()
+    expect(props.onOpenChange).toHaveBeenCalledWith(false)
+  })
 })

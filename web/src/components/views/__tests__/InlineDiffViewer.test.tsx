@@ -266,4 +266,52 @@ describe('InlineDiffViewer Component', () => {
 
     expect(screen.getByText('Why was obsoleteCode removed?')).toBeInTheDocument()
   })
+
+  it('toggles between Unified and Split diff views', () => {
+    render(
+      <InlineDiffViewer
+        owner="shiva"
+        repoName="refweir.dev"
+        prNumber={101}
+        diffHunks={mockHunks}
+        comments={mockComments}
+        onRefreshComments={() => {}}
+      />
+    )
+
+    const splitBtn = screen.getByRole('button', { name: /split diff view/i })
+    const unifiedBtn = screen.getByRole('button', { name: /unified diff view/i })
+
+    expect(splitBtn).toBeInTheDocument()
+    expect(unifiedBtn).toBeInTheDocument()
+
+    // Switch to split view
+    fireEvent.click(splitBtn)
+    expect(screen.getByText('+newLine()')).toBeInTheDocument()
+    expect(screen.getByText('-oldLine()')).toBeInTheDocument()
+
+    // Switch back to unified view
+    fireEvent.click(unifiedBtn)
+    expect(screen.getByText('-oldLine()')).toBeInTheDocument()
+    expect(screen.getByText('+newLine()')).toBeInTheDocument()
+  })
+
+  it('toggles ignore whitespace button state', () => {
+    render(
+      <InlineDiffViewer
+        owner="shiva"
+        repoName="refweir.dev"
+        prNumber={101}
+        diffHunks={mockHunks}
+        comments={mockComments}
+        onRefreshComments={() => {}}
+      />
+    )
+
+    const wsBtn = screen.getByRole('button', { name: /-w ignore whitespace/i })
+    expect(wsBtn).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(wsBtn)
+    expect(wsBtn).toHaveAttribute('aria-pressed', 'true')
+  })
 })

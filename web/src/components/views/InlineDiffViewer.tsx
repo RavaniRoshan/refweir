@@ -49,6 +49,113 @@ export function extractSuggestion(body: string): string | null {
   return match ? match[1] : null
 }
 
+export interface SplitRow {
+  type: 'header' | 'diff'
+  headerText?: string
+  left?: {
+    lineNum: number
+    content: string
+    isDel: boolean
+  }
+  right?: {
+    lineNum: number
+    content: string
+    isAdd: boolean
+  }
+}
+
+/**
+ * Parses raw git hunk lines into side-by-side split rows with optional whitespace sensitivity.
+ */
+export function parseHunkToSplitRows(hunk: string, ignoreWhitespace: boolean): SplitRow[] {
+  const lines = hunk.split('\n')
+  const rows: SplitRow[] = []
+  let oldLine = 0
+  let newLine = 0
+
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    if (!line && i === lines.length - 1) {
+      i++
+      continue
+    }
+
+    if (line.startsWith('@@')) {
+      const match = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/)
+      if (match) {
+        oldLine = parseInt(match[1], 10) - 1
+        newLine = parseInt(match[2], 10) - 1
+      }
+      rows.push({ type: 'header', headerText: line })
+      i++
+      continue
+    }
+
+    if (!line.startsWith('+') && !line.startsWith('-')) {
+      oldLine++
+      newLine++
+      rows.push({
+        type: 'diff',
+        left: { lineNum: oldLine, content: line, isDel: false },
+        right: { lineNum: newLine, content: line, isAdd: false },
+      })
+      i++
+      continue
+    }
+
+    // Collect contiguous deletions
+    const dels: { lineNum: number; content: string }[] = []
+    while (i < lines.length && lines[i].startsWith('-')) {
+      oldLine++
+      dels.push({ lineNum: oldLine, content: lines[i] })
+      i++
+    }
+
+    // Collect contiguous additions
+    const adds: { lineNum: number; content: string }[] = []
+    while (i < lines.length && lines[i].startsWith('+')) {
+      newLine++
+      adds.push({ lineNum: newLine, content: lines[i] })
+      i++
+    }
+
+    const maxLen = Math.max(dels.length, adds.length)
+    for (let k = 0; k < maxLen; k++) {
+      const delItem = dels[k]
+      const addItem = adds[k]
+
+      const isWhitespaceOnly =
+        ignoreWhitespace &&
+        Boolean(
+          delItem &&
+          addItem &&
+          delItem.content.substring(1).trim() === addItem.content.substring(1).trim()
+        )
+
+      rows.push({
+        type: 'diff',
+        left: delItem
+          ? {
+              lineNum: delItem.lineNum,
+              content: delItem.content,
+              isDel: !isWhitespaceOnly,
+            }
+          : undefined,
+        right: addItem
+          ? {
+              lineNum: addItem.lineNum,
+              content: addItem.content,
+              isAdd: !isWhitespaceOnly,
+            }
+          : undefined,
+      })
+    }
+  }
+
+  return rows
+}
+
 export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   owner,
   repoName,
@@ -58,6 +165,10 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   onRefreshComments,
   isPrOpen = true,
 }) => {
+  // View mode & whitespace sensitivity
+  const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified')
+  const [ignoreWhitespace, setIgnoreWhitespace] = useState(false)
+
   // State for composing line comments
   const [activeComposer, setActiveComposer] = useState<{
     path: string
@@ -198,6 +309,228 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
     }
   }
 
+  const renderThreadAndComposer = (
+    filePath: string,
+    lineNum: number,
+    side: 'RIGHT' | 'LEFT',
+    currentLineText: string
+  ) => {
+    const lineComments = commentsByLine.get(`${filePath}:${lineNum}:${side}`) || []
+    const isComposerOpen =
+      activeComposer?.path === filePath &&
+      activeComposer?.line === lineNum &&
+      activeComposer?.side === side
+
+    if (lineComments.length === 0 && !isComposerOpen) return null
+
+    return (
+      <div className="bg-secondary/15 p-3 space-y-3 border-y border-border">
+        {lineComments.map((comment) => {
+          const suggestion = extractSuggestion(comment.body)
+          const isApplied = appliedSuggestions[comment.id]
+
+          return (
+            <div
+              key={comment.id}
+              className="rounded-md border border-border bg-card p-3 space-y-2 text-xs font-sans shadow-2xs"
+            >
+              {/* Comment Header */}
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <LivingAvatar name={comment.author} isAgent={comment.isAgent} size="sm" />
+                  <span className="font-semibold text-foreground">{comment.author}</span>
+                  {comment.isAgent && (
+                    <Badge variant="agent" className="text-[9px] py-0 px-1">
+                      AI Agent
+                    </Badge>
+                  )}
+                  <span className="text-muted-foreground text-[11px]">{comment.createdAt}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {comment.resolved ? (
+                    <Badge variant="success" className="text-[10px] gap-1">
+                      <Check className="w-3 h-3" />
+                      <span>Resolved</span>
+                    </Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => handleToggleResolve(comment.threadId || comment.id, false)}
+                      className="text-[11px] text-muted-foreground hover:text-foreground h-6 px-1.5"
+                    >
+                      Resolve conversation
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Comment Body */}
+              <div className="text-foreground leading-relaxed whitespace-pre-wrap">
+                {comment.body.replace(/```suggestion\r?\n[\s\S]*?\r?\n```/g, '').trim()}
+              </div>
+
+              {/* Suggestion Block Preview */}
+              {suggestion !== null && (
+                <div className="mt-2 rounded-md border border-border bg-secondary/30 overflow-hidden font-mono text-xs">
+                  <div className="px-3 py-1.5 bg-secondary/60 border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-muted-foreground font-sans font-medium text-[11px]">
+                      <GitCommit className="w-3.5 h-3.5 text-primary" />
+                      <span>Suggested change</span>
+                    </div>
+
+                    {isPrOpen && (
+                      <Button
+                        variant={isApplied ? 'secondary' : 'primary'}
+                        size="xs"
+                        disabled={isApplied || applyingSuggestionId === comment.id}
+                        onClick={() => handleApplySuggestion(comment.id)}
+                        className="h-6 gap-1 text-[11px]"
+                      >
+                        {applyingSuggestionId === comment.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : isApplied ? (
+                          <Check className="w-3 h-3 text-success" />
+                        ) : (
+                          <Check className="w-3 h-3" />
+                        )}
+                        <span>{isApplied ? 'Applied' : 'Apply suggestion'}</span>
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="p-2 space-y-0.5">
+                    <div className="px-2 py-0.5 rounded bg-danger/15 text-danger">
+                      - {currentLineText || 'original'}
+                    </div>
+                    <div className="px-2 py-0.5 rounded bg-success/15 text-success">
+                      + {suggestion}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Reply Composer inside thread */}
+        {lineComments.length > 0 &&
+          (replyingThreadId === (lineComments[0].threadId || lineComments[0].id) ? (
+            <div className="p-2.5 rounded-md border border-border bg-card space-y-2 font-sans">
+              <textarea
+                rows={2}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Reply..."
+                className="w-full bg-input text-foreground border border-border rounded-md p-2 text-xs outline-none focus:border-primary resize-y"
+              />
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => {
+                    setReplyingThreadId(null)
+                    setReplyText('')
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="xs"
+                  disabled={isSubmittingReply || !replyText.trim()}
+                  onClick={() =>
+                    handleSendReply(
+                      lineComments[0].threadId || lineComments[0].id,
+                      filePath,
+                      lineNum
+                    )
+                  }
+                  className="gap-1"
+                >
+                  {isSubmittingReply && <Loader2 className="w-3 h-3 animate-spin" />}
+                  <span>Reply</span>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => setReplyingThreadId(lineComments[0].threadId || lineComments[0].id)}
+              className="text-[11px] text-muted-foreground hover:text-foreground gap-1"
+            >
+              <CornerDownRight className="w-3 h-3" />
+              <span>Reply to thread...</span>
+            </Button>
+          ))}
+
+        {/* Inline Comment Composer for this line */}
+        {isComposerOpen && (
+          <div
+            data-testid="inline-comment-composer"
+            className="bg-secondary/20 p-3 border-y border-border font-sans space-y-2.5"
+          >
+            <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+              <span>
+                Comment on {filePath}:{lineNum}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => {
+                  const template = `\`\`\`suggestion\n${activeComposer.currentLineText}\n\`\`\``
+                  setComposerText((prev) => (prev ? `${prev}\n\n${template}` : template))
+                }}
+                className="text-[11px] gap-1 h-6"
+              >
+                <GitCommit className="w-3 h-3 text-primary" />
+                <span>Add a suggestion</span>
+              </Button>
+            </div>
+
+            <textarea
+              rows={3}
+              value={composerText}
+              onChange={(e) => setComposerText(e.target.value)}
+              placeholder="Leave a comment or review suggestion..."
+              className="w-full bg-input text-foreground border border-border rounded-md p-2.5 text-xs outline-none focus:border-primary resize-y"
+            />
+
+            <div className="flex items-center justify-end gap-2 text-xs">
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setActiveComposer(null)
+                  setComposerText('')
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="xs"
+                disabled={isSubmittingComment || !composerText.trim()}
+                onClick={handleAddLineComment}
+                className="gap-1.5"
+              >
+                {isSubmittingComment ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
+                <span>Add single comment</span>
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (diffHunks.length === 0) {
     return (
       <Box className="p-8 text-center text-muted-foreground text-xs">
@@ -209,9 +542,54 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Review Changes Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-border">
-        <div className="text-xs text-muted-foreground">
-          Showing <span className="font-semibold text-foreground">{diffHunks.length}</span> changed files with inline reviews
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border">
+        <div className="flex items-center gap-4">
+          <div className="text-xs text-muted-foreground">
+            Showing <span className="font-semibold text-foreground">{diffHunks.length}</span> changed files with inline reviews
+          </div>
+
+          {/* Segmented Unified / Split Switcher */}
+          <div className="flex items-center rounded-md border border-border p-0.5 bg-secondary/30 text-xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('unified')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                viewMode === 'unified'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              aria-label="Unified diff view"
+            >
+              Unified
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('split')}
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                viewMode === 'split'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              aria-label="Split diff view"
+            >
+              Split
+            </button>
+          </div>
+
+          {/* Ignore Whitespace toggle */}
+          <button
+            type="button"
+            onClick={() => setIgnoreWhitespace(!ignoreWhitespace)}
+            className={`px-2 py-0.5 rounded-md border text-[11px] font-medium transition-colors cursor-pointer ${
+              ignoreWhitespace
+                ? 'border-primary/50 bg-primary/10 text-primary'
+                : 'border-border bg-card text-muted-foreground hover:text-foreground'
+            }`}
+            title="Ignore whitespace changes (-w)"
+            aria-pressed={ignoreWhitespace}
+          >
+            -w Ignore Whitespace
+          </button>
         </div>
 
         {isPrOpen && (
@@ -378,298 +756,226 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                 className="font-mono text-xs overflow-x-auto bg-background divide-y divide-border/20"
                 style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 32px' }}
               >
-                {lines.map((line, lIdx) => {
-                const isAdd = line.startsWith('+')
-                const isDel = line.startsWith('-')
-                const isHeader = line.startsWith('@@')
+                {viewMode === 'split' ? (
+                  // SPLIT (SIDE-BY-SIDE) VIEW
+                  (() => {
+                    const splitRows = parseHunkToSplitRows(diff.hunk, ignoreWhitespace)
+                    return splitRows.map((row, rIdx) => {
+                      if (row.type === 'header') {
+                        return (
+                          <div
+                            key={rIdx}
+                            className="bg-secondary/60 text-muted-foreground font-semibold py-1 px-4 text-xs select-none border-y border-border"
+                          >
+                            {row.headerText}
+                          </div>
+                        )
+                      }
 
-                if (isHeader) {
-                  const match = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/)
-                  if (match) {
-                    currentOldLine = parseInt(match[1], 10) - 1
-                    currentNewLine = parseInt(match[2], 10) - 1
-                  }
-                } else if (isAdd) {
-                  currentNewLine++
-                } else if (isDel) {
-                  currentOldLine++
-                } else {
-                  currentOldLine++
-                  currentNewLine++
-                }
-
-                const lineNumForComment = isDel ? currentOldLine : currentNewLine
-                const sideForComment: 'RIGHT' | 'LEFT' = isDel ? 'LEFT' : 'RIGHT'
-
-                // O(1) indexed lookup for line comments
-                const lineComments =
-                  commentsByLine.get(`${diff.newPath}:${lineNumForComment}:${sideForComment}`) || []
-
-                const isComposerOpen =
-                  activeComposer?.path === diff.newPath &&
-                  activeComposer?.line === lineNumForComment &&
-                  activeComposer?.side === sideForComment
-
-                return (
-                  <React.Fragment key={lIdx}>
-                    <div
-                      className={`group flex items-stretch leading-relaxed ${
-                        isAdd
-                          ? 'bg-success/10 text-success'
-                          : isDel
-                          ? 'bg-danger/10 text-danger'
-                          : isHeader
-                          ? 'bg-secondary/60 text-muted-foreground font-semibold py-1'
-                          : 'text-foreground/90 hover:bg-secondary/20'
-                      }`}
-                    >
-                      {/* Left gutter: line numbers & hover plus icon */}
-                      {!isHeader ? (
-                        <div className="w-16 shrink-0 flex items-center justify-between px-2 bg-secondary/20 border-r border-border text-[11px] text-muted-foreground select-none">
-                          <span className="w-6 text-right font-mono">{isDel ? currentOldLine : isAdd ? '' : currentOldLine}</span>
-                          <span className="w-6 text-right font-mono">{isAdd ? currentNewLine : isDel ? '' : currentNewLine}</span>
-                          {isPrOpen && (
-                            <button
-                              type="button"
-                              title="Add inline comment"
-                              onClick={() => {
-                                if (isComposerOpen) {
-                                  setActiveComposer(null)
-                                } else {
-                                  setActiveComposer({
-                                    path: diff.newPath,
-                                    line: lineNumForComment,
-                                    side: sideForComment,
-                                    currentLineText: line.substring(1),
-                                  })
-                                }
-                              }}
-                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded bg-primary text-primary-foreground hover:scale-110 transition-all cursor-pointer ml-1"
-                            >
-                              <Plus className="w-2.5 h-2.5" />
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="w-16 shrink-0 bg-secondary/40 border-r border-border" />
-                      )}
-
-                      {/* Code line content */}
-                      <div className="px-3 py-0.5 whitespace-pre flex-1 select-text">
-                        {line}
-                      </div>
-                    </div>
-
-                    {/* Inline Discussion Thread for this line */}
-                    {lineComments.length > 0 && (
-                      <div className="bg-secondary/15 p-3 space-y-3 border-y border-border">
-                        {lineComments.map((comment) => {
-                          const suggestion = extractSuggestion(comment.body)
-                          const isApplied = appliedSuggestions[comment.id]
-
-                          return (
+                      return (
+                        <React.Fragment key={rIdx}>
+                          <div className="grid grid-cols-2 divide-x divide-border leading-relaxed">
+                            {/* Left Column (Old side) */}
                             <div
-                              key={comment.id}
-                              className="rounded-md border border-border bg-card p-3 space-y-2 text-xs font-sans shadow-2xs"
+                              className={`group flex items-stretch min-w-0 ${
+                                row.left?.isDel
+                                  ? 'bg-danger/10 text-danger'
+                                  : 'text-foreground/90 hover:bg-secondary/20'
+                              }`}
                             >
-                              {/* Comment Header */}
-                              <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-2">
-                                  <LivingAvatar name={comment.author} isAgent={comment.isAgent} size="sm" />
-                                  <span className="font-semibold text-foreground">{comment.author}</span>
-                                  {comment.isAgent && (
-                                    <Badge variant="agent" className="text-[9px] py-0 px-1">
-                                      AI Agent
-                                    </Badge>
-                                  )}
-                                  <span className="text-muted-foreground text-[11px]">{comment.createdAt}</span>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                  {comment.resolved ? (
-                                    <Badge variant="success" className="text-[10px] gap-1">
-                                      <Check className="w-3 h-3" />
-                                      <span>Resolved</span>
-                                    </Badge>
-                                  ) : (
-                                    <Button
-                                      variant="ghost"
-                                      size="xs"
-                                      onClick={() => handleToggleResolve(comment.threadId || comment.id, false)}
-                                      className="text-[11px] text-muted-foreground hover:text-foreground h-6 px-1.5"
-                                    >
-                                      Resolve conversation
-                                    </Button>
-                                  )}
-                                </div>
+                              <div className="w-12 shrink-0 flex items-center justify-between px-1.5 bg-secondary/20 border-r border-border text-[11px] text-muted-foreground select-none">
+                                <span className="font-mono text-right w-full pr-1">
+                                  {row.left?.lineNum ?? ''}
+                                </span>
+                                {row.left && isPrOpen && (
+                                  <button
+                                    type="button"
+                                    title="Add inline comment (old side)"
+                                    onClick={() => {
+                                      if (!row.left) return
+                                      if (
+                                        activeComposer?.path === diff.newPath &&
+                                        activeComposer?.line === row.left.lineNum &&
+                                        activeComposer?.side === 'LEFT'
+                                      ) {
+                                        setActiveComposer(null)
+                                      } else {
+                                        setActiveComposer({
+                                          path: diff.newPath,
+                                          line: row.left.lineNum,
+                                          side: 'LEFT',
+                                          currentLineText: row.left.content.replace(/^[+-]/, ''),
+                                        })
+                                      }
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded bg-primary text-primary-foreground hover:scale-110 transition-all cursor-pointer"
+                                  >
+                                    <Plus className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
                               </div>
-
-                              {/* Comment Body */}
-                              <div className="text-foreground leading-relaxed whitespace-pre-wrap">
-                                {comment.body.replace(/```suggestion\r?\n[\s\S]*?\r?\n```/g, '').trim()}
+                              <div className="px-2 py-0.5 whitespace-pre flex-1 select-text overflow-x-hidden">
+                                {row.left?.content ?? ''}
                               </div>
-
-                              {/* Suggestion Block Preview */}
-                              {suggestion !== null && (
-                                <div className="mt-2 rounded-md border border-border bg-secondary/30 overflow-hidden font-mono text-xs">
-                                  <div className="px-3 py-1.5 bg-secondary/60 border-b border-border flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 text-muted-foreground font-sans font-medium text-[11px]">
-                                      <GitCommit className="w-3.5 h-3.5 text-primary" />
-                                      <span>Suggested change</span>
-                                    </div>
-
-                                    {isPrOpen && (
-                                      <Button
-                                        variant={isApplied ? 'secondary' : 'primary'}
-                                        size="xs"
-                                        disabled={isApplied || applyingSuggestionId === comment.id}
-                                        onClick={() => handleApplySuggestion(comment.id)}
-                                        className="h-6 gap-1 text-[11px]"
-                                      >
-                                        {applyingSuggestionId === comment.id ? (
-                                          <Loader2 className="w-3 h-3 animate-spin" />
-                                        ) : isApplied ? (
-                                          <Check className="w-3 h-3 text-success" />
-                                        ) : (
-                                          <Check className="w-3 h-3" />
-                                        )}
-                                        <span>{isApplied ? 'Applied' : 'Apply suggestion'}</span>
-                                      </Button>
-                                    )}
-                                  </div>
-
-                                  <div className="p-2 space-y-0.5">
-                                    <div className="px-2 py-0.5 rounded bg-danger/15 text-danger">
-                                      - {line.substring(1) || 'original'}
-                                    </div>
-                                    <div className="px-2 py-0.5 rounded bg-success/15 text-success">
-                                      + {suggestion}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
                             </div>
-                          )
-                        })}
 
-                        {/* Reply Composer inside thread */}
-                        {replyingThreadId === (lineComments[0].threadId || lineComments[0].id) ? (
-                          <div className="p-2.5 rounded-md border border-border bg-card space-y-2 font-sans">
-                            <textarea
-                              rows={2}
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="Reply..."
-                              className="w-full bg-input text-foreground border border-border rounded-md p-2 text-xs outline-none focus:border-primary resize-y"
-                            />
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                onClick={() => {
-                                  setReplyingThreadId(null)
-                                  setReplyText('')
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                variant="primary"
-                                size="xs"
-                                disabled={isSubmittingReply || !replyText.trim()}
-                                onClick={() =>
-                                  handleSendReply(
-                                    lineComments[0].threadId || lineComments[0].id,
-                                    diff.newPath,
-                                    lineNumForComment
-                                  )
-                                }
-                                className="gap-1"
-                              >
-                                {isSubmittingReply && <Loader2 className="w-3 h-3 animate-spin" />}
-                                <span>Reply</span>
-                              </Button>
+                            {/* Right Column (New side) */}
+                            <div
+                              className={`group flex items-stretch min-w-0 ${
+                                row.right?.isAdd
+                                  ? 'bg-success/10 text-success'
+                                  : 'text-foreground/90 hover:bg-secondary/20'
+                              }`}
+                            >
+                              <div className="w-12 shrink-0 flex items-center justify-between px-1.5 bg-secondary/20 border-r border-border text-[11px] text-muted-foreground select-none">
+                                <span className="font-mono text-right w-full pr-1">
+                                  {row.right?.lineNum ?? ''}
+                                </span>
+                                {row.right && isPrOpen && (
+                                  <button
+                                    type="button"
+                                    title="Add inline comment (new side)"
+                                    onClick={() => {
+                                      if (!row.right) return
+                                      if (
+                                        activeComposer?.path === diff.newPath &&
+                                        activeComposer?.line === row.right.lineNum &&
+                                        activeComposer?.side === 'RIGHT'
+                                      ) {
+                                        setActiveComposer(null)
+                                      } else {
+                                        setActiveComposer({
+                                          path: diff.newPath,
+                                          line: row.right.lineNum,
+                                          side: 'RIGHT',
+                                          currentLineText: row.right.content.replace(/^[+-]/, ''),
+                                        })
+                                      }
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded bg-primary text-primary-foreground hover:scale-110 transition-all cursor-pointer"
+                                  >
+                                    <Plus className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="px-2 py-0.5 whitespace-pre flex-1 select-text overflow-x-hidden">
+                                {row.right?.content ?? ''}
+                              </div>
                             </div>
                           </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            onClick={() => setReplyingThreadId(lineComments[0].threadId || lineComments[0].id)}
-                            className="text-[11px] text-muted-foreground hover:text-foreground gap-1"
-                          >
-                            <CornerDownRight className="w-3 h-3" />
-                            <span>Reply to thread...</span>
-                          </Button>
-                        )}
-                      </div>
-                    )}
 
-                    {/* Inline Comment Composer for this line */}
-                    {isComposerOpen && (
-                      <div
-                        data-testid="inline-comment-composer"
-                        className="bg-secondary/20 p-3 border-y border-border font-sans space-y-2.5"
-                      >
-                        <div className="flex items-center justify-between text-xs font-semibold text-foreground">
-                          <span>
-                            Comment on {diff.newPath}:{lineNumForComment}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="xs"
-                            onClick={() => {
-                              const template = `\`\`\`suggestion\n${activeComposer.currentLineText}\n\`\`\``
-                              setComposerText((prev) => (prev ? `${prev}\n\n${template}` : template))
-                            }}
-                            className="text-[11px] gap-1 h-6"
-                          >
-                            <GitCommit className="w-3 h-3 text-primary" />
-                            <span>Add a suggestion</span>
-                          </Button>
-                        </div>
-
-                        <textarea
-                          rows={3}
-                          value={composerText}
-                          onChange={(e) => setComposerText(e.target.value)}
-                          placeholder="Leave a comment or review suggestion..."
-                          className="w-full bg-input text-foreground border border-border rounded-md p-2.5 text-xs outline-none focus:border-primary resize-y"
-                        />
-
-                        <div className="flex items-center justify-end gap-2 text-xs">
-                          <Button
-                            variant="ghost"
-                            size="xs"
-                            onClick={() => {
-                              setActiveComposer(null)
-                              setComposerText('')
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="primary"
-                            size="xs"
-                            disabled={isSubmittingComment || !composerText.trim()}
-                            onClick={handleAddLineComment}
-                            className="gap-1.5"
-                          >
-                            {isSubmittingComment ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Send className="w-3 h-3" />
+                          {/* Render threads or composer if active on either column */}
+                          {row.left &&
+                            renderThreadAndComposer(
+                              diff.newPath,
+                              row.left.lineNum,
+                              'LEFT',
+                              row.left.content.replace(/^[+-]/, '')
                             )}
-                            <span>Add single comment</span>
-                          </Button>
+                          {row.right &&
+                            renderThreadAndComposer(
+                              diff.newPath,
+                              row.right.lineNum,
+                              'RIGHT',
+                              row.right.content.replace(/^[+-]/, '')
+                            )}
+                        </React.Fragment>
+                      )
+                    })
+                  })()
+                ) : (
+                  // UNIFIED VIEW
+                  lines.map((line, lIdx) => {
+                    const isAdd = line.startsWith('+')
+                    const isDel = line.startsWith('-')
+                    const isHeader = line.startsWith('@@')
+
+                    if (isHeader) {
+                      const match = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/)
+                      if (match) {
+                        currentOldLine = parseInt(match[1], 10) - 1
+                        currentNewLine = parseInt(match[2], 10) - 1
+                      }
+                    } else if (isAdd) {
+                      currentNewLine++
+                    } else if (isDel) {
+                      currentOldLine++
+                    } else {
+                      currentOldLine++
+                      currentNewLine++
+                    }
+
+                    const lineNumForComment = isDel ? currentOldLine : currentNewLine
+                    const sideForComment: 'RIGHT' | 'LEFT' = isDel ? 'LEFT' : 'RIGHT'
+
+                    const isComposerOpen =
+                      activeComposer?.path === diff.newPath &&
+                      activeComposer?.line === lineNumForComment &&
+                      activeComposer?.side === sideForComment
+
+                    return (
+                      <React.Fragment key={lIdx}>
+                        <div
+                          className={`group flex items-stretch leading-relaxed ${
+                            isAdd
+                              ? 'bg-success/10 text-success'
+                              : isDel
+                              ? 'bg-danger/10 text-danger'
+                              : isHeader
+                              ? 'bg-secondary/60 text-muted-foreground font-semibold py-1'
+                              : 'text-foreground/90 hover:bg-secondary/20'
+                          }`}
+                        >
+                          {!isHeader ? (
+                            <div className="w-16 shrink-0 flex items-center justify-between px-2 bg-secondary/20 border-r border-border text-[11px] text-muted-foreground select-none">
+                              <span className="w-6 text-right font-mono">
+                                {isDel ? currentOldLine : isAdd ? '' : currentOldLine}
+                              </span>
+                              <span className="w-6 text-right font-mono">
+                                {isAdd ? currentNewLine : isDel ? '' : currentNewLine}
+                              </span>
+                              {isPrOpen && (
+                                <button
+                                  type="button"
+                                  title="Add inline comment"
+                                  onClick={() => {
+                                    if (isComposerOpen) {
+                                      setActiveComposer(null)
+                                    } else {
+                                      setActiveComposer({
+                                        path: diff.newPath,
+                                        line: lineNumForComment,
+                                        side: sideForComment,
+                                        currentLineText: line.substring(1),
+                                      })
+                                    }
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-0.5 rounded bg-primary text-primary-foreground hover:scale-110 transition-all cursor-pointer ml-1"
+                                >
+                                  <Plus className="w-2.5 h-2.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="w-16 shrink-0 bg-secondary/40 border-r border-border" />
+                          )}
+
+                          <div className="px-3 py-0.5 whitespace-pre flex-1 select-text">
+                            {line}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </React.Fragment>
-                )
-              })}
-            </div>
+
+                        {renderThreadAndComposer(
+                          diff.newPath,
+                          lineNumForComment,
+                          sideForComment,
+                          line.substring(1)
+                        )}
+                      </React.Fragment>
+                    )
+                  })
+                )}
+              </div>
             )}
           </Box>
         )

@@ -56,12 +56,12 @@ describe('WebhooksView', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Webhook Delivery Log')).toBeInTheDocument()
-      expect(screen.getByText('push')).toBeInTheDocument()
+      expect(screen.getAllByText('push').length).toBeGreaterThan(0)
       expect(screen.getByText('pull_request')).toBeInTheDocument()
       expect(screen.getByText('https://ci.internal.refweir.dev/hooks/forge')).toBeInTheDocument()
       expect(screen.getByText('https://security-bot.refweir.dev/audit')).toBeInTheDocument()
     })
-    expect(screen.getAllByText('HTTP 200').length).toBe(2)
+    expect(screen.getAllByText(/HTTP 200/i).length).toBeGreaterThan(0)
   })
 
   it('triggers test ping and shows success feedback badge', async () => {
@@ -84,11 +84,34 @@ describe('WebhooksView', () => {
     render(<WebhooksView />)
 
     await waitFor(() => {
-      expect(screen.getByText('push')).toBeInTheDocument()
+      expect(screen.getAllByText('push').length).toBeGreaterThan(0)
     })
 
     const redeliverBtns = screen.getAllByRole('button', { name: /redeliver/i })
     fireEvent.click(redeliverBtns[0])
+
+    await waitFor(() => {
+      expect(api.batchRedeliverWebhooks).toHaveBeenCalledWith(['whd-1'])
+      expect(screen.getByText('Webhook redelivery queued')).toBeInTheDocument()
+    })
+  })
+
+  it('renders inspection drawer with request headers and allows redelivery from drawer', async () => {
+    render(<WebhooksView />)
+
+    await waitFor(() => {
+      expect(screen.getAllByText('push').length).toBeGreaterThan(0)
+    })
+
+    // whd-1 is expanded by default (expandedId = data[0].id)
+    expect(screen.getByText('Delivery Details:')).toBeInTheDocument()
+    expect(screen.getByText('Request Headers')).toBeInTheDocument()
+    expect(screen.getByText('Target Response')).toBeInTheDocument()
+    expect(screen.getByText('X-Hub-Signature-256:')).toBeInTheDocument()
+    expect(screen.getByText('Duration:')).toBeInTheDocument()
+
+    const drawerRedeliver = screen.getByRole('button', { name: /redeliver event/i })
+    fireEvent.click(drawerRedeliver)
 
     await waitFor(() => {
       expect(api.batchRedeliverWebhooks).toHaveBeenCalledWith(['whd-1'])
