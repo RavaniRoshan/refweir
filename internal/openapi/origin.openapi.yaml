@@ -8292,7 +8292,7 @@ paths:
                     type: array
                     items:
                         type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             responses:
                 "200":
                     description: OK
@@ -9480,7 +9480,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             requestBody:
                 content:
                     application/json:
@@ -9499,7 +9499,7 @@ paths:
                                          FAILED_PRECONDITION, and a base branch that requires linear history
                                          lands as a squash. Omit to use the repository's default: a merge commit
                                          when allowed, otherwise squash.
-                                    x-cursor-visibility: PREVIEW
+                                    x-refweir-visibility: PREVIEW
                                 commitTitle:
                                     type: string
                                     description: |-
@@ -9508,11 +9508,11 @@ paths:
                                          Omit to let Origin compose the commit message when it lands. It applies
                                          only when the pull request lands on its own; a stack prefix landing as
                                          one commit keeps the composed message.
-                                    x-cursor-visibility: PREVIEW
+                                    x-refweir-visibility: PREVIEW
                                 commitMessage:
                                     type: string
                                     description: Body of the merge commit, under the same rules as `commit_title`.
-                                    x-cursor-visibility: PREVIEW
+                                    x-refweir-visibility: PREVIEW
                         examples:
                             enablePullRequestAutoMerge:
                                 value:
@@ -9614,7 +9614,7 @@ paths:
                     - user
                 scopes:
                     - repository:contents:write
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         delete:
             tags:
                 - OriginService
@@ -9640,7 +9640,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             responses:
                 "200":
                     description: OK
@@ -9726,7 +9726,7 @@ paths:
                     - user
                 scopes:
                     - repository:pull_requests:write
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
     /v1/origin/repos/{ownerSlug}/{repoName}/pulls/{pullNumber}/comments:
         get:
             tags:
@@ -10947,7 +10947,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             requestBody:
                 content:
                     application/json:
@@ -10961,7 +10961,7 @@ paths:
                                          be the pull request's current head. When set and the head differs, the
                                          request is rejected with ABORTED (HTTP 409) and nothing is computed.
                                          Values that are not a full commit SHA are rejected with INVALID_ARGUMENT.
-                                    x-cursor-visibility: PREVIEW
+                                    x-refweir-visibility: PREVIEW
                         examples:
                             preparePullRequestMergeRef:
                                 value:
@@ -11029,7 +11029,7 @@ paths:
                     - user
                 scopes:
                     - repository:pull_requests:read
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
     /v1/origin/repos/{ownerSlug}/{repoName}/pulls/{pullNumber}/mergeability:
         get:
             tags:
@@ -11061,7 +11061,7 @@ paths:
                   required: true
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: expectedHeadSha
                   in: query
                   description: |-
@@ -11072,7 +11072,7 @@ paths:
                      with INVALID_ARGUMENT.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             responses:
                 "200":
                     description: OK
@@ -11193,7 +11193,7 @@ paths:
                     - user
                 scopes:
                     - repository:pull_requests:read
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
     /v1/origin/repos/{ownerSlug}/{repoName}/pulls/{pullNumber}/requested_reviewers:
         get:
             tags:
@@ -13197,7 +13197,7 @@ paths:
                      into `q`.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: repo
                   in: query
                   description: |-
@@ -13209,14 +13209,14 @@ paths:
                      PERMISSION_DENIED.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: pageSize
                   in: query
                   description: Maximum results to return. Defaults to 30; maximum 100.
                   schema:
                     type: integer
                     format: int32
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: pageToken
                   in: query
                   description: |-
@@ -13226,7 +13226,7 @@ paths:
                      that page; omit it to keep the previous page size.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: sort
                   in: query
                   description: |-
@@ -13238,7 +13238,7 @@ paths:
                      `sort`, and so is a sort search cannot answer.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
                 - name: order
                   in: query
                   description: |-
@@ -13247,7 +13247,7 @@ paths:
                      `q`. Any other value is rejected with INVALID_ARGUMENT naming `order`.
                   schema:
                     type: string
-                  x-cursor-visibility: PREVIEW
+                  x-refweir-visibility: PREVIEW
             responses:
                 "200":
                     description: OK
@@ -13330,7 +13330,7 @@ paths:
                 scopes:
                     - repository:pull_requests:read
                     - repository:pull_requests:reviews:read
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
 components:
     schemas:
         AddAppInstallationRepositoriesRequest:
@@ -14096,23 +14096,23 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/RepositoryReference'
                     description: The repository the check run belongs to.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 checkRun:
                     allOf:
                         - $ref: '#/components/schemas/CheckRunReference'
                     description: The check run the annotations were appended to, with its suite.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 sha:
                     type: string
                     description: Resolved head commit SHA the check run is attached to (lowercase hex).
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 baseSha:
                     type: string
                     description: |-
                         The comparison base the check run was reported against (lowercase hex),
                          when its app supplied one; absent means base-agnostic (see
                          `CheckRun.base_sha`).
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 annotations:
                     type: array
                     items:
@@ -14120,17 +14120,17 @@ components:
                     description: |-
                         The appended annotations, in request order. May be shorter than
                          annotations_count when Origin capped the list.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 annotationsCount:
                     type: integer
                     description: Number of annotations the request appended.
                     format: uint32
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 createdAt:
                     type: string
                     description: When the batch was appended.
                     format: date-time
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 One `CreateCheckRunAnnotations` request appended annotations to a check run
                  (`repository.check_run.annotations.created`). Annotations are append-only
@@ -14144,7 +14144,7 @@ components:
                  pull request from `sha`.
             x-origin-webhook-events:
                 - repository.check_run.annotations.created
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
             example:
                 repository:
                     id: repo_01k2ja2000e0080000000000q4
@@ -14334,20 +14334,20 @@ components:
             properties:
                 id:
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 name:
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 checkSuite:
                     allOf:
                         - $ref: '#/components/schemas/CheckSuiteReference'
                     description: Suite the check run belongs to.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 Identity and display coordinates of a check run, for embedding in resources
                  that a `repository:checks` read does not gate. Everything else about the run
                  (status, conclusion, output, details URL) is `GetCheckRun`.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         CheckRunRerequestedWebhookPayload:
             type: object
             properties:
@@ -14650,8 +14650,8 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/CodeownerRequirement'
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         CodeownerRequirement:
             type: object
             properties:
@@ -14660,15 +14660,15 @@ components:
                     items:
                         type: string
                     description: Code owners, any one of whom can satisfy the requirement.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 paths:
                     type: array
                     items:
                         type: string
                     description: Changed paths this owner set covers.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: One owner set that still needs an approval.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         CommentThread:
             type: object
             properties:
@@ -14751,7 +14751,7 @@ components:
                 webUrl:
                     readOnly: true
                     type: string
-                    description: Web URL for this commit on Cursor.
+                    description: Web URL for this commit on Refweir.
             description: |-
                 A commit with identity fields (`sha`, `parents`) at the top level and
                  git-object metadata nested under
@@ -15502,11 +15502,11 @@ components:
                 identifier:
                     allOf:
                         - $ref: '#/components/schemas/RepoIdentifier'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pullNumber:
                     type: string
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         DismissPullRequestReviewRequest:
             required:
                 - identifier
@@ -15536,10 +15536,10 @@ components:
                 identifier:
                     allOf:
                         - $ref: '#/components/schemas/RepoIdentifier'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pullNumber:
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 mergeMethod:
                     enum:
                         - merge
@@ -15552,7 +15552,7 @@ components:
                          FAILED_PRECONDITION, and a base branch that requires linear history
                          lands as a squash. Omit to use the repository's default: a merge commit
                          when allowed, otherwise squash.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 commitTitle:
                     type: string
                     description: |-
@@ -15561,12 +15561,12 @@ components:
                          Omit to let Origin compose the commit message when it lands. It applies
                          only when the pull request lands on its own; a stack prefix landing as
                          one commit keeps the composed message.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 commitMessage:
                     type: string
                     description: Body of the merge commit, under the same rules as `commit_title`.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         FileCommentAnchor:
             required:
                 - path
@@ -15800,10 +15800,10 @@ components:
                 identifier:
                     allOf:
                         - $ref: '#/components/schemas/RepoIdentifier'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pullNumber:
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 expectedHeadSha:
                     type: string
                     description: |-
@@ -15812,8 +15812,8 @@ components:
                          differs, the request is rejected with ABORTED (HTTP 409) instead of
                          returning a result. Values that are not a full commit SHA are rejected
                          with INVALID_ARGUMENT.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         GetPullRequestRequest:
             required:
                 - identifier
@@ -17400,7 +17400,7 @@ components:
                          or pass only blank values, for no filter. More than 10 names, a name
                          longer than 50 characters, or a name that is not a label in this
                          repository matches no pull requests. Combines with the other filters.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
         ListPullRequestsResponse:
             type: object
             properties:
@@ -17573,17 +17573,17 @@ components:
                     items:
                         type: string
                     description: Paths that conflict with the base branch. At most 100 are listed.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 truncated:
                     type: boolean
                     description: Whether more paths conflict than are listed.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 inheritedFromDownstack:
                     type: boolean
                     description: |-
                         The conflict comes from a pull request below this one in the stack.
                          This pull request may also conflict on its own paths.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 conflictStarted:
                     allOf:
                         - $ref: '#/components/schemas/MergeConflictStart'
@@ -17593,37 +17593,37 @@ components:
                          conflict, for example because the repository's owner does not allow
                          Origin to store conflict data. Always unset when
                          `inherited_from_downstack` is true.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 conflictsBeyondDownstack:
                     type: boolean
                     description: |-
                         True when this pull request conflicts on a path the pull request below
                          it does not. False when every conflict is inherited from below. True
                          when this pull request is not in a stack.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         MergeConflictStart:
             type: object
             properties:
                 headSha:
                     type: string
                     description: Head commit of the pull request when the conflict was first found.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 baseSha:
                     type: string
                     description: |-
                         Tip commit of the branch the pull request merges into when the conflict
                          was first found.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 startedAt:
                     type: string
                     description: When the conflict was first found.
                     format: date-time
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 The check that first found the pull request in conflict. Later pushes that
                  stay in conflict keep it, so `head_sha` can be older than the evaluated head.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         MergePullRequestRequest:
             required:
                 - identifier
@@ -17853,7 +17853,7 @@ components:
                 displayName:
                     type: string
                     description: |-
-                        The product name Cursor shows for the account, such as a Grok bot's name; never empty when
+                        The product name Refweir shows for the account, such as a Grok bot's name; never empty when
                          present. A Grok bot whose name cannot be read is named "Grok Bot". Omitted when the
                          account has no product name.
         OriginTeamGroup:
@@ -18091,10 +18091,10 @@ components:
                 identifier:
                     allOf:
                         - $ref: '#/components/schemas/RepoIdentifier'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pullNumber:
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 expectedHeadSha:
                     type: string
                     description: |-
@@ -18102,8 +18102,8 @@ components:
                          be the pull request's current head. When set and the head differs, the
                          request is rejected with ABORTED (HTTP 409) and nothing is computed.
                          Values that are not a full commit SHA are rejected with INVALID_ARGUMENT.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         PreparePullRequestMergeRefResponse:
             type: object
             properties:
@@ -18114,26 +18114,26 @@ components:
                         - pending
                     type: string
                     description: Unrecognized values must be treated as `pending`.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 mergeCommitSha:
                     type: string
                     description: |-
                         The test merge commit: first parent `base_sha`, second parent
                          `head_sha`. Set only when `state` is `mergeable`.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 baseSha:
                     type: string
                     description: |-
                         Tip of the base branch the merge was computed, or is being computed,
                          against. Empty when `state` is `pending` and the base tip could not be
                          read.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 headSha:
                     type: string
                     description: Head commit of the pull request the merge is for.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: The pull request's test merge against its base branch.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         PullRequest:
             type: object
             properties:
@@ -18218,7 +18218,7 @@ components:
                 webUrl:
                     readOnly: true
                     type: string
-                    description: Web URL for this pull request on Cursor.
+                    description: Web URL for this pull request on Refweir.
                 autoMerge:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestAutoMerge'
@@ -18227,7 +18227,7 @@ components:
                          the pull request; unset once it is turned off or the pull request lands.
                          Enable it with EnablePullRequestAutoMerge and turn it off with
                          DisablePullRequestAutoMerge.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 version:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestVersion'
@@ -18240,12 +18240,12 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/OriginActor'
                     description: The principal that enabled auto-merge.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 enabledAt:
                     type: string
                     description: When auto-merge was enabled.
                     format: date-time
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 mergeMethod:
                     enum:
                         - merge
@@ -18258,7 +18258,7 @@ components:
                          rules still apply when it lands: a base branch that requires linear
                          history lands the repository default as a squash instead. Omitted only
                          when the repository allows no merge method.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 commitTitle:
                     type: string
                     description: |-
@@ -18266,18 +18266,18 @@ components:
                          given: Origin then composes the merge commit message when it lands. It
                          applies only when the pull request lands on its own; a stack prefix
                          landing as one commit keeps the composed message.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 commitMessage:
                     type: string
                     description: |-
                         Commit message body chosen when auto-merge was enabled, under the same
                          rules as the commit title.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 Auto-merge ("merge when ready") armed on a pull request: Origin lands the
                  pull request on the enabler's behalf once it is mergeable, and for a stacked
                  pull request only once it is the lowest open member of its stack.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         PullRequestAutoMergeDisabledWebhookPayload:
             type: object
             properties:
@@ -18285,7 +18285,7 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestReference'
                     description: The pull request auto-merge was cleared from.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 disabledReason:
                     enum:
                         - manual
@@ -18299,7 +18299,7 @@ components:
                         Why auto-merge was turned off, as recorded on the pull request. Unset
                          only for a disable recorded before the reason was. New reasons are
                          added over time; decode with unknown values tolerated.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 disabledBy:
                     allOf:
                         - $ref: '#/components/schemas/OriginActor'
@@ -18307,14 +18307,14 @@ components:
                         The principal that turned auto-merge off, as recorded on the pull
                          request. Set only when a principal did it (reason `manual`); automatic
                          disables carry none.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 Auto-merge ("merge when ready") cleared from a pull request without
                  landing it. A pull request that auto-merge landed emits
                  `pull_request.merged` instead.
             x-origin-webhook-events:
                 - pull_request.merge_when_ready.disabled
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
             example:
                 pullRequest:
                     id: pr_01k2ja2000e0080000000000d4
@@ -18338,21 +18338,21 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestReference'
                     description: The pull request auto-merge was armed on.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 autoMerge:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestAutoMerge'
                     description: |-
                         The auto-merge that was armed: who enabled it, when, and with which
                          merge method and commit text.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: |-
                 Auto-merge ("merge when ready") armed on a pull request. The merge itself
                  is `pull_request.merged`, and processing retries never emit; turning it off
                  is `pull_request.merge_when_ready.disabled`.
             x-origin-webhook-events:
                 - pull_request.merge_when_ready.enabled
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
             example:
                 pullRequest:
                     id: pr_01k2ja2000e0080000000000d4
@@ -18607,7 +18607,7 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestReference'
                     description: The pull request the verdict is about.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 verdict:
                     enum:
                         - mergeable
@@ -18618,7 +18618,7 @@ components:
                          `mergeable` means merging `pull_request` lands all of them (for a stacked
                          pull request, the whole stack below it as well). Unrecognized values must
                          be treated as `blocked`.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 blockers:
                     type: array
                     items:
@@ -18637,7 +18637,7 @@ components:
                          a blocker whose `kind` postdates your client then decodes with `kind`
                          unset and `message` intact, and is still blocking. Strict decoders reject
                          the whole response instead.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 evaluatedPullRequests:
                     type: array
                     items:
@@ -18647,33 +18647,33 @@ components:
                          ending with `pull_request`. Ancestors that already merged are not listed:
                          they are history, not part of the evaluation. Exactly one element for an
                          unstacked pull request.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 headSha:
                     type: string
                     description: Head commit of `pull_request` that was evaluated.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 baseRef:
                     type: string
                     description: |-
                         Branch the evaluated pull requests merge into: the stack root's base, not
                          this pull request's own base when it is stacked.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 baseSha:
                     type: string
                     description: |-
                         Tip commit of `base_ref` at `evaluated_at`. A later push to `base_ref`
                          may change the verdict. Empty when the base branch could not be
                          determined (for example, an invalid stack).
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 evaluatedAt:
                     type: string
                     description: |-
                         When this result was evaluated. Changes after this time are not
                          reflected; re-query to pick them up.
                     format: date-time
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: Whether a pull request can be merged, and why not when it cannot.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         PullRequestMergeabilityBlocker:
             type: object
             properties:
@@ -18681,7 +18681,7 @@ components:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestReference'
                     description: Pull request in `evaluated_pull_requests` this blocker belongs to.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 kind:
                     enum:
                         - draft
@@ -18702,35 +18702,35 @@ components:
                     description: |-
                         Category of the blocker. Never unset on the wire; a client that decodes
                          it unset received a kind newer than itself (see `blockers`).
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 message:
                     type: string
                     description: |-
                         Human-readable statement of the blocker and how to clear it. Never empty:
                          what to render when `kind` is unrecognized.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 requiredChecks:
                     allOf:
                         - $ref: '#/components/schemas/RequiredChecksBlocker'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 requiredApprovals:
                     allOf:
                         - $ref: '#/components/schemas/RequiredApprovalsBlocker'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 codeownerApproval:
                     allOf:
                         - $ref: '#/components/schemas/CodeownerApprovalBlocker'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 mergeConflict:
                     allOf:
                         - $ref: '#/components/schemas/MergeConflictBlocker'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 stackShape:
                     allOf:
                         - $ref: '#/components/schemas/StackShapeBlocker'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: One condition preventing a merge.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         PullRequestRef:
             type: object
             properties:
@@ -19055,7 +19055,7 @@ components:
                 webUrl:
                     readOnly: true
                     type: string
-                    description: Web URL for this pull request on Cursor.
+                    description: Web URL for this pull request on Refweir.
                 version:
                     allOf:
                         - $ref: '#/components/schemas/PullRequestVersion'
@@ -19370,7 +19370,7 @@ components:
                 webUrl:
                     readOnly: true
                     type: string
-                    description: Web URL for this repository on Cursor.
+                    description: Web URL for this repository on Refweir.
             description: A repository.
         RepoIdentifier:
             type: object
@@ -19679,25 +19679,25 @@ components:
                     type: integer
                     description: Approving reviews the repository rules require.
                     format: int32
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 approvedCount:
                     type: integer
                     description: Approving reviews currently counted toward the requirement.
                     format: int32
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         RequiredCheck:
             type: object
             properties:
                 name:
                     type: string
                     description: Name the repository rule requires.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 owner:
                     allOf:
                         - $ref: '#/components/schemas/OriginActor'
                     description: Principal expected to report the check.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 checkRun:
                     allOf:
                         - $ref: '#/components/schemas/CheckRunReference'
@@ -19708,9 +19708,9 @@ components:
                          `repository:pull_requests` read alone, while a run's status, conclusion,
                          output and details URL are gated by `repository:checks` read
                          (`GetCheckRun`); the requirement's state is `RequiredChecksBlocker.state`.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
             description: A check a repository rule requires on the evaluated head.
-            x-cursor-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         RequiredChecksBlocker:
             type: object
             properties:
@@ -19722,14 +19722,14 @@ components:
                         - action_required
                     type: string
                     description: State shared by every check in this blocker.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 checks:
                     type: array
                     items:
                         $ref: '#/components/schemas/RequiredCheck'
                     description: Required checks in that state.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         RerequestCheckRunRequest:
             required:
                 - identifier
@@ -20169,7 +20169,7 @@ components:
                          `team:`). When a problem has a location, its description ends with
                          ` (at <start>-<end>)`: zero-based, end-exclusive UTF-16 code unit offsets
                          into `q`.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 repo:
                     type: string
                     description: |-
@@ -20179,12 +20179,12 @@ components:
                          repository that does not exist is rejected with NOT_FOUND, and one the
                          caller cannot read pull requests or their reviews in with
                          PERMISSION_DENIED.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pageSize:
                     type: integer
                     description: Maximum results to return. Defaults to 30; maximum 100.
                     format: int32
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 pageToken:
                     type: string
                     description: |-
@@ -20192,7 +20192,7 @@ components:
                          first page. A token is valid only with the `q`, `repo`, `sort` and
                          `order` that produced it. `page_size` on a follow-up request applies to
                          that page; omit it to keep the previous page size.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 sort:
                     type: string
                     description: |-
@@ -20202,15 +20202,15 @@ components:
                          relevant first for a query with words and newest first for one without.
                          A value that is not a sort is rejected with INVALID_ARGUMENT naming
                          `sort`, and so is a sort search cannot answer.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 order:
                     type: string
                     description: |-
                         Direction of `sort`: `asc` or `desc`, defaulting to `desc`. Ignored
                          unless `sort` is set, so it never changes the direction of a `sort:` in
                          `q`. Any other value is rejected with INVALID_ARGUMENT naming `order`.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         SearchPullRequestsResponse:
             type: object
             properties:
@@ -20218,7 +20218,7 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/PullRequest'
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 totalCount:
                     type: integer
                     description: |-
@@ -20227,16 +20227,16 @@ components:
                          read both pull requests and their reviews are searched, so it counts
                          nothing the caller cannot read.
                     format: int32
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 totalCountIsLowerBound:
                     type: boolean
                     description: Set when more than `total_count` pull requests match.
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 nextPageToken:
                     type: string
                     description: Opaque cursor for the next page; empty when there are no more pages.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         SetPullRequestLabelsRequest:
             required:
                 - identifier
@@ -20340,14 +20340,14 @@ components:
                         - cross_repository_parent
                         - base_branch_missing
                     type: string
-                    x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
                 relatedPullRequests:
                     type: array
                     items:
                         $ref: '#/components/schemas/PullRequestReference'
                     description: Other pull requests involved, when the reason names any.
-                    x-cursor-visibility: PREVIEW
-            x-cursor-visibility: PREVIEW
+                    x-refweir-visibility: PREVIEW
+            x-refweir-visibility: PREVIEW
         Status:
             type: object
             properties:

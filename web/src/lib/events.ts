@@ -45,8 +45,8 @@ export function normalizeAgentActivity(raw: any): AgentActivityItem {
   }
 
   const rawType = raw.agentType || raw.AgentType;
-  const agentType: 'claude-code' | 'cursor' | 'codex' | 'refweir-mcp' =
-    rawType === 'claude-code' || rawType === 'cursor' || rawType === 'codex' || rawType === 'refweir-mcp'
+  const agentType: 'claude-code' | 'cline' | 'codex' | 'refweir-mcp' =
+    rawType === 'claude-code' || rawType === 'cline' || rawType === 'codex' || rawType === 'refweir-mcp'
       ? rawType
       : 'refweir-mcp';
 

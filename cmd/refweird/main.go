@@ -112,7 +112,7 @@ func main() {
     }
   }`+"\n", cfg.PublicURL, res.RawKey)
 		fmt.Println()
-		fmt.Println("Cursor (.cursor/mcp.json):")
+		fmt.Println("IDE / Editor MCP Configuration (.cursor/mcp.json):")
 		fmt.Printf(`  {
     "mcpServers": {
       "refweir": {

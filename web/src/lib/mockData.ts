@@ -190,8 +190,8 @@ export const mockSampleAgentActivities: AgentActivityItem[] = [
   },
   {
     id: 'act-2',
-    agentName: 'Cursor Agent',
-    agentType: 'cursor',
+    agentName: 'Cline Agent',
+    agentType: 'cline',
     toolName: 'checks_read',
     status: 'success',
     latencyMs: 8,

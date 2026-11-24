@@ -111,7 +111,7 @@ export interface NotificationItem {
 export interface AgentActivityItem {
   id: string
   agentName: string
-  agentType: 'claude-code' | 'cursor' | 'codex' | 'refweir-mcp'
+  agentType: 'claude-code' | 'cline' | 'codex' | 'refweir-mcp'
   toolName: string
   status: 'success' | 'executing' | 'error'
   latencyMs: number

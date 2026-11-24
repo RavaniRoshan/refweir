@@ -324,9 +324,9 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
                 </div>
 
                 <div className="p-3.5 rounded-md border border-border bg-secondary/20 space-y-2">
-                  <span className="font-semibold text-foreground">Cursor Configuration (.cursor/mcp.json)</span>
+                  <span className="font-semibold text-foreground">IDE Configuration (.cursor/mcp.json)</span>
                   <p className="text-[11px] text-muted-foreground">
-                    Enable repository awareness for Cursor agents:
+                    Enable repository awareness for IDE agents:
                   </p>
                   <pre className="p-2 rounded bg-input border border-border font-mono text-[10px] overflow-x-auto text-foreground">
 {`{

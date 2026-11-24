@@ -98,7 +98,7 @@ func BuiltinTools() []ToolDef {
 		// 1. get_repository
 		{
 			Name:        "get_repository",
-			Description: "Get metadata for an Origin repository",
+			Description: "Get metadata for a Refweir repository",
 			ReadOnly:    true,
 			InputSchema: makeSchema(map[string]any{
 				"ownerSlug": map[string]any{"type": "string", "description": "Repository owner namespace"},
@@ -139,7 +139,7 @@ func BuiltinTools() []ToolDef {
 		// 3. create_repository
 		{
 			Name:        "create_repository",
-			Description: "Create a new repository in Origin",
+			Description: "Create a new repository in Refweir",
 			ReadOnly:    false,
 			InputSchema: makeSchema(map[string]any{
 				"ownerSlug":     map[string]any{"type": "string", "description": "Owner namespace slug"},
