@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import {
   Rocket,
   Bot,
@@ -277,33 +278,43 @@ export const DocsView: React.FC<DocsViewProps> = ({
                       </div>
                     </button>
 
-                    {isExpanded && (
-                      <div className="py-1 px-1.5 space-y-0.5 border-t border-border/30">
-                        {cat.articleIds.map((artId) => {
-                          const art = DOCS_ARTICLES[artId]
-                          if (!art) return null
-                          const isSelected = selectedArticleId === art.id
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.18, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="py-1 px-1.5 space-y-0.5 border-t border-border/30">
+                            {cat.articleIds.map((artId) => {
+                              const art = DOCS_ARTICLES[artId]
+                              if (!art) return null
+                              const isSelected = selectedArticleId === art.id
 
-                          return (
-                            <button
-                              key={art.id}
-                              onClick={() => setSelectedArticleId(art.id)}
-                              className={cn(
-                                'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors text-left cursor-pointer',
-                                isSelected
-                                  ? 'bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-2'
-                                  : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-                              )}
-                            >
-                              <span className="truncate">{art.title}</span>
-                              <span className="text-[10px] text-muted-foreground/70 shrink-0 ml-1">
-                                {art.readTime.split(' ')[0]}m
-                              </span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
+                              return (
+                                <button
+                                  key={art.id}
+                                  onClick={() => setSelectedArticleId(art.id)}
+                                  className={cn(
+                                    'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                                    isSelected
+                                      ? 'bg-primary/10 text-primary font-semibold border-l-2 border-primary pl-2'
+                                      : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+                                  )}
+                                >
+                                  <span className="truncate">{art.title}</span>
+                                  <span className="text-[10px] text-muted-foreground/70 shrink-0 ml-1">
+                                    {art.readTime.split(' ')[0]}m
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )
               })
@@ -428,13 +439,20 @@ export const DocsView: React.FC<DocsViewProps> = ({
                       key={idx}
                       onClick={() => setActiveCodeTab(idx)}
                       className={cn(
-                        'px-3 py-1 text-xs font-medium rounded-t-md transition-colors cursor-pointer',
+                        'relative px-3 py-1 text-xs font-medium rounded-t-md transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
                         activeCodeTab === idx
-                          ? 'bg-secondary text-foreground font-semibold border-b-2 border-primary'
+                          ? 'bg-secondary text-foreground font-semibold'
                           : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      {snip.label}
+                      <span>{snip.label}</span>
+                      {activeCodeTab === idx && (
+                        <motion.div
+                          layoutId="activeCodeTabIndicator"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -598,29 +616,43 @@ export const DocsView: React.FC<DocsViewProps> = ({
                 Your feedback helps us continuously improve the Refweir documentation.
               </p>
             </div>
-            {feedbackSubmitted ? (
-              <div className="flex items-center gap-1.5 text-success font-medium">
-                <Check className="w-4 h-4" />
-                <span>Thank you for your feedback!</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setFeedbackSubmitted(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-secondary text-foreground transition-colors cursor-pointer"
+            <AnimatePresence mode="wait">
+              {feedbackSubmitted ? (
+                <motion.div
+                  key="feedback-thanks"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex items-center gap-1.5 text-success font-medium"
                 >
-                  <ThumbsUp className="w-3.5 h-3.5 text-primary" />
-                  <span>Yes</span>
-                </button>
-                <button
-                  onClick={() => setFeedbackSubmitted(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-secondary text-foreground transition-colors cursor-pointer"
+                  <Check className="w-4 h-4" />
+                  <span>Thank you for your feedback!</span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="feedback-actions"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2"
                 >
-                  <ThumbsDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span>No</span>
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={() => setFeedbackSubmitted(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-secondary text-foreground transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  >
+                    <ThumbsUp className="w-3.5 h-3.5 text-primary" />
+                    <span>Yes</span>
+                  </button>
+                  <button
+                    onClick={() => setFeedbackSubmitted(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background hover:bg-secondary text-foreground transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  >
+                    <ThumbsDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span>No</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </main>
 

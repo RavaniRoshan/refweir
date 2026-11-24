@@ -97,7 +97,7 @@ export const AgentConsoleView: React.FC = () => {
   const [leases, setLeases] = useState<ManagedLeaseRecord[]>(INITIAL_MOCK_LEASES)
   const [leaseSearchQuery, setLeaseSearchQuery] = useState('')
   const [leaseStatusFilter, setLeaseStatusFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'revoked'>('all')
-  const [leaseAgentId, setLeaseAgentId] = useState('agent:cursor-worker')
+  const [leaseAgentId, setLeaseAgentId] = useState('agent:refweir-worker')
   const [leaseRepoId, setLeaseRepoId] = useState('acme/rocket')
   const [leaseRefPrefix, setLeaseRefPrefix] = useState('refs/heads/agent/')
   const [leaseTtlMinutes, setLeaseTtlMinutes] = useState(30)

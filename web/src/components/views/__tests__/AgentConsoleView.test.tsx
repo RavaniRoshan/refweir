@@ -29,7 +29,7 @@ vi.mock('@/lib/api', async () => {
     issueAgentLease: vi.fn().mockResolvedValue({
       id: 'lease-test-1',
       token: 'agl_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy.sig',
-      agentId: 'agent:cursor-worker',
+      agentId: 'agent:refweir-worker',
       repoId: 'acme/rocket',
       refPrefixes: ['refs/heads/agent/'],
       expiresAt: '2026-10-15T12:00:00Z',

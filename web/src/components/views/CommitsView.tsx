@@ -36,10 +36,12 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
   const [searchQuery, setSearchQuery] = useState('')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [viewMode, setViewMode] = useState<'timeline' | 'virtual'>('timeline')
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMountedRef = useRef(true)
   const virtualListParentRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const loadCommits = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
@@ -110,6 +112,78 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
     })
   }, [commits, verifiedOnly, searchQuery])
 
+  // Keyboard navigation & shortcuts: /, j, k, Enter, v, m, Esc
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement
+      const isInput =
+        activeEl?.tagName === 'INPUT' ||
+        activeEl?.tagName === 'TEXTAREA' ||
+        (activeEl as HTMLElement)?.isContentEditable
+
+      if (e.key === 'Escape') {
+        if (inspectingCommit) {
+          setInspectingCommit(null)
+          e.preventDefault()
+          return
+        }
+        if (searchQuery) {
+          setSearchQuery('')
+          e.preventDefault()
+          return
+        }
+        if (isInput) {
+          ;(activeEl as HTMLElement).blur()
+          e.preventDefault()
+          return
+        }
+      }
+
+      if (isInput) return
+
+      if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key === 'k')) {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        return
+      }
+
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex((prev) => Math.min(prev + 1, filteredCommits.length - 1))
+        return
+      }
+
+      if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex((prev) => Math.max(prev - 1, 0))
+        return
+      }
+
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'o') {
+        if (selectedIndex >= 0 && selectedIndex < filteredCommits.length) {
+          e.preventDefault()
+          setInspectingCommit(filteredCommits[selectedIndex])
+        }
+        return
+      }
+
+      if (e.key === 'v') {
+        e.preventDefault()
+        setVerifiedOnly((prev) => !prev)
+        return
+      }
+
+      if (e.key === 'm') {
+        e.preventDefault()
+        setViewMode((prev) => (prev === 'timeline' ? 'virtual' : 'timeline'))
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [inspectingCommit, searchQuery, filteredCommits, selectedIndex])
+
   // Group commits by date for standard timeline view
   const groupedCommits = useMemo(() => {
     return filteredCommits.reduce<Record<string, CommitItem[]>>((acc, commit) => {
@@ -163,11 +237,12 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
           <div className="relative w-48 sm:w-56">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter commits..."
-              className="w-full pl-8 pr-7 py-1 text-xs rounded-md bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:bg-background transition-colors"
+              placeholder="Filter commits (/)..."
+              className="w-full pl-8 pr-7 py-1 text-xs rounded-md bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus-visible:ring-2 focus-visible:ring-primary focus:bg-background transition-colors"
             />
             {searchQuery && (
               <button
@@ -233,6 +308,22 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
             <span>Refresh</span>
           </Button>
         </div>
+      </div>
+
+      {/* Keyboard Shortcuts Affordance */}
+      <div className="hidden sm:flex items-center gap-2 flex-wrap text-[11px] text-muted-foreground bg-secondary/15 border border-border/40 px-3 py-1 rounded-md">
+        <span className="font-semibold text-foreground text-[10px] uppercase tracking-wider">Shortcuts:</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">/</kbd> filter</span>
+        <span className="text-muted-foreground/40">•</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">j</kbd><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">k</kbd> navigate</span>
+        <span className="text-muted-foreground/40">•</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">Enter</kbd> inspect</span>
+        <span className="text-muted-foreground/40">•</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">v</kbd> verified</span>
+        <span className="text-muted-foreground/40">•</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">m</kbd> mode</span>
+        <span className="text-muted-foreground/40">•</span>
+        <span className="inline-flex items-center gap-1"><kbd className="px-1 py-0.2 rounded bg-secondary font-mono border border-border text-[10px]">Esc</kbd> close</span>
       </div>
 
       {/* Filter status row (if filters active) */}
@@ -370,6 +461,7 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                 const commit = filteredCommits[virtualRow.index]
                 if (!commit) return null
                 const isInspectOpen = inspectingCommit?.sha === commit.sha
+                const isSelected = selectedIndex >= 0 && filteredCommits[selectedIndex]?.sha === commit.sha
                 const sigType = commit.verification?.key_type?.toUpperCase() || (commit.verified ? 'SSH' : 'UNSIGNED')
 
                 return (
@@ -382,7 +474,10 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                       width: '100%',
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    className="p-3 flex items-center justify-between gap-3 hover:bg-secondary/20 transition-colors text-xs border-b border-border/50"
+                    className={cn(
+                      'p-3 flex items-center justify-between gap-3 hover:bg-secondary/20 transition-colors text-xs border-b border-border/50',
+                      isSelected && 'bg-secondary/40 ring-1 ring-inset ring-primary/40'
+                    )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <LivingAvatar
@@ -459,12 +554,16 @@ export const CommitsView: React.FC<CommitsViewProps> = ({ repo = defaultRepo }) 
                 <BoxBody className="p-0">
                   {groupList.map((commit) => {
                     const isInspectOpen = inspectingCommit?.sha === commit.sha
+                    const isSelected = selectedIndex >= 0 && filteredCommits[selectedIndex]?.sha === commit.sha
                     const sigType = commit.verification?.key_type?.toUpperCase() || (commit.verified ? 'SSH' : 'UNSIGNED')
 
                     return (
                       <div key={commit.sha} className="border-b border-border last:border-b-0">
                         <BoxRow
-                          className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-secondary/20 transition-colors"
+                          className={cn(
+                            'p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-secondary/20 transition-colors',
+                            isSelected && 'bg-secondary/40 ring-1 ring-inset ring-primary/40'
+                          )}
                         >
                         <div className="flex items-start sm:items-center gap-3">
                           <LivingAvatar

@@ -406,8 +406,9 @@ git push origin feature/agent-capabilities`
             {/* Sub-Navigation UnderlineNav */}
             <div className="flex items-center gap-2 border-b border-border -mb-px text-xs font-medium">
               <button
+                aria-selected={activeSubTab === 'conversation'}
                 onClick={() => setActiveSubTab('conversation')}
-                className={`flex items-center gap-2 px-3 py-2 border-b-2 transition-colors ${
+                className={`relative flex items-center gap-2 px-3 py-2 border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   activeSubTab === 'conversation'
                     ? 'border-primary text-foreground font-semibold'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -418,11 +419,19 @@ git push origin feature/agent-capabilities`
                 <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.2 rounded-full font-mono">
                   {(selectedPr.comments || []).length}
                 </span>
+                {activeSubTab === 'conversation' && (
+                  <motion.div
+                    layoutId="activeSubTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
               </button>
 
               <button
+                aria-selected={activeSubTab === 'checks'}
                 onClick={() => setActiveSubTab('checks')}
-                className={`flex items-center gap-2 px-3 py-2 border-b-2 transition-colors ${
+                className={`relative flex items-center gap-2 px-3 py-2 border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   activeSubTab === 'checks'
                     ? 'border-primary text-foreground font-semibold'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -433,11 +442,19 @@ git push origin feature/agent-capabilities`
                 <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.2 rounded-full font-mono">
                   {(selectedPr.checks || []).length}
                 </span>
+                {activeSubTab === 'checks' && (
+                  <motion.div
+                    layoutId="activeSubTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
               </button>
 
               <button
+                aria-selected={activeSubTab === 'diff'}
                 onClick={() => setActiveSubTab('diff')}
-                className={`flex items-center gap-2 px-3 py-2 border-b-2 transition-colors ${
+                className={`relative flex items-center gap-2 px-3 py-2 border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   activeSubTab === 'diff'
                     ? 'border-primary text-foreground font-semibold'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -448,6 +465,13 @@ git push origin feature/agent-capabilities`
                 <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.2 rounded-full font-mono">
                   {(selectedPr.diffHunks || []).length}
                 </span>
+                {activeSubTab === 'diff' && (
+                  <motion.div
+                    layoutId="activeSubTabIndicator"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
               </button>
             </div>
 
@@ -455,8 +479,17 @@ git push origin feature/agent-capabilities`
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
               {/* Left Column: Timeline, Merge Box, Discussion, Diff (9 cols) */}
               <div className="lg:col-span-9 space-y-4">
-                {activeSubTab === 'conversation' && (
-                  <div className="space-y-4">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeSubTab}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="space-y-4"
+                  >
+                    {activeSubTab === 'conversation' && (
+                      <div className="space-y-4">
                     {/* Initial PR Description Box */}
                     <Box>
                       <BoxHeader className="bg-secondary/25 py-2">
@@ -691,6 +724,8 @@ git push origin feature/agent-capabilities`
                     </BoxBody>
                   </Box>
                 )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Right Column: Reviewers, Assignees, Labels, Rulesets (3 cols) */}

@@ -111,4 +111,27 @@ describe('CommitsView Component', () => {
     expect(screen.getByText(/Virtualized Commit Stream/i)).toBeInTheDocument()
     expect(screen.getByText(/TanStack Virtual v3/i)).toBeInTheDocument()
   })
+
+  it('supports keyboard shortcuts for filtering and mode toggling', async () => {
+    render(<CommitsView />)
+
+    expect(await screen.findByText('feat: implement capability leases in engine')).toBeInTheDocument()
+
+    // Press 'v' to toggle verified only filter
+    fireEvent.keyDown(window, { key: 'v' })
+    expect(screen.getByText('feat: implement capability leases in engine')).toBeInTheDocument()
+    expect(screen.queryByText('chore: update CI matrix')).not.toBeInTheDocument()
+
+    // Press 'v' again to disable verified filter
+    fireEvent.keyDown(window, { key: 'v' })
+    expect(screen.getByText('chore: update CI matrix')).toBeInTheDocument()
+
+    // Press 'm' to toggle to virtual log mode
+    fireEvent.keyDown(window, { key: 'm' })
+    expect(screen.getByText(/Virtualized Commit Stream/i)).toBeInTheDocument()
+
+    // Press 'm' again to return to timeline
+    fireEvent.keyDown(window, { key: 'm' })
+    expect(screen.queryByText(/Virtualized Commit Stream/i)).not.toBeInTheDocument()
+  })
 })

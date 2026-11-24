@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { GitMerge, CheckCircle2, ChevronDown, Check, AlertCircle } from 'lucide-react'
 import { Button } from './Button'
 import { cn } from '@/lib/utils'
@@ -61,6 +62,18 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
     rebase: 'The commits will be rebased and added to the base branch.',
   }
 
+  // Close confirmation or dropdown on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showDropdown) setShowDropdown(false)
+        else if (isConfirming) setIsConfirming(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showDropdown, isConfirming])
+
   if (isMerged) {
     return (
       <div className={cn('rounded-md border border-info/40 bg-info/15 p-4 flex items-center gap-3', className)}>
@@ -108,103 +121,132 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
 
       {/* Main Action Area */}
       <div className="p-4 space-y-3">
-        {!isConfirming ? (
-          <div className="relative inline-flex items-center">
-            {/* Primary Action Button */}
-            <Button
-              variant="primary"
-              disabled={isBlocked}
-              onClick={() => setIsConfirming(true)}
-              className="rounded-r-none border-r-0 font-semibold gap-1.5"
+        <AnimatePresence initial={false}>
+          {!isConfirming ? (
+            <motion.div
+              key="action-controls"
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.15 }}
+              className="relative inline-flex items-center"
             >
-              <GitMerge className="w-3.5 h-3.5" />
-              <span>{methodLabels[method]}</span>
-            </Button>
-
-            {/* Strategy Selector Dropdown Button */}
-            <Button
-              variant="primary"
-              disabled={isBlocked}
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="rounded-l-none px-2 border-l border-primary-foreground/20"
-              title="Select merge strategy"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </Button>
-
-            {/* Dropdown Menu */}
-            {showDropdown && (
-              <div className="absolute top-full left-0 mt-1 z-30 w-72 rounded-md border border-border bg-card shadow-xl p-1 space-y-1">
-                {(['merge', 'squash', 'rebase'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => {
-                      setMethod(m)
-                      setShowDropdown(false)
-                    }}
-                    className={cn(
-                      'w-full text-left p-2 rounded-md transition-colors flex items-start gap-2 cursor-pointer',
-                      method === m ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
-                    )}
-                  >
-                    <span className="mt-0.5 w-3.5 h-3.5 shrink-0 flex items-center justify-center">
-                      {method === m && <Check className="w-3.5 h-3.5 text-primary" />}
-                    </span>
-                    <div className="space-y-0.5">
-                      <span className="font-semibold block text-xs">{methodLabels[m]}</span>
-                      <p className="text-[11px] leading-tight text-muted-foreground">{methodDescriptions[m]}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Confirmation Box with Commit Message inputs */
-          <div className="space-y-3 p-3 bg-secondary/20 rounded-md border border-border">
-            <div className="space-y-1">
-              <label className="font-semibold text-foreground block text-[11px]">Commit Title</label>
-              <input
-                type="text"
-                value={commitTitle}
-                onChange={(e) => setCommitTitle(e.target.value)}
-                className="w-full h-8 bg-input text-foreground border border-border rounded-md px-2.5 text-xs font-mono outline-none focus:border-primary"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-semibold text-foreground block text-[11px]">Commit Description (Optional)</label>
-              <textarea
-                rows={3}
-                value={commitMessage}
-                onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Add an optional extended description..."
-                className="w-full bg-input text-foreground border border-border rounded-md p-2 text-xs font-mono outline-none focus:border-primary resize-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
+              {/* Primary Action Button */}
               <Button
                 variant="primary"
-                onClick={() => {
-                  onMerge(method, commitTitle, commitMessage)
-                  setIsConfirming(false)
-                }}
-                className="gap-1.5"
+                disabled={isBlocked}
+                onClick={() => setIsConfirming(true)}
+                className="rounded-r-none border-r-0 font-semibold gap-1.5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
               >
                 <GitMerge className="w-3.5 h-3.5" />
-                <span>Confirm {methodLabels[method].toLowerCase()}</span>
+                <span>{methodLabels[method]}</span>
               </Button>
+
+              {/* Strategy Selector Dropdown Button */}
               <Button
-                variant="ghost"
-                onClick={() => setIsConfirming(false)}
+                variant="primary"
+                disabled={isBlocked}
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="rounded-l-none px-2 border-l border-primary-foreground/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                title="Select merge strategy"
+                aria-expanded={showDropdown}
+                aria-haspopup="menu"
               >
-                Cancel
+                <ChevronDown className="w-3.5 h-3.5" />
               </Button>
-            </div>
-          </div>
-        )}
+
+              {/* Dropdown Menu */}
+              <AnimatePresence>
+                {showDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full left-0 mt-1 z-30 w-72 rounded-md border border-border bg-card shadow-xl p-1 space-y-1"
+                    role="menu"
+                  >
+                    {(['merge', 'squash', 'rebase'] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setMethod(m)
+                          setShowDropdown(false)
+                        }}
+                        className={cn(
+                          'w-full text-left p-2 rounded-md transition-colors flex items-start gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+                          method === m ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
+                        )}
+                      >
+                        <span className="mt-0.5 w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+                          {method === m && <Check className="w-3.5 h-3.5 text-primary" />}
+                        </span>
+                        <div className="space-y-0.5">
+                          <span className="font-semibold block text-xs">{methodLabels[m]}</span>
+                          <p className="text-[11px] leading-tight text-muted-foreground">{methodDescriptions[m]}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            /* Confirmation Box with Commit Message inputs */
+            <motion.div
+              key="confirmation-editor"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+              className="space-y-3 p-3 bg-secondary/20 rounded-md border border-border overflow-hidden"
+            >
+              <div className="space-y-1">
+                <label className="font-semibold text-foreground block text-[11px]">Commit Title</label>
+                <input
+                  type="text"
+                  value={commitTitle}
+                  onChange={(e) => setCommitTitle(e.target.value)}
+                  className="w-full h-8 bg-input text-foreground border border-border rounded-md px-2.5 text-xs font-mono outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-foreground block text-[11px]">Commit Description (Optional)</label>
+                <textarea
+                  rows={3}
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                  placeholder="Add an optional extended description..."
+                  className="w-full bg-input text-foreground border border-border rounded-md p-2 text-xs font-mono outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary resize-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    onMerge(method, commitTitle, commitMessage)
+                    setIsConfirming(false)
+                  }}
+                  className="gap-1.5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
+                  <GitMerge className="w-3.5 h-3.5" />
+                  <span>Confirm {methodLabels[method].toLowerCase()}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsConfirming(false)}
+                  className="focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {onToggleAutoMerge && (
           <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">

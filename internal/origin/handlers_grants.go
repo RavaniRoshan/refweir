@@ -49,7 +49,7 @@ type teamGroupDTO struct {
 	Kind string `json:"kind"` // members | admins
 }
 
-// grantDTO renders a grant on the wire. The permission keeps Origin's exact
+// grantDTO renders a grant on the wire. The permission keeps the canonical
 // enum value (lowercase for repo grants, PERMISSION_* for namespace grants).
 type grantDTO struct {
 	Permission string        `json:"permission"`
@@ -60,7 +60,7 @@ type grantDTO struct {
 
 // resolvePrincipal turns a request principal into a store principal, resolving
 // user_email→user_ and group_name→grp_ against refweir.dev's own tables (our
-// replacement for Origin's Cursor admin bridges). teamGroup needs no resolution.
+// replacement for external directory admin bridges). teamGroup needs no resolution.
 func (s *Server) resolvePrincipal(r *http.Request, namespaceID string, req grantRequest) (store.GrantPrincipal, error) {
 	switch {
 	case req.TeamGroup != nil:
