@@ -594,3 +594,115 @@ func TestMCP_CanonicalAgentLoopTools(t *testing.T) {
 		t.Fatalf("pull_request_merge after passing check failed: %+v", res)
 	}
 }
+
+func TestMCP_IssueTools(t *testing.T) {
+	srv, db, _ := setupTestMCP(t)
+	h := srv.Handler(false)
+	ctx := context.Background()
+
+	// 1. Create repo
+	_ = db.CreateNamespace(ctx, store.Namespace{ID: "ns-1", Slug: "acme", Name: "Acme"})
+	repo := store.Repo{
+		ID:            "repo-issues",
+		NamespaceID:   "ns-1",
+		Name:          "tracker",
+		FullName:      "acme/tracker",
+		DefaultBranch: "main",
+	}
+	if err := db.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("create repo: %v", err)
+	}
+
+	// 2. create_issue via MCP
+	rec := callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_issue",
+			"arguments": map[string]any{
+				"ownerSlug": "acme",
+				"repoName":  "tracker",
+				"title":     "High memory consumption in buffer pool",
+				"body":      "Worker allocates without freeing during batch synchronization.",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create_issue status: %d", rec.Code)
+	}
+	var resp struct {
+		Result map[string]any `json:"result"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("create_issue error: %+v", resp.Result)
+	}
+
+	// 3. create_issue_comment via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_issue_comment",
+			"arguments": map[string]any{
+				"ownerSlug":   "acme",
+				"repoName":    "tracker",
+				"issueNumber": 1,
+				"body":        "Reproduced on v1.4.2 under 10k connections. Working on patch.",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create_issue_comment status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("create_issue_comment error: %+v", resp.Result)
+	}
+
+	// 4. get_issue via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      3,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "get_issue",
+			"arguments": map[string]any{
+				"ownerSlug":   "acme",
+				"repoName":    "tracker",
+				"issueNumber": 1,
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("get_issue status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("get_issue error: %+v", resp.Result)
+	}
+
+	// 5. list_issues via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      4,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "list_issues",
+			"arguments": map[string]any{
+				"ownerSlug": "acme",
+				"repoName":  "tracker",
+				"state":     "open",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list_issues status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("list_issues error: %+v", resp.Result)
+	}
+}

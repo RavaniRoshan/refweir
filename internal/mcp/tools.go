@@ -1728,5 +1728,165 @@ func BuiltinTools() []ToolDef {
 				}, nil
 			},
 		},
+		// 47. list_issues
+		{
+			Name:        "list_issues",
+			Description: "List repository issues filtered by state (open, closed, or all)",
+			ReadOnly:    true,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug": map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":  map[string]any{"type": "string", "description": "Repository name"},
+				"state":     map[string]any{"type": "string", "description": "Optional state filter: open, closed, or all"},
+			}, []string{"ownerSlug", "repoName"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				state := getString(args, "state")
+				if state == "all" {
+					state = ""
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				issues, err := s.store.ListIssues(ctx, repo.ID, state)
+				if err != nil {
+					return nil, err
+				}
+				return issues, nil
+			},
+		},
+		// 48. get_issue
+		{
+			Name:        "get_issue",
+			Description: "Get issue details by repository and issue number, including discussion comments",
+			ReadOnly:    true,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":   map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":    map[string]any{"type": "string", "description": "Repository name"},
+				"issueNumber": map[string]any{"type": "integer", "description": "Issue number (e.g. 1)"},
+			}, []string{"ownerSlug", "repoName", "issueNumber"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				num := getInt(args, "issueNumber")
+				if num <= 0 {
+					return nil, fmt.Errorf("valid issueNumber is required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				issue, err := s.store.GetIssue(ctx, repo.ID, num)
+				if err != nil {
+					return nil, err
+				}
+				comments, err := s.store.ListIssueComments(ctx, issue.ID)
+				if err != nil {
+					return nil, err
+				}
+				return map[string]any{
+					"issue":    issue,
+					"comments": comments,
+				}, nil
+			},
+		},
+		// 49. create_issue
+		{
+			Name:        "create_issue",
+			Description: "Create a new issue in a repository",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug": map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":  map[string]any{"type": "string", "description": "Repository name"},
+				"title":     map[string]any{"type": "string", "description": "Issue title"},
+				"body":      map[string]any{"type": "string", "description": "Optional issue body content"},
+			}, []string{"ownerSlug", "repoName", "title"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				title := getString(args, "title")
+				body := getString(args, "body")
+				if title == "" {
+					return nil, fmt.Errorf("title is required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				newIssue := &store.Issue{
+					RepoID: repo.ID,
+					Title:  title,
+					Body:   body,
+					State:  "open",
+				}
+				if err := s.store.CreateIssue(ctx, newIssue); err != nil {
+					return nil, fmt.Errorf("create issue: %w", err)
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "issue.created",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Created issue #%d: %s", newIssue.Number, newIssue.Title),
+					Metadata: map[string]interface{}{
+						"issueNumber": newIssue.Number,
+						"issueId":     newIssue.ID,
+					},
+				})
+				return newIssue, nil
+			},
+		},
+		// 50. create_issue_comment
+		{
+			Name:        "create_issue_comment",
+			Description: "Post a comment on an existing repository issue",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":   map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":    map[string]any{"type": "string", "description": "Repository name"},
+				"issueNumber": map[string]any{"type": "integer", "description": "Issue number (e.g. 1)"},
+				"body":        map[string]any{"type": "string", "description": "Comment body text"},
+			}, []string{"ownerSlug", "repoName", "issueNumber", "body"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				num := getInt(args, "issueNumber")
+				body := getString(args, "body")
+				if num <= 0 || body == "" {
+					return nil, fmt.Errorf("valid issueNumber and body are required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				issue, err := s.store.GetIssue(ctx, repo.ID, num)
+				if err != nil {
+					return nil, err
+				}
+				newComment := &store.IssueComment{
+					RepoID:  repo.ID,
+					IssueID: issue.ID,
+					Body:    body,
+				}
+				if err := s.store.CreateIssueComment(ctx, newComment); err != nil {
+					return nil, fmt.Errorf("create issue comment: %w", err)
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "issue_comment.created",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Commented on issue #%d", issue.Number),
+					Metadata: map[string]interface{}{
+						"issueNumber": issue.Number,
+						"commentId":   newComment.ID,
+					},
+				})
+				return newComment, nil
+			},
+		},
 	}
 }

@@ -324,7 +324,7 @@ export const AgentConsoleView: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with {clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 46)} active tools.
+            Direct Model Context Protocol server mounted on <code className="text-primary font-mono">http://localhost:8080/mcp</code> with {clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 50)} active tools.
           </p>
         </div>
 
@@ -332,7 +332,7 @@ export const AgentConsoleView: React.FC = () => {
         <div className="flex items-center gap-3 text-xs font-mono">
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Tools:</span>
-            <span className="font-semibold text-foreground">{clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 46)}</span>
+            <span className="font-semibold text-foreground">{clusterInfo?.mcpMountedToolsCount ?? (availableTools.length > 0 ? availableTools.length : 50)}</span>
           </div>
           <div className="px-2.5 py-1 rounded-md bg-secondary border border-border">
             <span className="text-muted-foreground mr-1">Avg Latency:</span>
@@ -719,7 +719,7 @@ export const AgentConsoleView: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 4: 35-Tool Catalog */}
+      {/* Tab 4: 50-Tool Catalog */}
       {activeTab === 'catalog' && (
         <Box>
           <BoxHeader className="bg-secondary/35 py-2.5">
