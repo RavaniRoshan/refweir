@@ -190,6 +190,10 @@ func (a *App) ApplySuggestion(ctx context.Context, owner, repo string, prNumber 
 		}
 	}
 
+	repoLock := a.Git.RepoLock(owner, repoName)
+	repoLock.Lock()
+	defer repoLock.Unlock()
+
 	message := fmt.Sprintf("Apply suggestion to %s", path)
 	changes := []gitstore.FileChange{
 		{

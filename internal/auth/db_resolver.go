@@ -115,15 +115,6 @@ func NewDatabaseResolver(db *store.DB) Resolver {
 			}, nil
 		}
 
-		// If it is an installation token "oit_...", allow if unexpired
-		if strings.HasPrefix(raw, "oit_") {
-			instTok := NewInstallToken(raw)
-			if instTok.Expired() {
-				return nil, errors.New("auth: installation token expired")
-			}
-			return instTok, nil
-		}
-
 		return nil, errors.New("auth: unrecognized or invalid token")
 	}
 }

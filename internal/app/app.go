@@ -1901,6 +1901,10 @@ func Open(cfg config.Config) (*App, error) {
 			req.Email = "user@refweir.dev"
 		}
 
+		repoLock := git.RepoLock(owner, name)
+		repoLock.Lock()
+		defer repoLock.Unlock()
+
 		sig := object.Signature{
 			Name:  req.Author,
 			Email: req.Email,

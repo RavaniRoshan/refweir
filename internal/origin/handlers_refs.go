@@ -197,6 +197,10 @@ func (s *Server) createCommitFromFiles(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	lock := s.git.RepoLock(owner, name)
+	lock.Lock()
+	defer lock.Unlock()
+
 	// expectedHeadSha precondition: the branch tip must match, else
 	// FAILED_PRECONDITION (google.rpc code 9, mapped to HTTP 409).
 	head, err := s.git.ResolveRef(owner, name, req.TargetBranch)

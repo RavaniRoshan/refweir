@@ -1,11 +1,11 @@
-// Package auth implements the Origin token types and the API key exchange flow.
+// Package auth implements Refweir authentication token types and the API key exchange flow.
 //
-// Origin's auth model has three token types:
-//   - app: an Ed25519 JWT issued to an installed app
-//   - installation: an "oit_…" token with a ≤15 minute expiry
-//   - user: an OAuth user credential used directly as a bearer token
+// The auth model supports three primary token types:
+//   - app: an Ed25519 JWT issued to an installed application
+//   - installation: an ephemeral token with a ≤15 minute bounded lifetime
+//   - user: a user credential used directly as a bearer token
 //
-// Raw "key_…" or "crsr_…" API keys are not bearer tokens; they must first be
+// Raw "key_…" API keys are not bearer tokens; they must first be
 // exchanged via ExchangeAPIKey.
 package auth
 
@@ -130,14 +130,14 @@ func (t AppToken) Type() string     { return TypeApp }
 func (t AppToken) Scopes() []string { return t.scopes }
 func (t AppToken) Subject() string  { return t.subject }
 
-// InstallToken is an installation-scoped Origin token ("oit_…"). Origin
+// InstallToken is an installation-scoped token. Refweir
 // bounds its lifetime to at most 15 minutes.
 type InstallToken struct {
 	raw      string
 	issuedAt time.Time
 }
 
-// NewInstallToken wraps an "oit_…" token, marking its issuance time.
+// NewInstallToken wraps an installation token, marking its issuance time.
 func NewInstallToken(raw string) InstallToken {
 	return InstallToken{raw: raw, issuedAt: time.Now()}
 }
@@ -146,13 +146,13 @@ func (t InstallToken) Type() string     { return TypeInstallation }
 func (t InstallToken) Scopes() []string { return nil }
 func (t InstallToken) Subject() string  { return t.raw }
 
-// ExpiresAt returns the latest point at which Origin accepts the token.
+// ExpiresAt returns the latest point at which the token is accepted.
 func (t InstallToken) ExpiresAt() time.Time { return t.issuedAt.Add(InstallTokenMaxLifetime) }
 
 // Expired reports whether the token's bounded lifetime has elapsed.
 func (t InstallToken) Expired() bool { return time.Now().After(t.ExpiresAt()) }
 
-// UserToken is an Origin OAuth user credential. Non-prefixed bearer tokens
+// UserToken is an OAuth user credential. Non-prefixed bearer tokens
 // that are not compact JWTs are used directly as user tokens.
 type UserToken struct {
 	raw string
