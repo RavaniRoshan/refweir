@@ -179,4 +179,19 @@ describe('AgentConsoleView Component', () => {
     expect(screen.getByText('agent:security-reviewer-bot')).toBeInTheDocument()
     expect(screen.queryByText('agent:refweir-autonomous-worker')).not.toBeInTheDocument()
   })
+
+  it('switches to Workflow Topology tab and displays interactive containment graph', async () => {
+    render(<AgentConsoleView />)
+
+    const topologyTab = screen.getByText('Workflow Topology')
+    fireEvent.click(topologyTab)
+
+    expect(screen.getByText(/Interactive Capability & Governance Topology/i)).toBeInTheDocument()
+    expect(screen.getByText('1. Agent Fleet')).toBeInTheDocument()
+    expect(screen.getByText('2. Capability Weir')).toBeInTheDocument()
+    expect(screen.getByText('3. Policy Gates')).toBeInTheDocument()
+    expect(screen.getByText('4. Mainline Branch')).toBeInTheDocument()
+    expect(screen.getByText('0 Allowed')).toBeInTheDocument()
+    expect(screen.getByText('Direct Pushes Blocked')).toBeInTheDocument()
+  })
 })

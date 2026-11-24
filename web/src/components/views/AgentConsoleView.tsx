@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Code2,
   GitPullRequest,
+  Network,
+  Shield,
+  GitBranch,
 } from 'lucide-react'
 import { Box, BoxHeader, BoxBody } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -87,7 +90,24 @@ export const AgentConsoleView: React.FC = () => {
   const [executing, setExecuting] = useState(false)
   const [executionResult, setExecutionResult] = useState<any | null>(null)
   const [executionTime, setExecutionTime] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'activity' | 'tester' | 'catalog' | 'leases'>('activity')
+  const [activeTab, setActiveTab] = useState<'activity' | 'tester' | 'catalog' | 'leases' | 'topology'>('activity')
+  const [selectedTopologyNode, setSelectedTopologyNode] = useState<{
+    id: string
+    type: 'agent' | 'lease' | 'gate' | 'mainline'
+    title: string
+    details: string
+    status: string
+    allowedRefs?: string[]
+    token?: string
+  } | null>({
+    id: 'lease-act-001',
+    type: 'lease',
+    title: 'Lease: refs/heads/agent/*',
+    details: 'Scoped HMAC capability lease issued for autonomous worker. Enforces strict isolation to agent/* branches.',
+    status: 'active',
+    allowedRefs: ['refs/heads/agent/*'],
+    token: 'agl_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.worker1.sig',
+  })
 
   // Timeline Filtering State
   const [activitySearchQuery, setActivitySearchQuery] = useState('')
@@ -508,6 +528,21 @@ export const AgentConsoleView: React.FC = () => {
           <span>Capability Leases</span>
           <span className="text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.2 rounded-full font-mono">
             {leases.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('topology')}
+          className={`flex items-center gap-2 px-3 py-2 border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'topology'
+              ? 'border-primary text-foreground font-semibold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Network className="w-3.5 h-3.5 text-primary" />
+          <span>Workflow Topology</span>
+          <span className="text-[10px] bg-primary/10 text-primary border border-primary/30 px-1.5 py-0.2 rounded-full font-mono">
+            Graph
           </span>
         </button>
 
@@ -1102,6 +1137,336 @@ export const AgentConsoleView: React.FC = () => {
             </div>
           </BoxBody>
         </Box>
+      )}
+
+      {/* Tab 5: Interactive Capability & Policy Workflow Topology */}
+      {activeTab === 'topology' && (
+        <div className="space-y-4">
+          {/* Header & Metrics Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3 rounded-lg border border-border bg-card space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Active Leases</span>
+                <KeyRound className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div className="text-xl font-bold text-foreground font-mono">
+                {leases.filter((l) => !l.revoked && new Date(l.expiresAt).getTime() > Date.now()).length}
+              </div>
+              <div className="text-[11px] text-muted-foreground">Ephemeral HMAC capability tokens</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Ref Containment</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+              <div className="text-xl font-bold text-emerald-500 font-mono">100%</div>
+              <div className="text-[11px] text-muted-foreground">Restricted to refs/heads/agent/*</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Policy Gates</span>
+                <Lock className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <div className="text-xl font-bold text-foreground font-mono">3 Active</div>
+              <div className="text-[11px] text-muted-foreground">Rulesets, Signatures, AST Review</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-border bg-card space-y-1">
+              <div className="flex items-center justify-between text-muted-foreground text-xs">
+                <span>Direct Main Pushes</span>
+                <ShieldAlert className="w-3.5 h-3.5 text-destructive" />
+              </div>
+              <div className="text-xl font-bold text-foreground font-mono">0 Allowed</div>
+              <div className="text-[11px] text-muted-foreground">Hermetic forge-level quarantine</div>
+            </div>
+          </div>
+
+          {/* Interactive Topology Graph Box */}
+          <Box>
+            <BoxHeader className="bg-secondary/35 py-2.5 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Network className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-foreground text-xs">Interactive Capability & Governance Topology</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 text-[10px] font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Weir Containment Enforced
+                </span>
+              </div>
+            </BoxHeader>
+
+            <BoxBody className="p-4 sm:p-6 space-y-6">
+              {/* Visual 4-Tier Flow Canvas */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+                {/* Tier 1: Agents */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 text-xs font-semibold text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-primary" />
+                      <span>1. Agent Fleet</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">Identity</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      { id: 'agent-1', name: 'agent:autonomous-worker', role: 'Feature Implementation', active: true },
+                      { id: 'agent-2', name: 'agent:security-reviewer-bot', role: 'Policy & AST Inspection', active: true },
+                      { id: 'agent-3', name: 'agent:triage-daemon', role: 'Background Indexing', active: false },
+                    ].map((agent) => (
+                      <button
+                        key={agent.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedTopologyNode({
+                            id: agent.id,
+                            type: 'agent',
+                            title: agent.name,
+                            details: `Agent principal actively authenticated via MCP. Designated role: ${agent.role}.`,
+                            status: agent.active ? 'active' : 'idle',
+                          })
+                        }
+                        className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                          selectedTopologyNode?.title === agent.name
+                            ? 'border-primary bg-primary/10 shadow-xs'
+                            : 'border-border bg-secondary/30 hover:bg-secondary/60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="font-mono text-xs font-semibold text-foreground truncate">{agent.name}</span>
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              agent.active ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground'
+                            }`}
+                          />
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{agent.role}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tier 2: Capability Weir Leases */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 text-xs font-semibold text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-primary" />
+                      <span>2. Capability Weir</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">HMAC Isolation</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {leases.slice(0, 3).map((l) => {
+                      const state = getLeaseLifecycleState(l)
+                      return (
+                        <button
+                          key={l.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedTopologyNode({
+                              id: l.id,
+                              type: 'lease',
+                              title: `Lease (${l.id})`,
+                              details: `Scoped capability token for ${l.agentId}. Allowed branch scope: ${(l.refPrefixes || l.allowedRefs || []).join(', ')}.`,
+                              status: state.label,
+                              allowedRefs: l.refPrefixes || l.allowedRefs,
+                              token: l.token,
+                            })
+                          }
+                          className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                            selectedTopologyNode?.id === l.id
+                              ? 'border-primary bg-primary/10 shadow-xs'
+                              : 'border-border bg-secondary/30 hover:bg-secondary/60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-mono text-[11px] text-foreground font-semibold truncate">{l.id}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-medium border ${state.color}`}>
+                              {state.label.split(' ')[0]}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-primary font-mono mt-1 truncate">
+                            {(l.refPrefixes || l.allowedRefs || []).join(', ')}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Tier 3: Governance Policy Gates */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 text-xs font-semibold text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5 text-amber-500" />
+                      <span>3. Policy Gates</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">Verification</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      {
+                        id: 'gate-ruleset',
+                        name: 'Branch Ruleset Gate',
+                        details: 'Requires pull request review, verified commit status checks, and non-linear push rejection.',
+                        icon: ShieldCheck,
+                      },
+                      {
+                        id: 'gate-sig',
+                        name: 'OpenSSH Signature Attestation',
+                        details: 'Cryptographically audits SSH SIGSPEC and PGP RFC 4880 signatures before merge execution.',
+                        icon: Lock,
+                      },
+                      {
+                        id: 'gate-ast',
+                        name: 'Refweir Reviewer (AST & Leaks)',
+                        details: 'Automated agent reviewer inspects Go/TS/Python AST diffs and flags exposed credentials.',
+                        icon: CheckCircle2,
+                      },
+                    ].map((gate) => {
+                      const Icon = gate.icon
+                      return (
+                        <button
+                          key={gate.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedTopologyNode({
+                              id: gate.id,
+                              type: 'gate',
+                              title: gate.name,
+                              details: gate.details,
+                              status: 'enforced',
+                            })
+                          }
+                          className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
+                            selectedTopologyNode?.id === gate.id
+                              ? 'border-primary bg-primary/10 shadow-xs'
+                              : 'border-border bg-secondary/30 hover:bg-secondary/60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="text-xs font-semibold text-foreground truncate">{gate.name}</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{gate.details}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Tier 4: Target Mainline */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-border pb-1.5 text-xs font-semibold text-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <GitBranch className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>4. Mainline Branch</span>
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">Protected</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedTopologyNode({
+                          id: 'node-main',
+                          type: 'mainline',
+                          title: 'refs/heads/main',
+                          details: 'Target mainline production branch. Direct pushes strictly prohibited for all agents without verified pull request and passing policy gates.',
+                          status: 'protected',
+                          allowedRefs: ['refs/heads/main'],
+                        })
+                      }
+                      className={`w-full text-left p-4 rounded-lg border transition-all cursor-pointer ${
+                        selectedTopologyNode?.id === 'node-main'
+                          ? 'border-emerald-500 bg-emerald-500/10 shadow-xs'
+                          : 'border-border bg-secondary/30 hover:bg-secondary/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-foreground">refs/heads/main</span>
+                        <Badge variant="success" className="text-[10px]">Protected</Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+                        Merge transactions executed synchronously with 3-way or squash strategy once policy gates clear.
+                      </p>
+                    </button>
+
+                    {/* Direct Push Prohibition Card */}
+                    <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-[11px] space-y-1">
+                      <div className="flex items-center gap-1.5 font-semibold">
+                        <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                        <span>Direct Pushes Blocked</span>
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-destructive/80">
+                        Pre-receive hook rejects any agent token attempting push to non-prefixed refs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Node Inspector Panel */}
+              {selectedTopologyNode && (
+                <div className="mt-4 p-4 rounded-lg border border-border/80 bg-secondary/20 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                        Topology Inspector:
+                      </span>
+                      <span className="font-mono text-xs font-bold text-primary">{selectedTopologyNode.title}</span>
+                      <Badge variant="outline" className="text-[10px] capitalize">
+                        {selectedTopologyNode.status}
+                      </Badge>
+                    </div>
+
+                    {selectedTopologyNode.type === 'lease' && selectedTopologyNode.id.startsWith('lease-') && (
+                      <Button
+                        size="xs"
+                        variant="destructive"
+                        onClick={() => handleRevokeLease(selectedTopologyNode.id)}
+                        disabled={isRevokingLease}
+                        className="text-xs gap-1"
+                      >
+                        <ShieldAlert className="w-3 h-3" />
+                        <span>Revoke Lease</span>
+                      </Button>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-foreground/90 leading-relaxed">{selectedTopologyNode.details}</p>
+
+                  {selectedTopologyNode.token && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase">Token Digest</span>
+                      <div className="p-2 rounded bg-zinc-950 text-zinc-300 font-mono text-[11px] flex items-center justify-between gap-2 overflow-x-auto border border-border/40">
+                        <span className="truncate">{selectedTopologyNode.token}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyRowToken(selectedTopologyNode.id, selectedTopologyNode.token!)}
+                          className="shrink-0 p-1 hover:text-white transition-colors cursor-pointer"
+                          title="Copy Token"
+                        >
+                          {copiedRowTokenId === selectedTopologyNode.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </BoxBody>
+          </Box>
+        </div>
       )}
     </div>
   )
