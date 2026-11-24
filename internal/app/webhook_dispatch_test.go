@@ -205,3 +205,77 @@ func TestWebhookDispatch_SSRFRejection(t *testing.T) {
 		t.Errorf("expected delivery.Delivered to be false")
 	}
 }
+
+func TestWebhookDispatcher_BoundedPool(t *testing.T) {
+	t.Setenv("REFWEIR_ALLOW_LOOPBACK_WEBHOOKS", "true")
+	db := newWebhookTestDB(t)
+	ctx := context.Background()
+
+	deliveredCount := make(chan int, 10)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deliveredCount <- 1
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+
+	nsID := idgen.New("ns")
+	_ = db.CreateNamespace(ctx, store.Namespace{ID: nsID, Slug: "acme-pool", Name: "Acme Pool"})
+	repoID := idgen.New("repo")
+	_ = db.CreateRepo(ctx, store.Repo{ID: repoID, NamespaceID: nsID, Name: "pool-repo", FullName: "acme-pool/pool-repo", DefaultBranch: "main"})
+
+	hook, err := db.CreateRepoWebhook(ctx, repoID, srv.URL, "", "json", `["push"]`, true, false)
+	if err != nil {
+		t.Fatalf("CreateRepoWebhook: %v", err)
+	}
+
+	dispatcher := NewWebhookDispatcher(db, 4, 32)
+	dispatcher.Start()
+	defer dispatcher.Stop()
+
+	// Dispatch 5 events
+	for i := 0; i < 5; i++ {
+		ok := dispatcher.Dispatch(ctx, hook, "push", map[string]any{"index": i})
+		if !ok {
+			t.Fatalf("expected dispatch %d to be accepted by bounded queue", i)
+		}
+	}
+
+	totalDelivered := 0
+	timeout := time.After(3 * time.Second)
+	for totalDelivered < 5 {
+		select {
+		case <-deliveredCount:
+			totalDelivered++
+		case <-timeout:
+			t.Fatalf("timed out: only %d/5 deliveries completed", totalDelivered)
+		}
+	}
+}
+
+func TestWebhookDispatcher_BackpressureDrop(t *testing.T) {
+	db := newWebhookTestDB(t)
+	ctx := context.Background()
+
+	// Create a tiny dispatcher: 0 workers running, queue capacity 2
+	dispatcher := NewWebhookDispatcher(db, 0, 2)
+	// Do not start workers, so queue fills up immediately
+
+	hook := &store.RepoWebhook{ID: "hook_1", URL: "http://example.com"}
+
+	ok1 := dispatcher.Dispatch(ctx, hook, "push", map[string]any{"i": 1})
+	ok2 := dispatcher.Dispatch(ctx, hook, "push", map[string]any{"i": 2})
+	if !ok1 || !ok2 {
+		t.Fatalf("expected first 2 dispatches to succeed into queue of capacity 2")
+	}
+
+	// 3rd dispatch should overflow and be dropped due to backpressure
+	ok3 := dispatcher.Dispatch(ctx, hook, "push", map[string]any{"i": 3})
+	if ok3 {
+		t.Fatalf("expected 3rd dispatch to be dropped when queue is full")
+	}
+	if dispatcher.DroppedTotal() != 1 {
+		t.Fatalf("expected DroppedTotal() == 1, got %d", dispatcher.DroppedTotal())
+	}
+}
+

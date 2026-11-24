@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"refweir.dev/internal/security"
@@ -130,12 +132,147 @@ func DispatchRepoWebhookWithGUID(ctx context.Context, db *store.DB, hook *store.
 	return delivery, nil
 }
 
+// WebhookDispatcher manages a bounded worker pool for resilient, asynchronous webhook deliveries
+// with backpressure handling and retry capabilities.
+type WebhookDispatcher struct {
+	db           *store.DB
+	workers      int
+	queue        chan webhookTask
+	stopCh       chan struct{}
+	wg           sync.WaitGroup
+	droppedTotal atomic.Uint64
+	started      atomic.Bool
+	stopOnce     sync.Once
+}
+
+type webhookTask struct {
+	hook    *store.RepoWebhook
+	event   string
+	payload any
+}
+
+// NewWebhookDispatcher creates a new dispatcher with bounded concurrency and queue buffer.
+func NewWebhookDispatcher(db *store.DB, workers int, queueSize int) *WebhookDispatcher {
+	if workers <= 0 {
+		workers = 0 // permits test-mode with 0 workers
+	}
+	if queueSize <= 0 {
+		queueSize = 1024
+	}
+	return &WebhookDispatcher{
+		db:      db,
+		workers: workers,
+		queue:   make(chan webhookTask, queueSize),
+		stopCh:  make(chan struct{}),
+	}
+}
+
+// Start spawns the background worker goroutines.
+func (d *WebhookDispatcher) Start() {
+	if !d.started.CompareAndSwap(false, true) {
+		return
+	}
+	for i := 0; i < d.workers; i++ {
+		d.wg.Add(1)
+		go d.workerLoop()
+	}
+}
+
+// Stop gracefully terminates all worker goroutines after draining remaining jobs.
+func (d *WebhookDispatcher) Stop() {
+	d.stopOnce.Do(func() {
+		close(d.stopCh)
+		d.wg.Wait()
+		d.started.Store(false)
+	})
+}
+
+// DroppedTotal returns the count of deliveries dropped due to queue saturation backpressure.
+func (d *WebhookDispatcher) DroppedTotal() uint64 {
+	return d.droppedTotal.Load()
+}
+
+// Dispatch enqueues a webhook delivery task into the bounded queue.
+// Returns false if the queue is full and the delivery was dropped under backpressure.
+func (d *WebhookDispatcher) Dispatch(ctx context.Context, hook *store.RepoWebhook, event string, payload any) bool {
+	if hook == nil {
+		return false
+	}
+	select {
+	case d.queue <- webhookTask{hook: hook, event: event, payload: payload}:
+		return true
+	default:
+		d.droppedTotal.Add(1)
+		return false
+	}
+}
+
+func (d *WebhookDispatcher) workerLoop() {
+	defer d.wg.Done()
+	for {
+		select {
+		case <-d.stopCh:
+			return
+		case task := <-d.queue:
+			d.deliverTask(task)
+		}
+	}
+}
+
+func (d *WebhookDispatcher) deliverTask(task webhookTask) {
+	dispatchCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	del, err := DispatchRepoWebhook(dispatchCtx, d.db, task.hook, task.event, task.payload)
+	// If initial attempt failed or returned a 5xx server error, retry once after short backoff preserving GUID for idempotency
+	if (err != nil || (del != nil && !del.Delivered && del.ResponseStatusCode >= 500)) && dispatchCtx.Err() == nil {
+		deliveryGUID := ""
+		if del != nil && del.GUID != "" {
+			deliveryGUID = del.GUID
+		}
+		select {
+		case <-time.After(500 * time.Millisecond):
+			_, _ = DispatchRepoWebhookWithGUID(dispatchCtx, d.db, task.hook, task.event, task.payload, deliveryGUID)
+		case <-dispatchCtx.Done():
+		case <-d.stopCh:
+			return
+		}
+	}
+}
+
+var (
+	defaultDispatcherMu sync.RWMutex
+	defaultDispatcher   *WebhookDispatcher
+)
+
+func getDefaultDispatcher(db *store.DB) *WebhookDispatcher {
+	defaultDispatcherMu.RLock()
+	d := defaultDispatcher
+	defaultDispatcherMu.RUnlock()
+	if d != nil && d.db == db {
+		return d
+	}
+
+	defaultDispatcherMu.Lock()
+	defer defaultDispatcherMu.Unlock()
+	if defaultDispatcher == nil || defaultDispatcher.db != db {
+		if defaultDispatcher != nil {
+			defaultDispatcher.Stop()
+		}
+		defaultDispatcher = NewWebhookDispatcher(db, 16, 1024)
+		defaultDispatcher.Start()
+	}
+	return defaultDispatcher
+}
+
 // DispatchRepoEvent dispatches a repository event asynchronously to all active webhooks subscribed to that event.
 func DispatchRepoEvent(ctx context.Context, db *store.DB, repoID string, event string, payload any) {
 	hooks, err := db.ListRepoWebhooks(ctx, repoID)
 	if err != nil || len(hooks) == 0 {
 		return
 	}
+
+	dispatcher := getDefaultDispatcher(db)
 
 	for _, hook := range hooks {
 		if !hook.Active {
@@ -155,22 +292,6 @@ func DispatchRepoEvent(ctx context.Context, db *store.DB, repoID string, event s
 			continue
 		}
 
-		go func(h *store.RepoWebhook) {
-			dispatchCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancel()
-			del, err := DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
-			// If initial attempt failed or returned a 5xx server error, retry once after short backoff preserving GUID for idempotency
-			if (err != nil || (del != nil && !del.Delivered && del.ResponseStatusCode >= 500)) && dispatchCtx.Err() == nil {
-				deliveryGUID := ""
-				if del != nil && del.GUID != "" {
-					deliveryGUID = del.GUID
-				}
-				select {
-				case <-time.After(500 * time.Millisecond):
-					_, _ = DispatchRepoWebhookWithGUID(dispatchCtx, db, h, event, payload, deliveryGUID)
-				case <-dispatchCtx.Done():
-				}
-			}
-		}(hook)
+		_ = dispatcher.Dispatch(ctx, hook, event, payload)
 	}
 }

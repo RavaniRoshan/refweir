@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"refweir.dev/internal/agentactivity"
@@ -109,6 +110,7 @@ func (s *Server) Handler(readonly bool) http.Handler {
 
 		ctx := r.Context()
 
+		var callerScopes string
 		// Enforce authentication when users are registered on the forge
 		count, _ := s.store.CountUsers(ctx)
 		if count > 0 {
@@ -117,6 +119,20 @@ func (s *Server) Handler(readonly bool) http.Handler {
 				return
 			}
 		}
+
+		// Resolve caller token scopes if Bearer authorization is provided
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			rawToken := strings.TrimPrefix(authHeader, "Bearer ")
+			tokHash := auth.HashCredential(rawToken)
+			if key, err := s.store.GetAPIKeyByHash(ctx, tokHash); err == nil && key.Scopes != "" {
+				callerScopes = key.Scopes
+			} else if tokRecord, err := s.store.GetAccessTokenByHash(ctx, tokHash); err == nil && tokRecord.Scopes != "" {
+				callerScopes = tokRecord.Scopes
+			}
+		}
+
+		effectiveReadOnly := readonly || isScopeReadOnly(callerScopes)
 
 		switch req.Method {
 		case "initialize":
@@ -141,7 +157,7 @@ func (s *Server) Handler(readonly bool) http.Handler {
 		case "tools/list":
 			var exposed []ToolDef
 			for _, t := range s.allTools {
-				if readonly && !t.ReadOnly {
+				if effectiveReadOnly && !t.ReadOnly {
 					continue
 				}
 				exposed = append(exposed, t)
@@ -168,9 +184,13 @@ func (s *Server) Handler(readonly bool) http.Handler {
 				return
 			}
 
-			if readonly && !tool.ReadOnly {
+			if effectiveReadOnly && !tool.ReadOnly {
+				msg := "Tool %q is a write operation not permitted on /mcp/readonly"
+				if isScopeReadOnly(callerScopes) {
+					msg = fmt.Sprintf("Tool %%q is a write operation not permitted for token with read-only scopes (%s)", callerScopes)
+				}
 				writeRPCResult(w, req.ID, toolCallResult{
-					Content: []toolCallContent{{Type: "text", Text: fmt.Sprintf("Tool %q is a write operation not permitted on /mcp/readonly", params.Name)}},
+					Content: []toolCallContent{{Type: "text", Text: fmt.Sprintf(msg, params.Name)}},
 					IsError: true,
 				})
 				return
@@ -261,4 +281,25 @@ func writeRPCError(w http.ResponseWriter, id any, code int, message string) {
 			Message: message,
 		},
 	})
+}
+
+// isScopeReadOnly returns true if the token's granted scopes only permit read operations,
+// or specifically lack mutating write permissions.
+func isScopeReadOnly(scopes string) bool {
+	if scopes == "" {
+		return false
+	}
+	tokens := strings.Fields(strings.ReplaceAll(scopes, ",", " "))
+	hasWrite := false
+	hasRead := false
+	for _, tok := range tokens {
+		tok = strings.TrimSpace(tok)
+		if tok == "*" || tok == "repo" || tok == "write" || tok == "repo:write" || tok == "admin" || tok == "admin:org" || tok == "admin:repo" {
+			hasWrite = true
+		}
+		if tok == "read" || tok == "read:repo" || tok == "repo:read" || tok == "read:all" || tok == "mcp:read" {
+			hasRead = true
+		}
+	}
+	return hasRead && !hasWrite
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"refweir.dev/internal/audit"
+	"refweir.dev/internal/auth"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/store"
 	"refweir.dev/pkg/idgen"
@@ -37,8 +38,15 @@ func setupTestMCP(t *testing.T) (*Server, *store.DB, *gitstore.Store) {
 }
 
 func callRPC(handler http.Handler, reqBody map[string]any) *httptest.ResponseRecorder {
+	return callRPCWithHeader(handler, reqBody, nil)
+}
+
+func callRPCWithHeader(handler http.Handler, reqBody map[string]any, headers map[string]string) *httptest.ResponseRecorder {
 	raw, _ := json.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/mcp", bytes.NewReader(raw))
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	return rec
@@ -896,3 +904,119 @@ func TestMCP_WebhookTools(t *testing.T) {
 		t.Fatalf("expected create_webhook with cloud metadata IP to fail with isError=true")
 	}
 }
+
+func TestMCP_ScopeEnforcement_ReadOnlyTokenBlockedOnWrite(t *testing.T) {
+	srv, db, _ := setupTestMCP(t)
+	ctx := context.Background()
+
+	// 1. Create User
+	userID := idgen.NewUser()
+	if err := db.CreateUserWithPassword(ctx, store.User{
+		ID:    userID,
+		Login: "sandbox-agent",
+		Name:  "Sandbox Agent",
+		Email: "agent@refweir.dev",
+	}); err != nil {
+		t.Fatalf("CreateUser: %v", err)
+	}
+
+	// 2. Create Read-Only API Key ("read:repo")
+	rawROKey, roPrefix, roHash, _ := auth.GenerateAPIKey()
+	if err := db.CreateAPIKey(ctx, store.APIKey{
+		ID:        idgen.New("key"),
+		UserID:    userID,
+		KeyHash:   roHash,
+		KeyPrefix: roPrefix,
+		Name:      "agent-ro-key",
+		Scopes:    "read:repo",
+	}); err != nil {
+		t.Fatalf("CreateAPIKey RO: %v", err)
+	}
+
+	// 3. Create Read-Write API Key ("repo")
+	rawRWKey, rwPrefix, rwHash, _ := auth.GenerateAPIKey()
+	if err := db.CreateAPIKey(ctx, store.APIKey{
+		ID:        idgen.New("key"),
+		UserID:    userID,
+		KeyHash:   rwHash,
+		KeyPrefix: rwPrefix,
+		Name:      "agent-rw-key",
+		Scopes:    "repo",
+	}); err != nil {
+		t.Fatalf("CreateAPIKey RW: %v", err)
+	}
+
+	// Create Namespace
+	ns := store.Namespace{ID: idgen.NewNS(), Slug: "agent-corp", Type: "team", Name: "Agent Corp"}
+	_ = db.CreateNamespace(ctx, ns)
+
+	// Handler is on /mcp (the read-write endpoint)
+	rwHandler := srv.Handler(false)
+
+	// 4. Calling read tool (list_repositories) with Read-Only key on /mcp -> SUCCEEDS
+	recList := callRPCWithHeader(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name":      "list_repositories",
+			"arguments": map[string]any{},
+		},
+	}, map[string]string{
+		"Authorization": "Bearer " + rawROKey,
+	})
+	if recList.Code != http.StatusOK {
+		t.Fatalf("list_repositories status: %d", recList.Code)
+	}
+	var respList rpcResponse
+	_ = json.Unmarshal(recList.Body.Bytes(), &respList)
+	resList, ok := respList.Result.(map[string]any)
+	if !ok || resList["isError"] == true {
+		t.Fatalf("expected list_repositories to succeed with read-only key, got error: %+v", respList.Result)
+	}
+
+	// 5. Calling write tool (create_repository) with Read-Only key on /mcp -> MUST FAIL with isError: true
+	recWrite := callRPCWithHeader(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_repository",
+			"arguments": map[string]any{
+				"ownerSlug": "agent-corp",
+				"name":      "blocked-repo",
+			},
+		},
+	}, map[string]string{
+		"Authorization": "Bearer " + rawROKey,
+	})
+	var respWrite rpcResponse
+	_ = json.Unmarshal(recWrite.Body.Bytes(), &respWrite)
+	resWrite, ok := respWrite.Result.(map[string]any)
+	if !ok || resWrite["isError"] != true {
+		t.Fatalf("expected write tool with read-only key to fail with isError=true on /mcp")
+	}
+
+	// 6. Calling write tool (create_repository) with Read-Write key on /mcp -> MUST SUCCEED
+	recWriteOK := callRPCWithHeader(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      3,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_repository",
+			"arguments": map[string]any{
+				"ownerSlug": "agent-corp",
+				"name":      "allowed-repo",
+			},
+		},
+	}, map[string]string{
+		"Authorization": "Bearer " + rawRWKey,
+	})
+	var respWriteOK rpcResponse
+	_ = json.Unmarshal(recWriteOK.Body.Bytes(), &respWriteOK)
+	resWriteOK, ok := respWriteOK.Result.(map[string]any)
+	if !ok || resWriteOK["isError"] == true {
+		t.Fatalf("expected write tool with read-write key to succeed, got error: %+v", respWriteOK.Result)
+	}
+}
+

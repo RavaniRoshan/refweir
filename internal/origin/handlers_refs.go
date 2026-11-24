@@ -260,6 +260,26 @@ func (s *Server) createCommitFromFiles(w http.ResponseWriter, r *http.Request) {
 		internalError(w, "read commit: "+err.Error())
 		return
 	}
+
+	if s.eventHook != nil {
+		if repo, err := s.store.GetRepo(r.Context(), owner, name); err == nil && repo.ID != "" {
+			s.eventHook(r.Context(), repo.ID, "push", map[string]any{
+				"ref":        "refs/heads/" + req.TargetBranch,
+				"before":     headSHA,
+				"after":      sha.String(),
+				"repository": map[string]any{"id": repo.ID, "name": repo.Name, "full_name": repo.FullName},
+				"pusher":     map[string]any{"name": req.Author.Name, "email": req.Author.Email},
+				"commits": []map[string]any{
+					{
+						"id":      sha.String(),
+						"message": req.Message,
+						"author":  map[string]any{"name": req.Author.Name, "email": req.Author.Email},
+					},
+				},
+			})
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"sha":             sha.String(),
 		"treeSha":         newCommit.TreeSHA,

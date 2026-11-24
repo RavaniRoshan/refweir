@@ -122,6 +122,9 @@ func Open(cfg config.Config) (*App, error) {
 	registry := auth.NewRegistry()
 	originServer := origin.New(db, git, registry, cfg.PublicURL, cfg.GitURL)
 	originServer.SetResolver(auth.NewDatabaseResolver(db))
+	originServer.SetEventHook(func(ctx context.Context, repoID, event string, payload any) {
+		DispatchRepoEvent(ctx, db, repoID, event, payload)
+	})
 
 	replCtrl, _ := replication.NewController(replication.Config{
 		NodeID:          cfg.NodeID,
@@ -1905,6 +1908,11 @@ func Open(cfg config.Config) (*App, error) {
 		repoLock.Lock()
 		defer repoLock.Unlock()
 
+		headSHA := ""
+		if h, err := git.ResolveRef(owner, name, req.Branch); err == nil {
+			headSHA = h.String()
+		}
+
 		sig := object.Signature{
 			Name:  req.Author,
 			Email: req.Email,
@@ -1918,6 +1926,21 @@ func Open(cfg config.Config) (*App, error) {
 			http.Error(w, "Failed to commit file to repository: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		DispatchRepoEvent(r.Context(), db, repo.ID, "push", map[string]any{
+			"ref":        "refs/heads/" + req.Branch,
+			"before":     headSHA,
+			"after":      commitHash.String(),
+			"repository": map[string]any{"id": repo.ID, "name": repo.Name, "full_name": repo.FullName},
+			"pusher":     map[string]any{"name": req.Author, "email": req.Email},
+			"commits": []map[string]any{
+				{
+					"id":      commitHash.String(),
+					"message": req.Message,
+					"author":  map[string]any{"name": req.Author, "email": req.Email},
+				},
+			},
+		})
 
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]any{

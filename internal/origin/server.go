@@ -3,6 +3,7 @@
 package origin
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -25,6 +26,13 @@ type Server struct {
 	// resolve, when set, overrides BearerResolver in guard(). Tests inject a
 	// resolver that returns a fixed credential with known scopes.
 	resolve auth.Resolver
+	// eventHook is an optional callback triggered on asynchronous repository mutations (push, create, delete).
+	eventHook func(ctx context.Context, repoID, event string, payload any)
+}
+
+// SetEventHook registers a callback invoked after repository events (e.g. push).
+func (s *Server) SetEventHook(hook func(ctx context.Context, repoID, event string, payload any)) {
+	s.eventHook = hook
 }
 
 // New builds a Server. registry may be nil (a fresh one is created).
