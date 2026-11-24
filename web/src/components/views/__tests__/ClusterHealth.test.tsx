@@ -25,8 +25,8 @@ describe('ClusterHealth Admin View', () => {
     goroutines: 12,
     allocatedMemoryMb: 14.5,
     cpuUsagePercent: 0.5,
-    litestreamSyncStatus: 'active',
-    lastBackupTimestamp: '2026-10-15T11:00:00Z',
+    replicationStatus: 'not configured',
+    lastBackupTimestamp: 'Not configured',
     mcpMountedToolsCount: 35,
   }
 
@@ -67,7 +67,7 @@ describe('ClusterHealth Admin View', () => {
     expect(screen.getByText(/refweird v0.4.5-enterprise/i)).toBeInTheDocument()
     expect(screen.getByText(/System Operational/i)).toBeInTheDocument()
     expect(screen.getByText('1.0 MB')).toBeInTheDocument() // formatBytes(1048576)
-    expect(screen.getByText('Continuous')).toBeInTheDocument()
+    expect(screen.getAllByText('Not configured').length).toBeGreaterThan(0)
     expect(screen.getByText('14.5')).toBeInTheDocument()
     expect(screen.getByText('MB RAM')).toBeInTheDocument()
   })

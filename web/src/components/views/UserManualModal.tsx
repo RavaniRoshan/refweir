@@ -228,7 +228,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
 |                                    v                                    |
 |  +--------------------------------------------------------------------+ |
 |  |    SQLite WAL Database Engine (modernc.org/sqlite, zero-CGO)       | |
-|  |    data/meta.db  <--->  Litestream Hot Live Replicas               | |
+|  |    data/meta.db  <--->  WAL SQLite Storage Engine                  | |
 |  +---------------------------------+----------------------------------+ |
 |                                    |                                    |
 |                                    v                                    |

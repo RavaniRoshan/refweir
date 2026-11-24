@@ -153,9 +153,9 @@ export interface ClusterMetrics {
   databasePath: string
   goroutines: number
   allocatedMemoryMb: number
-  cpuUsagePercent: number
-  litestreamSyncStatus: 'active' | 'standby' | 'disabled'
-  lastBackupTimestamp: string
+  cpuUsagePercent?: number
+  replicationStatus?: 'active' | 'standby' | 'not configured'
+  lastBackupTimestamp?: string
   mcpMountedToolsCount: number
   history?: MetricHistorySample[]
 }

@@ -212,7 +212,7 @@ git clone http://localhost:8080/shiva/core-engine.git`,
     sections: [
       { id: 'environment-variables', title: 'Core Environment Variables' },
       { id: 'storage-layout', title: 'On-Disk Storage Layout' },
-      { id: 'high-availability-flags', title: 'High Availability & Litestream Flags' },
+      { id: 'high-availability-flags', title: 'High Availability & Storage Flags' },
     ],
     params: [
       {
@@ -242,13 +242,6 @@ git clone http://localhost:8080/shiva/core-engine.git`,
         required: true,
         default: 'auto-generated',
         description: '256-bit cryptographic secret for signing session tokens and capability leases.',
-      },
-      {
-        name: 'REFWEIR_LITESTREAM_URL',
-        type: 'string',
-        required: false,
-        default: 'none',
-        description: 'S3-compatible destination URL for continuous sub-second SQLite WAL replication.',
       },
     ],
     codeSnippets: [
@@ -729,7 +722,7 @@ ssh-keygen -s /var/lib/refweir/ca/refweir_user_ca -I dev-alice -n alice -V +8h i
   'storage-replication': {
     id: 'storage-replication',
     categoryId: 'git-storage',
-    title: 'Multi-Engine SQLite WAL & Litestream Replication',
+    title: 'Multi-Engine SQLite WAL Storage & Replication',
     lead: 'How Refweir maintains ACID persistence, concurrent reader connections, and continuous zero-data-loss streaming replication to cloud storage.',
     readTime: '6 min read',
     badge: 'Reliability',
@@ -737,7 +730,7 @@ ssh-keygen -s /var/lib/refweir/ca/refweir_user_ca -I dev-alice -n alice -V +8h i
     sections: [
       { id: 'sqlite-wal-engine', title: 'SQLite WAL Multi-Reader Engine' },
       { id: 'busy-timeout-locking', title: 'Busy Timeout & Write Mutex Management' },
-      { id: 'litestream-sync', title: 'Litestream S3 Continuous Sync' },
+      { id: 'sqlite-sync', title: 'Point-In-Time Backup & Snapshots' },
       { id: 'failover-procedure', title: 'Disaster Recovery & Point-In-Time Restore' },
     ],
     callouts: [

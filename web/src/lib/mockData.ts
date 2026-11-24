@@ -280,8 +280,8 @@ export const mockClusterMetrics: ClusterMetrics = {
   goroutines: 38,
   allocatedMemoryMb: 64.2,
   cpuUsagePercent: 1.8,
-  litestreamSyncStatus: 'active',
-  lastBackupTimestamp: '3 minutes ago (s3://refweir-backups-prod/wal/)',
+  replicationStatus: 'not configured',
+  lastBackupTimestamp: 'Not configured',
   mcpMountedToolsCount: 34,
   history: [
     { timestamp: new Date(Date.now() - 3600000).toISOString(), uptimeSeconds: 3600, httpRequestsTotal: 120, gitTransfersTotal: 14, mcpCallsTotal: 45, secretPushBlocks: 0, allocatedMemoryMb: 58.2, goroutines: 32, cpuUsagePercent: 1.2 },

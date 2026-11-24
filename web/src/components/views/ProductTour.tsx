@@ -218,7 +218,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
                 <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
               </div>
               <div className="font-mono text-xs text-primary font-bold">SQLite WAL</div>
-              <p className="text-[10px] text-muted-foreground">ACID metadata & Litestream replicas</p>
+              <p className="text-[10px] text-muted-foreground">ACID metadata storage</p>
             </div>
           </div>
 

@@ -1020,9 +1020,9 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
         databasePath: data.databasePath || 'SQLite WAL storage',
         goroutines: data.goroutines || 24,
         allocatedMemoryMb: parseFloat(data.allocatedMemoryMb) || 32.5,
-        cpuUsagePercent: data.cpuUsagePercent || 0.5,
-        litestreamSyncStatus: data.litestreamSyncStatus || 'active',
-        lastBackupTimestamp: data.lastBackupTimestamp || 'Continuous',
+        cpuUsagePercent: data.cpuUsagePercent,
+        replicationStatus: data.replicationStatus || 'not configured',
+        lastBackupTimestamp: data.lastBackupTimestamp,
         mcpMountedToolsCount: data.mcpMountedToolsCount || 34,
         history: Array.isArray(data.history) ? data.history : undefined,
       }
@@ -1042,8 +1042,8 @@ export async function getClusterMetrics(signal?: AbortSignal): Promise<ClusterMe
     goroutines: 24,
     allocatedMemoryMb: 32.5,
     cpuUsagePercent: 0.8,
-    litestreamSyncStatus: 'standby',
-    lastBackupTimestamp: 'Managed via local WAL',
+    replicationStatus: 'not configured',
+    lastBackupTimestamp: 'Not configured',
     mcpMountedToolsCount: 34,
     history: mockClusterMetrics.history,
   }

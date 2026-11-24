@@ -216,21 +216,21 @@ export const ClusterHealth: React.FC = () => {
           </p>
         </Box>
 
-        {/* Metric 2: Litestream Continuous Sync */}
+        {/* Metric 2: Hot Replication */}
         <Box className="p-3.5 space-y-1.5">
           <div className="flex items-center justify-between text-muted-foreground text-xs">
             <span className="flex items-center gap-1.5 font-medium">
               <Cloud className="w-3.5 h-3.5 text-primary" /> Hot Replication
             </span>
-            <Badge variant={metrics.litestreamSyncStatus === 'active' ? 'success' : 'outline'} className="text-[9px] py-0">
-              {metrics.litestreamSyncStatus}
+            <Badge variant={metrics.replicationStatus === 'active' ? 'success' : 'outline'} className="text-[9px] py-0">
+              {metrics.replicationStatus === 'active' ? 'active' : 'Not configured'}
             </Badge>
           </div>
           <div className="text-xl font-bold font-mono text-foreground tracking-tight">
-            Continuous
+            {metrics.replicationStatus === 'active' ? 'Continuous' : 'Not configured'}
           </div>
-          <p className="text-[11px] text-muted-foreground truncate" title={metrics.lastBackupTimestamp}>
-            Backup: {metrics.lastBackupTimestamp}
+          <p className="text-[11px] text-muted-foreground truncate" title={metrics.lastBackupTimestamp || 'Not configured'}>
+            Hot replication (Litestream): Not configured
           </p>
         </Box>
 
