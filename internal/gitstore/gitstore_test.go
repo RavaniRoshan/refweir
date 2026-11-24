@@ -182,3 +182,34 @@ func TestCommitObject(t *testing.T) {
 		t.Errorf("commit message = %q", c.Message)
 	}
 }
+
+func TestStore_Delete_Rename_Locks(t *testing.T) {
+	s := newStore(t)
+
+	// 1. Init repository
+	if _, err := s.Init("acme", "project-a", "main"); err != nil {
+		t.Fatalf("Init project-a: %v", err)
+	}
+	if !s.Exists("acme", "project-a") {
+		t.Fatal("expected project-a to exist")
+	}
+
+	// 2. Rename project-a to project-b with concurrent lock safety
+	if err := s.Rename("acme", "project-a", "project-b"); err != nil {
+		t.Fatalf("Rename: %v", err)
+	}
+	if s.Exists("acme", "project-a") {
+		t.Fatal("expected project-a to be gone after rename")
+	}
+	if !s.Exists("acme", "project-b") {
+		t.Fatal("expected project-b to exist after rename")
+	}
+
+	// 3. Delete project-b with lock safety
+	if err := s.Delete("acme", "project-b"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if s.Exists("acme", "project-b") {
+		t.Fatal("expected project-b to be removed after Delete")
+	}
+}

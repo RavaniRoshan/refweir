@@ -225,3 +225,95 @@ func TestRepoLifecycle_DangerZoneAndTemplates(t *testing.T) {
 		t.Errorf("got FullName %q, want globex/satellite-v2", transferredRepo.FullName)
 	}
 }
+
+func TestRepoLifecycle_ArchivedLeaseBlockAndRevoke(t *testing.T) {
+	dataDir := t.TempDir()
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:0",
+		DataDir:    dataDir,
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+	}
+
+	application, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer application.Close()
+
+	handler := application.Handler()
+
+	// 1. Create a repository
+	createBody, _ := json.Marshal(map[string]any{
+		"owner":          "acme",
+		"name":           "arch-target",
+		"default_branch": "main",
+		"visibility":     "public",
+		"init_readme":    true,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/repos", bytes.NewReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("Create repo status = %d: %s", rec.Code, rec.Body.String())
+	}
+
+	repo, err := application.Store.GetRepo(req.Context(), "acme", "arch-target")
+	if err != nil {
+		t.Fatalf("GetRepo: %v", err)
+	}
+
+	// 2. Issue a lease before archival -> succeeds (200)
+	leaseReq, _ := json.Marshal(map[string]any{
+		"agentId":            "agent:bot",
+		"repoId":             repo.ID,
+		"allowedRefPrefixes": []string{"refs/heads/agent/*"},
+	})
+	lReq := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", bytes.NewReader(leaseReq))
+	lReq.Header.Set("Content-Type", "application/json")
+	lRec := httptest.NewRecorder()
+	handler.ServeHTTP(lRec, lReq)
+	if lRec.Code != http.StatusOK {
+		t.Fatalf("expected 200 on lease issuance, got %d: %s", lRec.Code, lRec.Body.String())
+	}
+	var leaseResp struct {
+		ID    string `json:"id"`
+		Token string `json:"token"`
+	}
+	_ = json.Unmarshal(lRec.Body.Bytes(), &leaseResp)
+
+	// Verify lease is active
+	revoked, err := application.Store.IsLeaseRevoked(req.Context(), leaseResp.ID, repo.ID)
+	if err != nil || revoked {
+		t.Fatalf("expected lease to be active, got revoked=%v, err=%v", revoked, err)
+	}
+
+	// 3. Archive the repository
+	archBody, _ := json.Marshal(map[string]any{
+		"archived":     true,
+		"confirm_name": "acme/arch-target",
+	})
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/v1/repos/acme/arch-target", bytes.NewReader(archBody))
+	patchReq.Header.Set("Content-Type", "application/json")
+	patchRec := httptest.NewRecorder()
+	handler.ServeHTTP(patchRec, patchReq)
+	if patchRec.Code != http.StatusOK {
+		t.Fatalf("expected 200 on archive, got %d: %s", patchRec.Code, patchRec.Body.String())
+	}
+
+	// 4. Existing lease must now be marked revoked because repo was archived
+	revoked, err = application.Store.IsLeaseRevoked(req.Context(), leaseResp.ID, repo.ID)
+	if err != nil || !revoked {
+		t.Fatalf("expected lease to be revoked after repo archival, got revoked=%v, err=%v", revoked, err)
+	}
+
+	// 5. Attempting to issue a new capability lease on archived repo must fail (403 Forbidden)
+	lReq2 := httptest.NewRequest(http.MethodPost, "/api/v1/agent/leases", bytes.NewReader(leaseReq))
+	lReq2.Header.Set("Content-Type", "application/json")
+	lRec2 := httptest.NewRecorder()
+	handler.ServeHTTP(lRec2, lReq2)
+	if lRec2.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden when issuing lease on archived repo, got %d: %s", lRec2.Code, lRec2.Body.String())
+	}
+}

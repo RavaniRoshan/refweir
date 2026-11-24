@@ -338,7 +338,7 @@ func (s *Server) validateLease(ctx context.Context, repo *store.Repo, lease *age
 		return errors.New("lease does not grant access to this repository")
 	}
 	if s.store != nil {
-		revoked, err := s.store.IsAgentLeaseRevoked(ctx, lease.ID)
+		revoked, err := s.store.IsLeaseRevoked(ctx, lease.ID, lease.RepoID)
 		if err == nil && revoked {
 			return agentlease.ErrRevokedLease
 		}

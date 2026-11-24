@@ -1664,7 +1664,7 @@ func BuiltinTools() []ToolDef {
 				}
 				revoked := false
 				if s.store != nil {
-					isRev, err := s.store.IsAgentLeaseRevoked(ctx, lease.ID)
+					isRev, err := s.store.IsLeaseRevoked(ctx, lease.ID, lease.RepoID)
 					if err != nil {
 						return nil, fmt.Errorf("failed to check lease revocation status: %w", err)
 					}

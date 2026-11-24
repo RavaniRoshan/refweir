@@ -136,8 +136,40 @@ func (s *Store) Exists(namespaceSlug, repoName string) bool {
 	return err == nil
 }
 
-// Rename renames a bare repository directory on disk from oldName.git to newName.git.
+// Delete safely removes a bare repository directory on disk and cleans up synchronization mutexes.
+func (s *Store) Delete(namespaceSlug, repoName string) error {
+	lock := s.RepoLock(namespaceSlug, repoName)
+	lock.Lock()
+	defer lock.Unlock()
+
+	p := s.repoPath(namespaceSlug, repoName)
+	if p == "" {
+		return fmt.Errorf("gitstore: invalid or unsafe repository slug")
+	}
+	defer s.repoLocks.Delete(namespaceSlug + "/" + repoName)
+	return os.RemoveAll(p)
+}
+
+// Rename renames a bare repository directory on disk from oldName.git to newName.git with 2-phase lock synchronization.
 func (s *Store) Rename(namespaceSlug, oldName, newName string) error {
+	oldKey := namespaceSlug + "/" + oldName
+	newKey := namespaceSlug + "/" + newName
+
+	oldLock := s.RepoLock(namespaceSlug, oldName)
+	newLock := s.RepoLock(namespaceSlug, newName)
+
+	if oldKey < newKey {
+		oldLock.Lock()
+		defer oldLock.Unlock()
+		newLock.Lock()
+		defer newLock.Unlock()
+	} else {
+		newLock.Lock()
+		defer newLock.Unlock()
+		oldLock.Lock()
+		defer oldLock.Unlock()
+	}
+
 	oldPath := s.repoPath(namespaceSlug, oldName)
 	newPath := s.repoPath(namespaceSlug, newName)
 	if oldPath == "" || newPath == "" {
@@ -149,11 +181,33 @@ func (s *Store) Rename(namespaceSlug, oldName, newName string) error {
 	if _, err := os.Stat(newPath); err == nil {
 		return fmt.Errorf("gitstore: destination repo %s/%s already exists", namespaceSlug, newName)
 	}
-	return os.Rename(oldPath, newPath)
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return err
+	}
+	s.repoLocks.Delete(oldKey)
+	return nil
 }
 
-// Transfer moves a bare repository directory on disk from oldNamespaceSlug/repoName.git to newNamespaceSlug/repoName.git.
+// Transfer moves a bare repository directory on disk from oldNamespaceSlug/repoName.git to newNamespaceSlug/repoName.git with 2-phase lock synchronization.
 func (s *Store) Transfer(oldNamespaceSlug, newNamespaceSlug, repoName string) error {
+	oldKey := oldNamespaceSlug + "/" + repoName
+	newKey := newNamespaceSlug + "/" + repoName
+
+	oldLock := s.RepoLock(oldNamespaceSlug, repoName)
+	newLock := s.RepoLock(newNamespaceSlug, repoName)
+
+	if oldKey < newKey {
+		oldLock.Lock()
+		defer oldLock.Unlock()
+		newLock.Lock()
+		defer newLock.Unlock()
+	} else {
+		newLock.Lock()
+		defer newLock.Unlock()
+		oldLock.Lock()
+		defer oldLock.Unlock()
+	}
+
 	oldPath := s.repoPath(oldNamespaceSlug, repoName)
 	newPath := s.repoPath(newNamespaceSlug, repoName)
 	if oldPath == "" || newPath == "" {
@@ -169,7 +223,11 @@ func (s *Store) Transfer(oldNamespaceSlug, newNamespaceSlug, repoName string) er
 	if _, err := os.Stat(newPath); err == nil {
 		return fmt.Errorf("gitstore: destination repo %s/%s already exists", newNamespaceSlug, repoName)
 	}
-	return os.Rename(oldPath, newPath)
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return err
+	}
+	s.repoLocks.Delete(oldKey)
+	return nil
 }
 
 // Clone clones a remote repository into the store as a bare repo and returns it.

@@ -358,13 +358,26 @@ type RepoUpdate struct {
 	Archived            *bool
 }
 
-// DeleteRepo deletes a repository by owner slug + name.
+// DeleteRepo deletes a repository by owner slug + name, cleaning up LFS locks and revoking outstanding capability leases.
 func (db *DB) DeleteRepo(ctx context.Context, ownerSlug, name string) error {
-	res, err := db.sql.ExecContext(ctx, `DELETE FROM repos
-		WHERE id IN (
-			SELECT r.id FROM repos r JOIN namespaces n ON n.id = r.namespace_id
-			WHERE n.slug = ? AND r.name = ?
-		)`, ownerSlug, name)
+	var repoID string
+	err := db.sql.QueryRowContext(ctx, `
+		SELECT r.id FROM repos r JOIN namespaces n ON n.id = r.namespace_id
+		WHERE n.slug = ? AND r.name = ?`, ownerSlug, name).Scan(&repoID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return fmt.Errorf("lookup repo for deletion: %w", err)
+	}
+
+	// Clean up uncascaded LFS locks
+	_, _ = db.sql.ExecContext(ctx, `DELETE FROM lfs_locks WHERE repository_id = ?`, repoID)
+
+	// Invalidate any active agent capability leases targeting this repo
+	_ = db.RevokeRepoAgentLeases(ctx, repoID, "repository permanently deleted")
+
+	res, err := db.sql.ExecContext(ctx, `DELETE FROM repos WHERE id = ?`, repoID)
 	if err != nil {
 		return fmt.Errorf("delete repo: %w", err)
 	}

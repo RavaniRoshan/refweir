@@ -429,7 +429,7 @@ func Open(cfg config.Config) (*App, error) {
 			RepoID             string   `json:"repoId"`
 			AllowedRefPrefixes []string `json:"allowedRefPrefixes"`
 		}
-		if err := json.Unmarshal(bodyBytes, &req); err == nil && caller != nil && caller.Role != "admin" {
+		if err := json.Unmarshal(bodyBytes, &req); err == nil {
 			if req.RepoID != "" && req.RepoID != "*" {
 				var repo store.Repo
 				var rErr error
@@ -439,24 +439,32 @@ func Open(cfg config.Config) (*App, error) {
 				} else {
 					repo, rErr = db.GetRepoByID(r.Context(), req.RepoID)
 				}
-				if rErr != nil {
-					http.Error(w, "Repository not found", http.StatusNotFound)
+				if rErr == nil && repo.Archived {
+					http.Error(w, "Forbidden: Capability leases cannot be issued for archived repositories", http.StatusForbidden)
 					return
 				}
-				allowed, err := db.CheckRepoAccess(r.Context(), repo, caller.ID, true)
-				if err != nil || !allowed {
-					http.Error(w, "Forbidden: Write permission required to issue capability lease for repository", http.StatusForbidden)
-					return
+				if caller != nil && caller.Role != "admin" {
+					if rErr != nil {
+						http.Error(w, "Repository not found", http.StatusNotFound)
+						return
+					}
+					allowed, err := db.CheckRepoAccess(r.Context(), repo, caller.ID, true)
+					if err != nil || !allowed {
+						http.Error(w, "Forbidden: Write permission required to issue capability lease for repository", http.StatusForbidden)
+						return
+					}
 				}
 			}
 
-			for _, prefix := range req.AllowedRefPrefixes {
-				clean := strings.TrimPrefix(prefix, "refs/heads/")
-				clean = strings.TrimSuffix(clean, "/*")
-				clean = strings.TrimSuffix(clean, "/")
-				if clean == "main" || clean == "master" || prefix == "refs/heads/main" || prefix == "refs/heads/master" {
-					http.Error(w, "Forbidden: Administrator privileges required to issue capability lease with direct main/master access", http.StatusForbidden)
-					return
+			if caller != nil && caller.Role != "admin" {
+				for _, prefix := range req.AllowedRefPrefixes {
+					clean := strings.TrimPrefix(prefix, "refs/heads/")
+					clean = strings.TrimSuffix(clean, "/*")
+					clean = strings.TrimSuffix(clean, "/")
+					if clean == "main" || clean == "master" || prefix == "refs/heads/main" || prefix == "refs/heads/master" {
+						http.Error(w, "Forbidden: Administrator privileges required to issue capability lease with direct main/master access", http.StatusForbidden)
+						return
+					}
 				}
 			}
 		}
@@ -805,8 +813,7 @@ func Open(cfg config.Config) (*App, error) {
 			http.Error(w, "Failed to delete repository: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		repoPath := filepath.Join(gitDir, owner, name+".git")
-		_ = os.RemoveAll(repoPath)
+		_ = git.Delete(owner, name)
 
 		_ = audit.Log(audit.Event{
 			Actor:     owner,
@@ -1195,6 +1202,8 @@ func Open(cfg config.Config) (*App, error) {
 			action := "repo.archived"
 			if !*req.Archived {
 				action = "repo.unarchived"
+			} else {
+				_ = db.RevokeRepoAgentLeases(r.Context(), existingRepo.ID, "repository archived")
 			}
 			_ = audit.Log(audit.Event{
 				Actor:     "web-user",
