@@ -38,9 +38,26 @@ public_url = "http://127.0.0.1:8080"
 git_url = "127.0.0.1:8080"
 
 [agentlease]
+secret = "min-32-character-secret-signing-key-for-leases"
 algorithm = "HMAC-SHA256"
 ttl = "1h"
 refs = ["refs/heads/agent/*"]
+
+[smtp]
+host = "smtp.example.com"
+port = 587
+username = "smtp-user"
+password = "smtp-password"
+from = "noreply@refweir.dev"
+tls = true
+
+[telemetry]
+enabled = false
+endpoint = "https://telemetry.example.com"
+
+[cluster]
+role = "primary"
+node_id = "node-01"
 
 [mcp]
 endpoint = "/mcp"

@@ -109,40 +109,43 @@ func Load() (Config, error) {
 	sshAddr := normalizeAddr(getVal("REFWEIR_SSH_ADDR", "transport", "ssh", "127.0.0.1:2222"), "127.0.0.1:2222")
 	sshHostKeyPath := getVal("REFWEIR_SSH_HOST_KEY", "transport", "ssh_host_key", filepath.Join(dataDir, "ssh_host_key"))
 
-	jwtSecret, err := resolveJWTSecret(dataDir)
+	jwtSecretVal := getVal("REFWEIR_JWT_SECRET", "agentlease", "secret", "")
+	jwtSecret, err := resolveJWTSecret(dataDir, jwtSecretVal)
 	if err != nil {
 		return Config{}, err
 	}
 
-	clusterRole := getEnv("REFWEIR_CLUSTER_ROLE", "primary")
-	replicaDir := getEnv("REFWEIR_REPLICA_DIR", "")
-	nodeID := getEnv("REFWEIR_NODE_ID", "")
+	clusterRole := getVal("REFWEIR_CLUSTER_ROLE", "cluster", "role", "primary")
+	replicaDir := getVal("REFWEIR_REPLICA_DIR", "cluster", "replica_dir", "")
+	nodeID := getVal("REFWEIR_NODE_ID", "cluster", "node_id", "")
 
-	smtpHost := getEnv("REFWEIR_SMTP_HOST", "")
+	smtpHost := getVal("REFWEIR_SMTP_HOST", "smtp", "host", "")
 	smtpPort := 587
-	if pStr := getEnv("REFWEIR_SMTP_PORT", ""); pStr != "" {
+	if pStr := getVal("REFWEIR_SMTP_PORT", "smtp", "port", ""); pStr != "" {
 		if p, err := strconv.Atoi(pStr); err == nil && p > 0 {
 			smtpPort = p
 		}
 	}
-	smtpUsername := getEnv("REFWEIR_SMTP_USERNAME", "")
-	smtpPassword := getEnv("REFWEIR_SMTP_PASSWORD", "")
-	smtpFrom := getEnv("REFWEIR_SMTP_FROM", "noreply@refweir.dev")
-	smtpTLS := getEnv("REFWEIR_SMTP_TLS", "true") != "false"
+	smtpUsername := getVal("REFWEIR_SMTP_USERNAME", "smtp", "username", "")
+	smtpPassword := getVal("REFWEIR_SMTP_PASSWORD", "smtp", "password", "")
+	smtpFrom := getVal("REFWEIR_SMTP_FROM", "smtp", "from", "noreply@refweir.dev")
+	smtpTLS := getVal("REFWEIR_SMTP_TLS", "smtp", "tls", "true") != "false"
 
 	version := getEnv("REFWEIR_VERSION", "dev")
 
-	telemetryEnabled := getEnv("REFWEIR_TELEMETRY_OPT_IN", "") == "1"
+	telemetryOpt := getVal("REFWEIR_TELEMETRY_OPT_IN", "telemetry", "enabled", "")
+	telemetryEnabled := telemetryOpt == "1" || telemetryOpt == "true"
 	if !telemetryEnabled {
 		if body, err := os.ReadFile(filepath.Join(dataDir, "telemetry_opt_in")); err == nil { // #nosec G304 -- operator-configured data directory
-			telemetryEnabled = strings.TrimSpace(string(body)) == "1"
+			trimmed := strings.TrimSpace(string(body))
+			telemetryEnabled = trimmed == "1" || trimmed == "true"
 		}
 	}
-	telemetryEndpoint := getEnv("REFWEIR_TELEMETRY_ENDPOINT", "")
+	telemetryEndpoint := getVal("REFWEIR_TELEMETRY_ENDPOINT", "telemetry", "endpoint", "")
 
-	demoMode := getEnv("REFWEIR_DEMO_MODE", "") == "1"
-	demoRepo := getEnv("REFWEIR_DEMO_REPO", "demo/agent-lab")
-	demoSelfURL := strings.TrimRight(getEnv("REFWEIR_DEMO_SELF_URL", ""), "/")
+	demoMode := (getVal("REFWEIR_DEMO_MODE", "demo", "enabled", "") == "1" || getVal("REFWEIR_DEMO_MODE", "demo", "enabled", "") == "true")
+	demoRepo := getVal("REFWEIR_DEMO_REPO", "demo", "repo", "demo/agent-lab")
+	demoSelfURL := strings.TrimRight(getVal("REFWEIR_DEMO_SELF_URL", "demo", "self_url", ""), "/")
 
 	return Config{
 		Version:        version,
@@ -175,12 +178,12 @@ func Load() (Config, error) {
 
 // resolveJWTSecret returns the lease signing key, generating and persisting one
 // under dataDir on first use. It never falls back to a literal in the source.
-func resolveJWTSecret(dataDir string) (string, error) {
-	if v := os.Getenv("REFWEIR_JWT_SECRET"); v != "" {
-		if len(v) < minJWTSecretBytes {
-			return "", fmt.Errorf("REFWEIR_JWT_SECRET must be at least %d bytes (got %d)", minJWTSecretBytes, len(v))
+func resolveJWTSecret(dataDir string, configuredSecret string) (string, error) {
+	if configuredSecret != "" {
+		if len(configuredSecret) < minJWTSecretBytes {
+			return "", fmt.Errorf("REFWEIR_JWT_SECRET must be at least %d bytes (got %d)", minJWTSecretBytes, len(configuredSecret))
 		}
-		return v, nil
+		return configuredSecret, nil
 	}
 
 	path := filepath.Join(dataDir, "jwt_secret")

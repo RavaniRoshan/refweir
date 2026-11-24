@@ -184,3 +184,89 @@ git_url = "forge.acme.corp"
 		t.Errorf("gitURL = %s, want forge.acme.corp", cfg.GitURL)
 	}
 }
+
+func TestConfigTOML_FullFields(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := filepath.Join(dir, "refweir.toml")
+	tomlContent := `
+[transport]
+http = ":9090"
+ssh = ":2225"
+public_url = "https://forge.full.test"
+git_url = "git.full.test"
+
+[agentlease]
+secret = "configured-via-toml-secret-that-is-at-least-32-bytes!"
+
+[smtp]
+host = "smtp.mailgun.org"
+port = "465"
+username = "postmaster@mailgun.org"
+password = "supersecretpassword"
+from = "alerts@refweir.dev"
+tls = "true"
+
+[telemetry]
+enabled = "true"
+endpoint = "https://telemetry.refweir.dev/v1/events"
+
+[cluster]
+role = "replica"
+replica_dir = "/var/lib/refweir/replica"
+node_id = "node-alpha"
+`
+	if err := os.WriteFile(tomlPath, []byte(tomlContent), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	t.Setenv("REFWEIR_CONFIG", tomlPath)
+	t.Setenv("REFWEIR_DATA_DIR", dir)
+	if err := os.Unsetenv("REFWEIR_JWT_SECRET"); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if cfg.ListenAddr != "127.0.0.1:9090" {
+		t.Errorf("listenAddr = %s, want 127.0.0.1:9090", cfg.ListenAddr)
+	}
+	if cfg.JWTSecret != "configured-via-toml-secret-that-is-at-least-32-bytes!" {
+		t.Errorf("jwtSecret = %s, want configured-via-toml-secret-that-is-at-least-32-bytes!", cfg.JWTSecret)
+	}
+	if cfg.SMTPHost != "smtp.mailgun.org" {
+		t.Errorf("smtpHost = %s", cfg.SMTPHost)
+	}
+	if cfg.SMTPPort != 465 {
+		t.Errorf("smtpPort = %d, want 465", cfg.SMTPPort)
+	}
+	if cfg.SMTPUsername != "postmaster@mailgun.org" {
+		t.Errorf("smtpUsername = %s", cfg.SMTPUsername)
+	}
+	if cfg.SMTPPassword != "supersecretpassword" {
+		t.Errorf("smtpPassword = %s", cfg.SMTPPassword)
+	}
+	if cfg.SMTPFrom != "alerts@refweir.dev" {
+		t.Errorf("smtpFrom = %s", cfg.SMTPFrom)
+	}
+	if !cfg.SMTPTLS {
+		t.Errorf("smtpTLS = %v, want true", cfg.SMTPTLS)
+	}
+	if !cfg.TelemetryEnabled {
+		t.Errorf("telemetryEnabled = %v, want true", cfg.TelemetryEnabled)
+	}
+	if cfg.TelemetryEndpoint != "https://telemetry.refweir.dev/v1/events" {
+		t.Errorf("telemetryEndpoint = %s", cfg.TelemetryEndpoint)
+	}
+	if cfg.ClusterRole != "replica" {
+		t.Errorf("clusterRole = %s, want replica", cfg.ClusterRole)
+	}
+	if cfg.ReplicaDir != "/var/lib/refweir/replica" {
+		t.Errorf("replicaDir = %s", cfg.ReplicaDir)
+	}
+	if cfg.NodeID != "node-alpha" {
+		t.Errorf("nodeID = %s", cfg.NodeID)
+	}
+}
