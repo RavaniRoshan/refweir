@@ -40,6 +40,7 @@ vi.mock('@/lib/api', async () => {
 
 describe('AgentConsoleView Component', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
     vi.clearAllMocks()
   })
 
@@ -140,5 +141,42 @@ describe('AgentConsoleView Component', () => {
       expect(screen.getByText('live-agent')).toBeInTheDocument()
       expect(screen.getByText('Found 12 symbols in AST')).toBeInTheDocument()
     })
+  })
+
+  it('filters operational timeline by keyword search and category buttons', async () => {
+    render(<AgentConsoleView />)
+
+    await waitFor(() => {
+      expect(screen.getByText('refweir-agent')).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByPlaceholderText(/Filter events.../i)
+    fireEvent.change(searchInput, { target: { value: 'nonexistent-tool' } })
+
+    expect(screen.getByText(/No events match your filter criteria/i)).toBeInTheDocument()
+
+    // Reset filters
+    const resetBtn = screen.getByRole('button', { name: /Reset Filters/i })
+    fireEvent.click(resetBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('refweir-agent')).toBeInTheDocument()
+    })
+  })
+
+  it('filters capability leases table by search and status filter', async () => {
+    render(<AgentConsoleView />)
+
+    const leasesTab = screen.getByText('Capability Leases')
+    fireEvent.click(leasesTab)
+
+    expect(screen.getByText('Issued Agent Capability Leases & Audited State')).toBeInTheDocument()
+    expect(screen.getByText('agent:refweir-autonomous-worker')).toBeInTheDocument()
+
+    const searchInput = screen.getByPlaceholderText(/Search by agent or repo.../i)
+    fireEvent.change(searchInput, { target: { value: 'reviewer-bot' } })
+
+    expect(screen.getByText('agent:security-reviewer-bot')).toBeInTheDocument()
+    expect(screen.queryByText('agent:refweir-autonomous-worker')).not.toBeInTheDocument()
   })
 })
