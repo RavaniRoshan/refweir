@@ -193,11 +193,24 @@ func (e *AutoMergeEngine) evaluate(ctx context.Context, evt AutoMergeEvent) erro
 		return fmt.Errorf("get repo %s: %w", pr.RepoID, err)
 	}
 
+	method := am.MergeMethod
+	if method == "" {
+		if repo.AllowMergeCommit {
+			method = "merge"
+		} else if repo.AllowSquashMerge {
+			method = "squash"
+		} else {
+			method = "squash"
+		}
+	}
+
 	// If engine is available, also verify full ruleset mergeability
 	if e.eng != nil {
 		rulesets, err := e.db.ListRulesets(ctx, pr.RepoID)
 		if err == nil && len(rulesets) > 0 {
-			res := e.eng.EvaluateMerge(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "", "", approvedCount, checkRuns)
+			res := e.eng.EvaluateMergeWithOptions(ctx, rulesets, repo.DefaultBranch, pr.BaseRef, "", "", approvedCount, checkRuns, engine.MergeEvaluationOptions{
+				MergeMethod: method,
+			})
 			if !res.Allowed {
 				return nil
 			}
@@ -212,17 +225,6 @@ func (e *AutoMergeEngine) evaluate(ctx context.Context, evt AutoMergeEvent) erro
 		nsSlug = strings.Split(repo.FullName, "/")[0]
 	}
 	repoName := repo.Name
-
-	method := am.MergeMethod
-	if method == "" {
-		if repo.AllowMergeCommit {
-			method = "merge"
-		} else if repo.AllowSquashMerge {
-			method = "squash"
-		} else {
-			method = "squash"
-		}
-	}
 
 	authorSig := object.Signature{
 		Name:  "Refweir Engine",
@@ -240,20 +242,28 @@ func (e *AutoMergeEngine) evaluate(ctx context.Context, evt AutoMergeEvent) erro
 
 	var mergeCommitSHA string
 	if e.git != nil {
-		mergeable, _, _, err := e.git.CheckMergeable(nsSlug, repoName, pr.BaseRef, pr.HeadRef)
-		if err == nil && !mergeable {
-			// Conflicts prevent auto-merge
-			return nil
-		}
+		maxRetries := 3
+		for attempt := 0; attempt < maxRetries; attempt++ {
+			mergeable, _, _, err := e.git.CheckMergeable(nsSlug, repoName, pr.BaseRef, pr.HeadRef)
+			if err == nil && !mergeable {
+				// Conflicts prevent auto-merge
+				return nil
+			}
 
-		sha, err := e.git.Merge(nsSlug, repoName, pr.BaseRef, pr.HeadRef, method, authorSig, msg)
-		if err != nil {
+			sha, err := e.git.Merge(nsSlug, repoName, pr.BaseRef, pr.HeadRef, method, authorSig, msg)
+			if err == nil {
+				mergeCommitSHA = sha
+				break
+			}
 			if errors.Is(err, gitstore.ErrMergeConflict) {
 				return nil
 			}
+			if strings.Contains(err.Error(), "was modified concurrently") && attempt < maxRetries-1 {
+				time.Sleep(time.Duration(50*(1<<attempt)) * time.Millisecond)
+				continue
+			}
 			return fmt.Errorf("git merge: %w", err)
 		}
-		mergeCommitSHA = sha
 	} else {
 		mergeCommitSHA = "0000000000000000000000000000000000000000"
 	}

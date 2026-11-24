@@ -155,6 +155,30 @@ func TestPooledConnectionForeignKeys(t *testing.T) {
 	}
 }
 
+func TestStore_IncrementalVacuum(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "vacuum_test.db")
+	db, err := Open(path)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	if err := db.IncrementalVacuum(ctx, 10); err != nil {
+		t.Fatalf("IncrementalVacuum: %v", err)
+	}
+
+	// Verify PRAGMA auto_vacuum is INCREMENTAL (value 2 in SQLite)
+	var autoVacuum int
+	if err := db.sql.QueryRowContext(ctx, "PRAGMA auto_vacuum").Scan(&autoVacuum); err != nil {
+		t.Fatalf("query auto_vacuum: %v", err)
+	}
+	if autoVacuum != 2 {
+		t.Fatalf("expected auto_vacuum to be 2 (INCREMENTAL), got %d", autoVacuum)
+	}
+}
+
 func tableExists(t *testing.T, db *DB, name string) bool {
 	t.Helper()
 	var n int

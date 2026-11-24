@@ -614,3 +614,78 @@ func TestAutoMergeEngine_ConcurrentEvents(t *testing.T) {
 		t.Fatalf("expected PR to be merged after concurrent notifications")
 	}
 }
+
+func TestAutoMergeEngine_LinearHistoryRuleset(t *testing.T) {
+	db, git, repo, u := setupAutoMergeTestEnv(t)
+	pr := createTestPRWithGit(t, db, git, repo, u)
+	ctx := context.Background()
+
+	// Configure require_linear_history ruleset on default branch
+	rs := store.Ruleset{
+		RepoID:           repo.ID,
+		Name:             "linear-history",
+		Enforcement:      "active",
+		Kind:             "merge_branch",
+		IncludedRefNames: []string{"~DEFAULT_BRANCH"},
+		Rules: []store.RulesetRule{
+			{
+				RuleType: "require_linear_history",
+			},
+		},
+	}
+	if _, err := db.CreateRuleset(ctx, rs); err != nil {
+		t.Fatalf("CreateRuleset: %v", err)
+	}
+
+	// 1. Enable auto-merge with "merge" method (forbidden by linear history)
+	am := store.PRAutoMerge{
+		PullRequestID:   pr.ID,
+		EnabledByUserID: u.ID,
+		MergeMethod:     "merge",
+	}
+	if err := db.SetAutoMerge(ctx, am); err != nil {
+		t.Fatalf("SetAutoMerge: %v", err)
+	}
+
+	eng := NewAutoMergeEngine(db, git, engine.New(db))
+
+	// Evaluate: should be blocked by ruleset
+	if err := eng.Evaluate(ctx, AutoMergeEvent{
+		Type:          "check_completed",
+		RepoID:        repo.ID,
+		PullRequestID: pr.ID,
+	}); err != nil {
+		t.Fatalf("Evaluate error: %v", err)
+	}
+
+	checkPR, err := db.GetPullRequestByID(ctx, pr.ID)
+	if err != nil {
+		t.Fatalf("GetPullRequestByID: %v", err)
+	}
+	if checkPR.Merged {
+		t.Fatalf("expected PR to remain unmerged when method is 'merge' under require_linear_history")
+	}
+
+	// 2. Change auto-merge method to "squash" (permitted by linear history)
+	am.MergeMethod = "squash"
+	if err := db.SetAutoMerge(ctx, am); err != nil {
+		t.Fatalf("SetAutoMerge: %v", err)
+	}
+
+	if err := eng.Evaluate(ctx, AutoMergeEvent{
+		Type:          "check_completed",
+		RepoID:        repo.ID,
+		PullRequestID: pr.ID,
+	}); err != nil {
+		t.Fatalf("Evaluate error: %v", err)
+	}
+
+	checkPR, err = db.GetPullRequestByID(ctx, pr.ID)
+	if err != nil {
+		t.Fatalf("GetPullRequestByID: %v", err)
+	}
+	if !checkPR.Merged {
+		t.Fatalf("expected PR to be successfully merged with squash under require_linear_history")
+	}
+}
+

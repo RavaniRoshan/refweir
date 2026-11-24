@@ -150,6 +150,8 @@ func (c *Controller) Checkpoint(ctx context.Context) error {
 		return nil
 	}
 
+	_ = c.db.IncrementalVacuum(ctx, 1000)
+
 	_, err := c.db.SQL().ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
 	if err != nil {
 		return fmt.Errorf("replication: wal checkpoint: %w", err)

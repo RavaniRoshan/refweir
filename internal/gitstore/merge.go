@@ -242,6 +242,10 @@ func (s *Store) CheckMergeable(namespaceSlug, repoName, baseRef, headRef string)
 // Merge performs a 3-way merge or squash merge of headRef into baseRef and advances
 // baseRef to the newly created commit.
 func (s *Store) Merge(namespaceSlug, repoName, baseRef, headRef, mergeMethod string, author object.Signature, message string) (string, error) {
+	repoLock := s.RepoLock(namespaceSlug, repoName)
+	repoLock.Lock()
+	defer repoLock.Unlock()
+
 	repo, err := s.Open(namespaceSlug, repoName)
 	if err != nil {
 		return "", err

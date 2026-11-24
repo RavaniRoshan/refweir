@@ -765,7 +765,33 @@ func (s *Server) mergePullRequest(w http.ResponseWriter, r *http.Request) {
 	if tok, ok := auth.ContextToken(r.Context()); ok {
 		actingUser = tok.Subject()
 	}
-	evalRes := engine.EvaluateMerge(r.Context(), rulesets, repo.DefaultBranch, pr.BaseRef, actingUser, "", approvedCount, checkRuns)
+
+	opts := engine.MergeEvaluationOptions{
+		MergeMethod: method,
+	}
+	for _, rs := range rulesets {
+		if rs.Enforcement != "active" {
+			continue
+		}
+		for _, rl := range rs.Rules {
+			if rl.RuleType == "require_signed_commits" {
+				if commits, err := s.git.ListPRCommits(owner, name, pr.BaseSHA, pr.HeadSHA, 100); err == nil {
+					unsigned := 0
+					for _, c := range commits {
+						if c.Verification.Status != "verified" {
+							unsigned++
+						}
+					}
+					opts.UnsignedCommitsCount = unsigned
+					isSigned := unsigned == 0
+					opts.CommitsSigned = &isSigned
+				}
+				break
+			}
+		}
+	}
+
+	evalRes := engine.EvaluateMergeWithOptions(r.Context(), rulesets, repo.DefaultBranch, pr.BaseRef, actingUser, "", approvedCount, checkRuns, opts)
 	if !evalRes.Allowed {
 		msg := "blocked by ruleset"
 		if len(evalRes.Blockers) > 0 {
@@ -886,7 +912,31 @@ func (s *Server) getPullRequestMergeability(w http.ResponseWriter, r *http.Reque
 	if tok, ok := auth.ContextToken(r.Context()); ok {
 		actingUser = tok.Subject()
 	}
-	evalRes := engine.EvaluateMerge(r.Context(), rulesets, repo.DefaultBranch, pr.BaseRef, actingUser, "", approvedCount, checkRuns)
+
+	opts := engine.MergeEvaluationOptions{}
+	for _, rs := range rulesets {
+		if rs.Enforcement != "active" {
+			continue
+		}
+		for _, rl := range rs.Rules {
+			if rl.RuleType == "require_signed_commits" {
+				if commits, err := s.git.ListPRCommits(owner, name, pr.BaseSHA, pr.HeadSHA, 100); err == nil {
+					unsigned := 0
+					for _, c := range commits {
+						if c.Verification.Status != "verified" {
+							unsigned++
+						}
+					}
+					opts.UnsignedCommitsCount = unsigned
+					isSigned := unsigned == 0
+					opts.CommitsSigned = &isSigned
+				}
+				break
+			}
+		}
+	}
+
+	evalRes := engine.EvaluateMergeWithOptions(r.Context(), rulesets, repo.DefaultBranch, pr.BaseRef, actingUser, "", approvedCount, checkRuns, opts)
 	if !evalRes.Allowed {
 		verdict = "blocked"
 		for _, b := range evalRes.Blockers {

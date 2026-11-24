@@ -44,6 +44,13 @@ type EvaluationResult struct {
 	Blockers []MergeBlocker
 }
 
+// MergeEvaluationOptions contains optional contextual arguments for evaluating rulesets on a PR or merge attempt.
+type MergeEvaluationOptions struct {
+	MergeMethod          string // "merge", "squash", "rebase"
+	CommitsSigned        *bool  // if set, true means all commits have verified signatures
+	UnsignedCommitsCount int    // count of unsigned or invalid commits
+}
+
 // EvaluateMerge evaluates merge protection rulesets for a target pull request.
 func EvaluateMerge(
 	ctx context.Context,
@@ -54,6 +61,22 @@ func EvaluateMerge(
 	actingAppID string,
 	approvedReviewCount int,
 	checkRuns []store.CheckRun,
+) EvaluationResult {
+	return EvaluateMergeWithOptions(ctx, rulesets, defaultBranch, baseRef, actingUserID, actingAppID, approvedReviewCount, checkRuns, MergeEvaluationOptions{})
+}
+
+// EvaluateMergeWithOptions evaluates merge protection rulesets for a target pull request,
+// including linear history and commit signature constraints.
+func EvaluateMergeWithOptions(
+	ctx context.Context,
+	rulesets []store.Ruleset,
+	defaultBranch string,
+	baseRef string,
+	actingUserID string,
+	actingAppID string,
+	approvedReviewCount int,
+	checkRuns []store.CheckRun,
+	opts MergeEvaluationOptions,
 ) EvaluationResult {
 	var blockers []MergeBlocker
 
@@ -93,6 +116,22 @@ func EvaluateMerge(
 							RequiredCount: reqApprovals,
 							ApprovedCount: approvedReviewCount,
 						},
+					})
+				}
+
+			case "require_linear_history":
+				if opts.MergeMethod != "" && opts.MergeMethod != "squash" && opts.MergeMethod != "rebase" {
+					blockers = append(blockers, MergeBlocker{
+						Kind:    "require_linear_history",
+						Message: "Linear history is required. Merge commits are not allowed; use squash or rebase merge.",
+					})
+				}
+
+			case "require_signed_commits":
+				if opts.UnsignedCommitsCount > 0 || (opts.CommitsSigned != nil && !*opts.CommitsSigned) {
+					blockers = append(blockers, MergeBlocker{
+						Kind:    "require_signed_commits",
+						Message: fmt.Sprintf("Commits must be cryptographically signed (%d unsigned or invalid commits detected).", max(1, opts.UnsignedCommitsCount)),
 					})
 				}
 
@@ -318,4 +357,19 @@ func (e *Engine) EvaluateMerge(
 	checkRuns []store.CheckRun,
 ) EvaluationResult {
 	return EvaluateMerge(ctx, rulesets, defaultBranch, baseRef, actingUserID, actingAppID, approvedReviewCount, checkRuns)
+}
+
+// EvaluateMergeWithOptions evaluates merge protection rulesets for a target pull request with options.
+func (e *Engine) EvaluateMergeWithOptions(
+	ctx context.Context,
+	rulesets []store.Ruleset,
+	defaultBranch string,
+	baseRef string,
+	actingUserID string,
+	actingAppID string,
+	approvedReviewCount int,
+	checkRuns []store.CheckRun,
+	opts MergeEvaluationOptions,
+) EvaluationResult {
+	return EvaluateMergeWithOptions(ctx, rulesets, defaultBranch, baseRef, actingUserID, actingAppID, approvedReviewCount, checkRuns, opts)
 }

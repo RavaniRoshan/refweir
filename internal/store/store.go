@@ -1,6 +1,6 @@
 // Package store is refweir.dev's metadata store: a pure-Go SQLite database
 // (modernc.org/sqlite, no cgo) holding namespaces, repos, grants, pull
-// requests, checks, rulesets, apps, and every other Origin entity that is not
+// requests, checks, rulesets, apps, and every other Refweir entity that is not
 // itself a git object. Git object data lives in internal/gitstore.
 package store
 
@@ -25,7 +25,7 @@ type DB struct {
 // pragmas, and runs migrations. Use ":memory:" for an ephemeral database.
 func Open(path string) (*DB, error) {
 	// modernc's driver expects a file: DSN with pragmas for durability, performance in WAL mode, and connection-scoped foreign keys.
-	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-16000)&_pragma=foreign_keys(1)&_txlock=immediate"
+	dsn := "file:" + path + "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=cache_size(-16000)&_pragma=foreign_keys(1)&_pragma=auto_vacuum(INCREMENTAL)&_txlock=immediate"
 	if path == ":memory:" {
 		dsn = "file::memory:?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_txlock=immediate"
 	}
@@ -46,9 +46,9 @@ func Open(path string) (*DB, error) {
 		sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	}
 
-	if _, err := sqlDB.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+	if _, err := sqlDB.Exec(`PRAGMA foreign_keys = ON; PRAGMA auto_vacuum = INCREMENTAL;`); err != nil {
 		_ = sqlDB.Close()
-		return nil, fmt.Errorf("store: enable foreign_keys: %w", err)
+		return nil, fmt.Errorf("store: apply pragmas: %w", err)
 	}
 
 	db := &DB{sql: sqlDB}
@@ -73,6 +73,20 @@ func (db *DB) Ping(ctx context.Context) error {
 		return errors.New("store: database not initialized")
 	}
 	return db.sql.PingContext(ctx)
+}
+
+// IncrementalVacuum reclaims unused freelist pages back to the operating system.
+// If maxPages > 0, it frees up to maxPages pages; if <= 0, it frees all freelist pages.
+func (db *DB) IncrementalVacuum(ctx context.Context, maxPages int) error {
+	if db == nil || db.sql == nil {
+		return errors.New("store: database not initialized")
+	}
+	query := "PRAGMA incremental_vacuum"
+	if maxPages > 0 {
+		query = fmt.Sprintf("PRAGMA incremental_vacuum(%d)", maxPages)
+	}
+	_, err := db.sql.ExecContext(ctx, query)
+	return err
 }
 
 // SQL exposes the raw database for query code in later phases. Prefer typed
