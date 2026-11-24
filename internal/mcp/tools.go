@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -1886,6 +1887,220 @@ func BuiltinTools() []ToolDef {
 					},
 				})
 				return newComment, nil
+			},
+		},
+		// 51. close_issue
+		{
+			Name:        "close_issue",
+			Description: "Close an existing repository issue with optional resolution explanation comment",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":   map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":    map[string]any{"type": "string", "description": "Repository name"},
+				"issueNumber": map[string]any{"type": "integer", "description": "Issue number (e.g. 1)"},
+				"comment":     map[string]any{"type": "string", "description": "Optional closing resolution comment"},
+			}, []string{"ownerSlug", "repoName", "issueNumber"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				num := getInt(args, "issueNumber")
+				comment := getString(args, "comment")
+				if num <= 0 {
+					return nil, fmt.Errorf("valid issueNumber is required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				issue, err := s.store.GetIssue(ctx, repo.ID, num)
+				if err != nil {
+					return nil, err
+				}
+				if err := s.store.UpdateIssueState(ctx, repo.ID, num, "closed"); err != nil {
+					return nil, fmt.Errorf("close issue: %w", err)
+				}
+				issue.State = "closed"
+				if comment != "" {
+					newComment := &store.IssueComment{
+						RepoID:  repo.ID,
+						IssueID: issue.ID,
+						Body:    comment,
+					}
+					_ = s.store.CreateIssueComment(ctx, newComment)
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "issue.closed",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Closed issue #%d via MCP", issue.Number),
+					Metadata: map[string]interface{}{
+						"issueNumber": issue.Number,
+						"issueId":     issue.ID,
+					},
+				})
+				return issue, nil
+			},
+		},
+		// 52. reopen_issue
+		{
+			Name:        "reopen_issue",
+			Description: "Reopen a previously closed repository issue with optional comment",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":   map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":    map[string]any{"type": "string", "description": "Repository name"},
+				"issueNumber": map[string]any{"type": "integer", "description": "Issue number (e.g. 1)"},
+				"comment":     map[string]any{"type": "string", "description": "Optional reopen explanation comment"},
+			}, []string{"ownerSlug", "repoName", "issueNumber"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				num := getInt(args, "issueNumber")
+				comment := getString(args, "comment")
+				if num <= 0 {
+					return nil, fmt.Errorf("valid issueNumber is required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				issue, err := s.store.GetIssue(ctx, repo.ID, num)
+				if err != nil {
+					return nil, err
+				}
+				if err := s.store.UpdateIssueState(ctx, repo.ID, num, "open"); err != nil {
+					return nil, fmt.Errorf("reopen issue: %w", err)
+				}
+				issue.State = "open"
+				if comment != "" {
+					newComment := &store.IssueComment{
+						RepoID:  repo.ID,
+						IssueID: issue.ID,
+						Body:    comment,
+					}
+					_ = s.store.CreateIssueComment(ctx, newComment)
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "issue.reopened",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Reopened issue #%d via MCP", issue.Number),
+					Metadata: map[string]interface{}{
+						"issueNumber": issue.Number,
+						"issueId":     issue.ID,
+					},
+				})
+				return issue, nil
+			},
+		},
+		// 53. list_webhooks
+		{
+			Name:        "list_webhooks",
+			Description: "List outbound webhooks configured on a repository",
+			ReadOnly:    true,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug": map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":  map[string]any{"type": "string", "description": "Repository name"},
+			}, []string{"ownerSlug", "repoName"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				hooks, err := s.store.ListRepoWebhooks(ctx, repo.ID)
+				if err != nil {
+					return nil, err
+				}
+				if hooks == nil {
+					hooks = []*store.RepoWebhook{}
+				}
+				return hooks, nil
+			},
+		},
+		// 54. create_webhook
+		{
+			Name:        "create_webhook",
+			Description: "Register a new outbound HTTP webhook subscription for repository events",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":   map[string]any{"type": "string", "description": "Owner namespace"},
+				"repoName":    map[string]any{"type": "string", "description": "Repository name"},
+				"url":         map[string]any{"type": "string", "description": "Outbound payload delivery URL"},
+				"secret":      map[string]any{"type": "string", "description": "Optional HMAC-SHA256 signature secret"},
+				"events":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "List of events to subscribe to (e.g. ['push', 'pull_request'] or ['*'])"},
+				"insecureSsl": map[string]any{"type": "boolean", "description": "Skip TLS certificate verification (default false)"},
+			}, []string{"ownerSlug", "repoName", "url"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				url := getString(args, "url")
+				secret := getString(args, "secret")
+				insecureSSL := getBool(args, "insecureSsl")
+				if url == "" {
+					return nil, fmt.Errorf("url is required")
+				}
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, err
+				}
+				evList := getStringSlice(args, "events")
+				if len(evList) == 0 {
+					evList = []string{"push"}
+				}
+				eventsJSON, _ := json.Marshal(evList)
+				created, err := s.store.CreateRepoWebhook(ctx, repo.ID, url, secret, "json", string(eventsJSON), true, insecureSSL)
+				if err != nil {
+					return nil, err
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "repo.webhook_added",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Registered webhook for %s via MCP", created.URL),
+					Metadata: map[string]interface{}{
+						"webhookId": created.ID,
+						"url":       created.URL,
+					},
+				})
+				return created, nil
+			},
+		},
+		// 55. delete_webhook
+		{
+			Name:        "delete_webhook",
+			Description: "Delete an outbound webhook subscription from a repository",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"webhookId": map[string]any{"type": "string", "description": "Webhook ID to delete"},
+			}, []string{"webhookId"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				webhookID := getString(args, "webhookId")
+				if webhookID == "" {
+					return nil, fmt.Errorf("webhookId is required")
+				}
+				if err := s.store.DeleteRepoWebhook(ctx, webhookID); err != nil {
+					return nil, fmt.Errorf("delete webhook: %w", err)
+				}
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "repo.webhook_deleted",
+					Resource:  webhookID,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Deleted webhook %s via MCP", webhookID),
+					Metadata: map[string]interface{}{
+						"webhookId": webhookID,
+					},
+				})
+				return map[string]any{"ok": true, "deleted": webhookID}, nil
 			},
 		},
 	}

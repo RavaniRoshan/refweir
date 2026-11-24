@@ -705,4 +705,175 @@ func TestMCP_IssueTools(t *testing.T) {
 	if resp.Result["isError"] == true {
 		t.Fatalf("list_issues error: %+v", resp.Result)
 	}
+
+	// 6. close_issue via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      5,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "close_issue",
+			"arguments": map[string]any{
+				"ownerSlug":   "acme",
+				"repoName":    "tracker",
+				"issueNumber": 1,
+				"comment":     "Resolved by PR #42 in commit abc1234",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("close_issue status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("close_issue error: %+v", resp.Result)
+	}
+
+	// 7. reopen_issue via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      6,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "reopen_issue",
+			"arguments": map[string]any{
+				"ownerSlug":   "acme",
+				"repoName":    "tracker",
+				"issueNumber": 1,
+				"comment":     "Reopening due to edge case regression on ARM64",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("reopen_issue status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("reopen_issue error: %+v", resp.Result)
+	}
+}
+
+func TestMCP_WebhookTools(t *testing.T) {
+	srv, db, _ := setupTestMCP(t)
+	h := srv.Handler(false)
+	ctx := context.Background()
+
+	nsID := idgen.NewNS()
+	_ = db.CreateNamespace(ctx, store.Namespace{
+		ID:   nsID,
+		Slug: "acme",
+		Type: "organization",
+		Name: "Acme Corp",
+	})
+	repoID := idgen.NewRepo()
+	repo := store.Repo{
+		ID:            repoID,
+		NamespaceID:   nsID,
+		Name:          "api-gateway",
+		FullName:      "acme/api-gateway",
+		DefaultBranch: "main",
+	}
+	if err := db.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("create repo: %v", err)
+	}
+
+	// 1. create_webhook via MCP
+	rec := callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "create_webhook",
+			"arguments": map[string]any{
+				"ownerSlug":   "acme",
+				"repoName":    "api-gateway",
+				"url":         "https://ci.example.com/hooks/refweir",
+				"secret":      "supersecretkey123",
+				"events":      []any{"push", "pull_request"},
+				"insecureSsl": false,
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("create_webhook status: %d", rec.Code)
+	}
+	var resp struct {
+		Result map[string]any `json:"result"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("create_webhook error: %+v", resp.Result)
+	}
+	content := resp.Result["content"].([]any)
+	c0 := content[0].(map[string]any)
+	var createdHook store.RepoWebhook
+	if err := json.Unmarshal([]byte(c0["text"].(string)), &createdHook); err != nil {
+		t.Fatalf("unmarshal created hook: %v", err)
+	}
+	hookID := createdHook.ID
+	if hookID == "" {
+		t.Fatalf("expected non-empty webhook id: %+v", createdHook)
+	}
+
+	// 2. list_webhooks via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "list_webhooks",
+			"arguments": map[string]any{
+				"ownerSlug": "acme",
+				"repoName":  "api-gateway",
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("list_webhooks status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("list_webhooks error: %+v", resp.Result)
+	}
+	content = resp.Result["content"].([]any)
+	c0 = content[0].(map[string]any)
+	var hooksList []*store.RepoWebhook
+	if err := json.Unmarshal([]byte(c0["text"].(string)), &hooksList); err != nil {
+		t.Fatalf("unmarshal hooks list: %v", err)
+	}
+	if len(hooksList) != 1 {
+		t.Fatalf("expected 1 webhook in list, got %d", len(hooksList))
+	}
+	if hooksList[0].URL != "https://ci.example.com/hooks/refweir" {
+		t.Errorf("expected url https://ci.example.com/hooks/refweir, got %v", hooksList[0].URL)
+	}
+
+	// 3. delete_webhook via MCP
+	rec = callRPC(h, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      3,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "delete_webhook",
+			"arguments": map[string]any{
+				"webhookId": hookID,
+			},
+		},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("delete_webhook status: %d", rec.Code)
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Result["isError"] == true {
+		t.Fatalf("delete_webhook error: %+v", resp.Result)
+	}
+
+	// Verify webhook deleted
+	hooks, err := db.ListRepoWebhooks(ctx, repo.ID)
+	if err != nil {
+		t.Fatalf("ListRepoWebhooks: %v", err)
+	}
+	if len(hooks) != 0 {
+		t.Fatalf("expected 0 webhooks after delete, got %d", len(hooks))
+	}
 }

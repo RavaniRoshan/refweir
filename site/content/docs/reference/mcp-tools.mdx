@@ -1,9 +1,9 @@
 ---
 title: Model Context Protocol (MCP) tool catalog
-description: Technical reference for the 46 MCP tools exposed by refweir.dev for AI coding agents.
+description: Technical reference for the 55 MCP tools exposed by refweir.dev for AI coding agents.
 ---
 
-refweir.dev natively exposes the Model Context Protocol (MCP) over [JSON-RPC 2.0](https://modelcontextprotocol.io) at `/mcp` (read-write, 46 tools) and `/mcp/readonly` (sandboxed read-only, 22 tools). Run the standard `tools/list` method against `/mcp` for the authoritative tool set in your build.
+refweir.dev natively exposes the Model Context Protocol (MCP) over [JSON-RPC 2.0](https://modelcontextprotocol.io) at `/mcp` (read-write, 55 tools) and `/mcp/readonly` (sandboxed read-only, 25 tools). Run the standard `tools/list` method against `/mcp` for the authoritative tool set in your build.
 
 Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 
@@ -60,7 +60,30 @@ Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 
 ---
 
-## 4. Checks, Rulesets & Metadata
+## 4. Issues Management
+
+| Tool Name | Scope | Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| `list_issues` | Read | `ownerSlug`, `repoName`, `state` (opt: `open`\|`closed`\|`all`) | List issues in a repository filtered by state. |
+| `get_issue` | Read | `ownerSlug`, `repoName`, `issueNumber` (int) | Get full details of an issue by number, including thread discussion comments. |
+| `create_issue` | Write | `ownerSlug`, `repoName`, `title`, `body` (opt) | Create a new issue in a repository. |
+| `create_issue_comment` | Write | `ownerSlug`, `repoName`, `issueNumber`, `body` | Post a comment on an existing repository issue. |
+| `close_issue` | Write | `ownerSlug`, `repoName`, `issueNumber`, `comment` (opt) | Close an issue with optional resolution explanation comment. |
+| `reopen_issue` | Write | `ownerSlug`, `repoName`, `issueNumber`, `comment` (opt) | Reopen a previously closed issue with optional comment. |
+
+---
+
+## 5. Webhook Management
+
+| Tool Name | Scope | Parameters | Description |
+| :--- | :--- | :--- | :--- |
+| `list_webhooks` | Read | `ownerSlug`, `repoName` | List outbound webhooks configured on a repository. |
+| `create_webhook` | Write | `ownerSlug`, `repoName`, `url`, `secret` (opt), `events` (opt), `insecureSsl` (opt) | Register a new outbound HTTP webhook subscription for repository events. |
+| `delete_webhook` | Write | `webhookId` (string) | Delete an outbound webhook subscription from a repository. |
+
+---
+
+## 6. Checks, Rulesets & Metadata
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
@@ -73,7 +96,7 @@ Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 
 ---
 
-## 5. Capability Leases
+## 7. Capability Leases
 
 | Tool Name | Scope | Parameters | Description |
 | :--- | :--- | :--- | :--- |
@@ -83,7 +106,7 @@ Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 
 ---
 
-## 6. Canonical Ergonomic Aliases
+## 8. Canonical Ergonomic Aliases
 
 To accommodate varied agent prompting conventions, refweir.dev registers 7 canonical alias tool pairs:
 
@@ -102,8 +125,8 @@ To accommodate varied agent prompting conventions, refweir.dev registers 7 canon
 ## Read-Only Sandbox Policy
 
 When connecting to `http://<host>:<port>/mcp/readonly`:
-- All **22 Read** tools operate normally and are listed by `tools/list`.
-- All **24 Write** tools are filtered out of discovery. Any direct invocation of a write tool immediately returns `isError: true`:
+- All **25 Read** tools operate normally and are listed by `tools/list`.
+- All **30 Write** tools are filtered out of discovery. Any direct invocation of a write tool immediately returns `isError: true`:
   ```json
   {
     "jsonrpc": "2.0",
