@@ -5,6 +5,12 @@
 </p>
 
 <p align="center">
+  <a href="assets/demo.mp4">
+    <img src="assets/demo.gif" alt="Refweir Walkthrough Demo" width="100%" />
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/RavaniRoshan/refweir/actions/workflows/ci-dev.yml"><img src="https://img.shields.io/github/actions/workflow/status/RavaniRoshan/refweir/ci-dev.yml?branch=main&style=flat-square&label=CI&color=10B981" alt="CI Status"></a>
   <a href="https://refweir.dev/docs/"><img src="https://img.shields.io/badge/Docs-refweir.dev%2Fdocs-2563EB?style=flat-square" alt="Documentation"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/github/v/release/RavaniRoshan/refweir?include_prereleases&style=flat-square&label=Release&color=0F172A" alt="Version"></a>
