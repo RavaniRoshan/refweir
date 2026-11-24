@@ -546,30 +546,165 @@ paths:
   /api/v1/agent/leases:
     post:
       summary: Issue cryptographic capability lease
-      description: Issues HMAC-SHA256 lease token with ref-prefix isolation.
+      description: Issues HMAC-SHA256 capability lease token with ref-prefix isolation.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [agentId, repository, allowedRefPrefix]
+              required: [agentId, repoId]
               properties:
                 agentId:
                   type: string
-                repository:
+                repoId:
                   type: string
-                allowedRefPrefix:
-                  type: string
+                allowedRefPrefixes:
+                  type: array
+                  items:
+                    type: string
+                disallowedRefPrefixes:
+                  type: array
+                  items:
+                    type: string
                 ttlSeconds:
                   type: integer
       responses:
-        '201':
-          description: Lease issued
+        '200':
+          description: Lease issued successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentLease'
+
+  /api/v1/agent/leases/{id}/revoke:
+    post:
+      summary: Revoke active capability lease
+      description: Revokes an active capability lease by ID with reason and durable audit record.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Lease revoked successfully
+
+  /api/v1/admin/metrics/history:
+    get:
+      summary: Historical telemetry metrics samples
+      description: Returns in-memory ring buffer of historical metric samples for cluster health charts.
+      responses:
+        '200':
+          description: Historical telemetry samples
+
+  /api/v1/repos/{owner}/{name}/contents:
+    post:
+      summary: Direct file commit
+      description: Commits a file change directly to a repository branch with secret scanning and ruleset push protection.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, content]
+              properties:
+                branch:
+                  type: string
+                path:
+                  type: string
+                content:
+                  type: string
+                message:
+                  type: string
+                author:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: Commit created successfully
+        '422':
+          description: Sensitive credentials detected or invalid payload
+        '403':
+          description: Protected branch direct commit prohibited
+
+  /api/v1/repos/{owner}/{name}/hooks:
+    get:
+      summary: List repository webhooks
+      description: Lists all configured outbound webhooks for a repository.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of configured webhooks
+    post:
+      summary: Create repository webhook
+      description: Registers an outbound webhook with SSRF link-local and loopback defense and HMAC-SHA256 signature support.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                secret:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+                active:
+                  type: boolean
+      responses:
+        '201':
+          description: Webhook created successfully
+        '400':
+          description: SSRF validation blocked target URL or invalid parameters
 
 components:
   schemas:
@@ -759,15 +894,15 @@ components:
     AgentLease:
       type: object
       properties:
-        tokenId:
+        id:
           type: string
         token:
           type: string
         agentId:
           type: string
-        repository:
+        repoId:
           type: string
-        allowedRefPrefix:
+        issuedAt:
           type: string
         expiresAt:
           type: string
