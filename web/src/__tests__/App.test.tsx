@@ -218,6 +218,27 @@ describe('App End-to-End Navigation', () => {
     }
   })
 
+  it('shows onboarding checklist exactly once on fresh localStorage, and skip persists', async () => {
+    localStorage.clear()
+    const { unmount } = render(<App />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: /refweir quickstart checklist/i })).toBeInTheDocument()
+    })
+    expect(screen.getByText('Create Personal Access Token')).toBeInTheDocument()
+
+    const skipBtn = screen.getByRole('button', { name: /skip/i })
+    fireEvent.click(skipBtn)
+
+    expect(localStorage.getItem('refweir_onboarding_tour_completed')).toBe('true')
+    unmount()
+
+    render(<App />)
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: /refweir quickstart checklist/i })).not.toBeInTheDocument()
+    })
+  })
+
   it('renders ViewFallback with accessible status role, polite live region, and CLS min-height', () => {
     const { container } = render(<ViewFallback />)
     const fallback = container.querySelector('[role="status"]')

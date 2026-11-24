@@ -1,12 +1,10 @@
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import {
-  Server,
-  GitBranch,
+  KeyRound,
   Bot,
-  ShieldCheck,
-  Users,
+  Terminal,
   CheckCircle2,
+  Circle,
   ArrowRight,
   ArrowLeft,
   X,
@@ -24,13 +22,13 @@ export interface ProductTourProps {
   onOpenManual?: () => void
 }
 
-interface TourStep {
+interface ChecklistStep {
   id: string
   title: string
+  shortLabel: string
   subtitle: string
   icon: React.ReactNode
   badge: string
-  color: string
   content: React.ReactNode
 }
 
@@ -39,13 +37,19 @@ export const ProductTour: React.FC<ProductTourProps> = ({
   onClose,
   onOpenManual,
 }) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [copiedText, setCopiedText] = useState<string | null>(null)
+  const [activeStepIndex, setActiveStepIndex] = useState(0)
+  const [completedSteps, setCompletedSteps] = useState<Record<number, boolean>>({})
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
-    setCopiedText(text)
-    setTimeout(() => setCopiedText(null), 2000)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  const handleSkip = () => {
+    localStorage.setItem('refweir_onboarding_tour_completed', 'true')
+    onClose()
   }
 
   const handleFinish = () => {
@@ -53,215 +57,145 @@ export const ProductTour: React.FC<ProductTourProps> = ({
     onClose()
   }
 
-  const steps: TourStep[] = [
+  const toggleStepDone = (index: number) => {
+    setCompletedSteps((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
+  const steps: ChecklistStep[] = [
     {
-      id: 'agent-mcp-bridge',
-      title: 'Autonomous AI Agent Bridge (MCP)',
-      subtitle: 'Native Model Context Protocol gateway exposing 35+ Git primitives to AI coding agents',
-      icon: <Bot className="w-5 h-5" />,
-      badge: 'Agent Gateway',
-      color: 'text-primary',
+      id: 'create-token',
+      title: 'Create Personal Access Token',
+      shortLabel: '1. Create Token',
+      subtitle: 'Generate an API token with repo and agent capability permissions',
+      icon: <KeyRound className="w-5 h-5 text-primary" />,
+      badge: 'Step 1 of 3',
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            refweir.dev is the first Git server built for autonomous AI agents. Any MCP-compatible agent (Claude Code, Cline, Windsurf, Devin) connects to your cluster to review PRs, triage issues, and run checks.
+            Autonomous coding agents and CLI runners authenticate to Refweir using scoped personal access tokens or cryptographic capability leases.
           </p>
 
           <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-foreground">MCP Server Endpoint</span>
-              <Badge variant="outline" className="font-mono text-[10px]">JSON-RPC 2.0</Badge>
+              <span className="font-semibold text-foreground">CLI Command</span>
+              <Badge variant="outline" className="font-mono text-[10px]">refweir-cli</Badge>
             </div>
             <div className="flex items-center justify-between bg-input p-2 rounded border border-border font-mono text-xs text-foreground">
-              <span>http://localhost:8080/mcp</span>
+              <span className="truncate">refweir auth token create --name "agent-token" --scopes "repo,agent"</span>
               <button
-                onClick={() => handleCopy('http://localhost:8080/mcp')}
-                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                onClick={() => handleCopy('refweir auth token create --name "agent-token" --scopes "repo,agent"', 'token-cli')}
+                aria-label="Copy CLI token command"
+                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
               >
-                {copiedText === 'http://localhost:8080/mcp' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey === 'token-cli' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
-              <span className="font-semibold text-foreground">35+ Mounted Tools</span>
-              <p className="text-muted-foreground">Diff inspection, symbolic AST search, branch switching, merge execution.</p>
+          <div className="p-3 rounded-md bg-secondary/20 border border-border space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">cURL API Alternative</span>
+              <span className="text-[10px] text-muted-foreground font-mono">POST /api/v1/auth/tokens</span>
             </div>
-            <div className="p-2 rounded bg-secondary/20 border border-border space-y-0.5">
-              <span className="font-semibold text-foreground">Ephemeral Leases</span>
-              <p className="text-muted-foreground">HMAC-signed short-lived tokens ensuring bounded agent blast radius.</p>
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'git-transports',
-      title: 'Connecting Your Git Clients',
-      subtitle: 'Clone and push code over Smart-HTTP or native SSH with Ed25519 key authentication',
-      icon: <GitBranch className="w-5 h-5" />,
-      badge: 'Git Wire Protocols',
-      color: 'text-primary',
-      content: (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            refweir.dev speaks standard Git protocol v2. You can use your existing Git CLI, IDEs (VS Code, JetBrains), and CI/CD pipelines without any plugins.
-          </p>
-
-          <div className="space-y-2.5">
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-foreground">1. Clone or Push over Smart-HTTP (:8080)</span>
-              <div className="relative flex items-center rounded-md bg-secondary/50 border border-border px-3 py-2 font-mono text-xs text-foreground">
-                <span className="truncate pr-8">git remote add refweir http://localhost:8080/shiva/refweir.dev.git</span>
-                <button
-                  onClick={() => handleCopy('git remote add refweir http://localhost:8080/shiva/refweir.dev.git')}
-                  className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  {copiedText?.includes('http://localhost:8080') ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[11px] font-medium text-foreground">2. Clone or Push over Pure-Go SSH (:2222)</span>
-              <div className="relative flex items-center rounded-md bg-secondary/50 border border-border px-3 py-2 font-mono text-xs text-foreground">
-                <span className="truncate pr-8">git remote add origin ssh://git@localhost:2222/shiva/refweir.dev.git</span>
-                <button
-                  onClick={() => handleCopy('git remote add origin ssh://git@localhost:2222/shiva/refweir.dev.git')}
-                  className="absolute right-2 p-1 text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  {copiedText?.includes('ssh://git@localhost:2222') ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-2.5 rounded-md bg-secondary/20 border border-border text-[11px] text-muted-foreground flex items-center justify-between">
-            <span>Enrolled SSH keys are managed directly under your <strong>User Profile &gt; SSH and GPG keys</strong>.</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'enterprise-rulesets',
-      title: 'Rulesets & Cryptographic Enforcement',
-      subtitle: 'Strict branch protection, Ed25519 commit signing verification, and automated merge queues',
-      icon: <ShieldCheck className="w-5 h-5" />,
-      badge: 'Enterprise Security',
-      color: 'text-primary',
-      content: (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Protect your production mainline branches with cryptographic verification and enterprise-grade policy enforcement directly in SQLite WAL transactions.
-          </p>
-
-          <div className="space-y-2">
-            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground">Cryptographic Commit Signing</span>
-                <p className="text-[11px] text-muted-foreground">
-                  Reject unsigned commits or unverified keys before they ever hit the repository refs.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-md border border-border bg-secondary/20 flex items-start gap-2.5">
-              <GitBranch className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="text-xs font-semibold text-foreground">Linear History & Merge Queues</span>
-                <p className="text-[11px] text-muted-foreground">
-                  Prevent merge skew by running tests against queued branches before atomic fast-forward commits.
-                </p>
-              </div>
+            <div className="flex items-center justify-between bg-input p-2 rounded border border-border font-mono text-[11px] text-foreground">
+              <span className="truncate">curl -X POST http://localhost:8080/api/v1/auth/tokens -H "Authorization: Bearer $REFWEIR_TOKEN" -d '&#123;"name":"agent"&#125;'</span>
+              <button
+                onClick={() => handleCopy('curl -X POST http://localhost:8080/api/v1/auth/tokens -H "Authorization: Bearer $REFWEIR_TOKEN" -d \'{"name":"agent"}\'', 'token-curl')}
+                aria-label="Copy cURL token command"
+                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
+              >
+                {copiedKey === 'token-curl' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
         </div>
       ),
     },
     {
-      id: 'cluster-architecture',
-      title: 'Sovereign Cluster Architecture',
-      subtitle: 'Single-binary Git forge with zero external dependencies and SQLite WAL storage',
-      icon: <Server className="w-5 h-5" />,
-      badge: 'Core Engine',
-      color: 'text-primary',
+      id: 'copy-mcp-config',
+      title: 'Copy MCP Config JSON',
+      shortLabel: '2. Copy MCP Config',
+      subtitle: 'Add Refweir native MCP server to your Claude Code, Cursor, or Cline configuration',
+      icon: <Bot className="w-5 h-5 text-primary" />,
+      badge: 'Step 2 of 3',
       content: (
         <div className="space-y-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            refweir.dev runs as a self-contained daemon (<code className="px-1.5 py-0.5 rounded bg-secondary text-foreground font-mono">refweird</code>) that unifies repository storage, Git wire protocols, and agent orchestration into a single sovereign service.
+            Refweir mounts a native JSON-RPC 2.0 Model Context Protocol server exposing repository primitives, AST symbols, and capability leases directly to your AI agents.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Smart-HTTP</span>
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">:8080</div>
-              <p className="text-[10px] text-muted-foreground">Standard Git push/pull & REST API</p>
+          <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">mcpServers Config (JSON)</span>
+              <Badge variant="outline" className="font-mono text-[10px]">~/.cursor/mcp.json</Badge>
             </div>
-
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Pure-Go SSH</span>
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">:2222</div>
-              <p className="text-[10px] text-muted-foreground">Embedded SSH transport (zero-OpenSSH)</p>
+            <pre className="p-2.5 rounded bg-input border border-border font-mono text-[11px] text-foreground overflow-x-auto">
+{`{
+  "mcpServers": {
+    "refweir": {
+      "url": "http://127.0.0.1:8080/mcp",
+      "headers": {
+        "Authorization": "Bearer <YOUR_TOKEN>"
+      }
+    }
+  }
+}`}
+            </pre>
+            <div className="flex justify-end">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleCopy(`{\n  "mcpServers": {\n    "refweir": {\n      "url": "http://127.0.0.1:8080/mcp",\n      "headers": {\n        "Authorization": "Bearer <YOUR_TOKEN>"\n      }\n    }\n  }\n}`, 'mcp-json')}
+                className="text-xs gap-1.5"
+              >
+                {copiedKey === 'mcp-json' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedKey === 'mcp-json' ? 'Copied MCP Config' : 'Copy MCP Config JSON'}</span>
+              </Button>
             </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'run-agent-loop',
+      title: 'Run Agent Loop on Seeded Demo Repo',
+      shortLabel: '3. Run Agent Loop',
+      subtitle: 'Seed the data room with demo repositories and start the autonomous agent loop',
+      icon: <Terminal className="w-5 h-5 text-primary" />,
+      badge: 'Step 3 of 3',
+      content: (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Seed the demo repositories with passing checks, leases, and an audit trail, then trigger the autonomous loop to execute branch leases and pull requests.
+          </p>
 
-            <div className="p-3 rounded-md bg-secondary/30 border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-foreground uppercase">Storage Engine</span>
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              </div>
-              <div className="font-mono text-xs text-primary font-bold">SQLite WAL</div>
-              <p className="text-[10px] text-muted-foreground">ACID metadata storage</p>
+          <div className="p-3 rounded-md bg-secondary/40 border border-border space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Execute Loop on Seeded Demo</span>
+              <Badge variant="outline" className="font-mono text-[10px]">bash</Badge>
+            </div>
+            <div className="flex items-center justify-between bg-input p-2 rounded border border-border font-mono text-xs text-foreground">
+              <span className="truncate">./scripts/seed.sh && refweir agent loop --repo demo/agent-lab</span>
+              <button
+                onClick={() => handleCopy('./scripts/seed.sh && refweir agent loop --repo demo/agent-lab', 'seed-cmd')}
+                aria-label="Copy seed and agent loop command"
+                className="p-1 text-muted-foreground hover:text-foreground cursor-pointer shrink-0 ml-2"
+              >
+                {copiedKey === 'seed-cmd' ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
 
           <div className="p-3 rounded-md bg-secondary/20 border border-border text-xs space-y-1.5">
             <div className="font-semibold text-foreground flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-              <span>How Everything Connects</span>
+              <span>What Happens Next</span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              All Git refs, pull request reviews, and security policies are coordinated directly through the SQLite write-ahead log (<code className="font-mono text-foreground">data/meta.db</code>). Bare Git repositories are stored in <code className="font-mono text-foreground">data/git/</code> with zero CGO dependencies.
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'enterprise-identity',
-      title: 'Enterprise Identity & Governance',
-      subtitle: 'SAML 2.0 / OIDC SSO, SCIM 2.0 automated provisioning, and immutable audit logs',
-      icon: <Users className="w-5 h-5" />,
-      badge: 'Compliance & Scale',
-      color: 'text-primary',
-      content: (
-        <div className="space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Federate your organization with existing corporate identity providers. Automatic user provisioning and deprovisioning via standard SCIM 2.0 endpoints.
-          </p>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2.5 rounded-md bg-secondary/30 border border-border space-y-1">
-              <span className="font-semibold text-foreground">Identity Federation</span>
-              <p className="text-[11px] text-muted-foreground">Okta, Azure AD, Google Workspace via SAML 2.0 and OpenID Connect.</p>
-            </div>
-            <div className="p-2.5 rounded-md bg-secondary/30 border border-border space-y-1">
-              <span className="font-semibold text-foreground">SCIM 2.0 Sync</span>
-              <p className="text-[11px] text-muted-foreground">Mounted at <code className="font-mono text-foreground">/scim/v2/Users</code> for instant lifecycle synchronization.</p>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-md bg-primary/10 border border-primary/20 text-xs space-y-1">
-            <span className="font-semibold text-foreground">You are now ready to build!</span>
-            <p className="text-[11px] text-muted-foreground">
-              Create your first repository, configure your SSH keys, or explore the in-depth system manual anytime.
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              The agent requests an ephemeral capability lease, pushes to <code className="px-1 py-0.5 rounded bg-secondary font-mono text-[10px]">refs/heads/agent/*</code>, opens a pull request, and triggers automated policy and review checks.
             </p>
           </div>
         </div>
@@ -269,161 +203,166 @@ export const ProductTour: React.FC<ProductTourProps> = ({
     },
   ]
 
-  const currentStep = steps[currentStepIndex]
-
   if (!isOpen) return null
 
+  const currentStep = steps[activeStepIndex]
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Refweir Quickstart Checklist"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+    >
+      <div
         className="fixed inset-0 bg-background/80 backdrop-blur-xs"
-        onClick={onClose}
+        onClick={handleSkip}
       />
 
-      {/* Tour Dialog */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: 8 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: 8 }}
-        className="relative w-full max-w-xl rounded-lg border border-border bg-card text-card-foreground shadow-2xl z-10 overflow-hidden"
-      >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-border bg-secondary/30 flex items-start justify-between gap-4">
+      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-lg border border-border bg-card text-card-foreground shadow-2xl z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+            <div className="w-9 h-9 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
               {currentStep.icon}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">{currentStep.title}</h3>
-                <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                <h2 className="text-sm font-semibold text-foreground tracking-tight">
+                  Refweir Quickstart Checklist
+                </h2>
+                <Badge variant="outline" className="text-[10px] font-mono">
                   {currentStep.badge}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">{currentStep.subtitle}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Complete these 3 steps to get your self-hosted forge agent-ready
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleFinish}
-              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-secondary/60 transition-colors cursor-pointer"
-            >
-              Skip tour
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
-              aria-label="Close tour"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+
+          <button
+            onClick={handleSkip}
+            aria-label="Close checklist"
+            className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-5 min-h-[220px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep.id}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.15 }}
-            >
-              {currentStep.content}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Footer Navigation */}
-        <div className="px-5 py-3 border-t border-border bg-secondary/20 flex items-center justify-between">
-          {/* Progress Dots */}
-          <div className="flex items-center gap-1.5">
-            {steps.map((step, idx) => (
+        {/* 3-Step Interactive Tab Bar */}
+        <div className="grid grid-cols-3 border-b border-border bg-secondary/10 shrink-0 text-xs">
+          {steps.map((s, idx) => {
+            const isDone = completedSteps[idx]
+            const isActive = activeStepIndex === idx
+            return (
               <button
-                key={step.id}
-                onClick={() => setCurrentStepIndex(idx)}
+                key={s.id}
+                onClick={() => setActiveStepIndex(idx)}
                 className={cn(
-                  'h-1.5 rounded-full transition-all cursor-pointer',
-                  idx === currentStepIndex
-                    ? 'w-6 bg-primary'
-                    : 'w-1.5 bg-border hover:bg-muted-foreground'
+                  'flex items-center justify-center gap-1.5 py-2.5 px-2 border-b-2 font-medium transition-colors text-center cursor-pointer',
+                  isActive
+                    ? 'border-primary text-foreground font-semibold bg-secondary/20'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/10'
                 )}
-                aria-label={`Go to step ${idx + 1}`}
-              />
-            ))}
-            <span className="text-[11px] text-muted-foreground ml-2">
-              {currentStepIndex + 1} of {steps.length}
-            </span>
+              >
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleStepDone(idx)
+                  }}
+                  className="cursor-pointer"
+                  title="Click to toggle step complete"
+                >
+                  {isDone ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                  ) : (
+                    <Circle className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                </span>
+                <span className="truncate">{s.shortLabel}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Step Content */}
+        <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{currentStep.title}</h3>
+            <p className="text-muted-foreground text-xs mt-0.5">{currentStep.subtitle}</p>
           </div>
 
+          <div key={currentStep.id} className="transition-opacity duration-150">
+            {currentStep.content}
+          </div>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-3.5 border-t border-border bg-secondary/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSkip}
+              className="text-xs"
+            >
+              Skip
+            </Button>
             {onOpenManual && (
               <Button
                 variant="ghost"
-                size="xs"
+                size="sm"
                 onClick={() => {
-                  onClose()
+                  handleFinish()
                   onOpenManual()
                 }}
-                className="gap-1 text-xs text-muted-foreground hover:text-foreground mr-1"
+                className="text-xs text-muted-foreground gap-1.5"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                <span>Open Manual</span>
+                <span>Open Docs</span>
               </Button>
             )}
+          </div>
 
-            {currentStepIndex < steps.length - 1 && (
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={handleFinish}
-                className="text-xs text-muted-foreground hover:text-foreground mr-1"
-              >
-                Skip tour
-              </Button>
-            )}
-
-            {currentStepIndex > 0 && (
+          <div className="flex items-center gap-2">
+            {activeStepIndex > 0 && (
               <Button
                 variant="secondary"
-                size="xs"
-                onClick={() => setCurrentStepIndex((prev) => prev - 1)}
-                className="gap-1 text-xs"
+                size="sm"
+                onClick={() => setActiveStepIndex((prev) => prev - 1)}
+                className="text-xs gap-1"
               >
-                <ArrowLeft className="w-3 h-3" />
+                <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
               </Button>
             )}
 
-            {currentStepIndex < steps.length - 1 ? (
+            {activeStepIndex < steps.length - 1 ? (
               <Button
-                variant="primary"
-                size="xs"
-                onClick={() => setCurrentStepIndex((prev) => prev + 1)}
-                className="gap-1 text-xs"
+                size="sm"
+                onClick={() => {
+                  setCompletedSteps((prev) => ({ ...prev, [activeStepIndex]: true }))
+                  setActiveStepIndex((prev) => prev + 1)
+                }}
+                className="text-xs gap-1"
               >
                 <span>Next</span>
-                <ArrowRight className="w-3 h-3" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             ) : (
               <Button
-                variant="primary"
-                size="xs"
+                size="sm"
                 onClick={handleFinish}
-                className="gap-1 text-xs"
+                className="text-xs bg-primary text-primary-foreground gap-1 font-semibold"
               >
-                <Check className="w-3 h-3" />
                 <span>Get Started</span>
+                <Check className="w-3.5 h-3.5" />
               </Button>
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
