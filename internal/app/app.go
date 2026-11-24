@@ -1575,6 +1575,178 @@ func Open(cfg config.Config) (*App, error) {
 		})
 	})
 
+	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/forks", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+
+		sourceRepo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			http.Error(w, "Source repository not found", http.StatusNotFound)
+			return
+		}
+
+		var req struct {
+			Organization string `json:"organization"`
+			Name         string `json:"name"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+
+		targetOrg := strings.TrimSpace(req.Organization)
+		caller, _ := auth.ResolveUser(r.Context(), db, r)
+		if targetOrg == "" {
+			if caller != nil && caller.Email != "" {
+				userSlug := strings.Split(caller.Email, "@")[0]
+				if err := slug.Validate(userSlug); err == nil {
+					targetOrg = userSlug
+				}
+			}
+			if targetOrg == "" {
+				targetOrg = "refweir"
+			}
+		}
+
+		targetName := strings.TrimSpace(req.Name)
+		if targetName == "" {
+			targetName = sourceRepo.Name
+		}
+
+		if err := slug.Validate(targetOrg); err != nil {
+			http.Error(w, "Invalid target organization slug: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := slug.Validate(targetName); err != nil {
+			http.Error(w, "Invalid target repository name: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if targetOrg == owner && targetName == sourceRepo.Name {
+			http.Error(w, "Cannot fork repository into itself", http.StatusBadRequest)
+			return
+		}
+
+		// Check if destination repository already exists
+		if _, err := db.GetRepo(r.Context(), targetOrg, targetName); err == nil {
+			http.Error(w, fmt.Sprintf("Repository %s/%s already exists", targetOrg, targetName), http.StatusConflict)
+			return
+		}
+
+		// Ensure target namespace exists
+		targetNS, err := db.GetNamespaceBySlug(r.Context(), targetOrg)
+		if err != nil {
+			targetNS = store.Namespace{
+				ID:   idgen.NewNS(),
+				Slug: targetOrg,
+				Name: targetOrg,
+				Type: "user",
+			}
+			if caller != nil && caller.ID != "" {
+				targetNS.OwnerUserID = caller.ID
+			}
+			_ = db.CreateNamespace(r.Context(), targetNS)
+		}
+
+		// Perform git fork
+		if _, err := git.Fork(owner, sourceRepo.Name, targetOrg, targetName); err != nil {
+			http.Error(w, "Failed to fork git repository on disk: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		targetFullName := targetOrg + "/" + targetName
+		cloneHTTP := fmt.Sprintf("%s/%s/%s.git", strings.TrimRight(cfg.PublicURL, "/"), targetOrg, targetName)
+		webURL := fmt.Sprintf("%s/%s/%s", strings.TrimRight(cfg.PublicURL, "/"), targetOrg, targetName)
+
+		forkRecord := store.Repo{
+			ID:                  idgen.NewRepo(),
+			NamespaceID:         targetNS.ID,
+			Name:                targetName,
+			FullName:            targetFullName,
+			Description:         sourceRepo.Description,
+			DefaultBranch:       sourceRepo.DefaultBranch,
+			Visibility:          sourceRepo.Visibility,
+			CloneURL:            cloneHTTP,
+			WebURL:              webURL,
+			AllowMergeCommit:    sourceRepo.AllowMergeCommit,
+			AllowSquashMerge:    sourceRepo.AllowSquashMerge,
+			DeleteBranchOnMerge: sourceRepo.DeleteBranchOnMerge,
+			ParentRepoID:        sourceRepo.ID,
+			IsFork:              true,
+		}
+
+		if err := db.CreateRepo(r.Context(), forkRecord); err != nil {
+			http.Error(w, "Failed to record forked repository: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if caller != nil && caller.ID != "" {
+			_ = db.EnsureNamespaceAdminGrant(r.Context(), targetNS.ID, caller.ID)
+		}
+
+		actor := "api"
+		if caller != nil && caller.Email != "" {
+			actor = caller.Email
+		}
+		_ = audit.Log(audit.Event{
+			Actor:     actor,
+			ActorType: "user",
+			Action:    "repo.fork",
+			Resource:  targetFullName,
+			Severity:  audit.SeverityInfo,
+			Details:   fmt.Sprintf("Forked repository %s/%s to %s", owner, name, targetFullName),
+		})
+
+		DispatchRepoEvent(r.Context(), db, sourceRepo.ID, "fork", map[string]any{
+			"action":     "forkee",
+			"forkee":     forkRecord,
+			"repository": sourceRepo,
+			"sender": map[string]any{
+				"login": actor,
+			},
+		})
+
+		w.WriteHeader(http.StatusAccepted)
+		_ = json.NewEncoder(w).Encode(forkRecord)
+	})
+
+	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/forks", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+
+		sourceRepo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			http.Error(w, "Repository not found", http.StatusNotFound)
+			return
+		}
+
+		limit := 30
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
+				limit = l
+			}
+		}
+
+		forks, err := db.ListForks(r.Context(), sourceRepo.ID, limit)
+		if err != nil {
+			http.Error(w, "Failed to list forks: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if forks == nil {
+			forks = []store.Repo{}
+		}
+
+		_ = json.NewEncoder(w).Encode(forks)
+	})
+
 	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/collaborators", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")

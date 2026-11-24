@@ -465,4 +465,94 @@ func TestCapabilityLease_AuthorizationGating(t *testing.T) {
 	}
 }
 
+func TestApp_ForkEndpoints(t *testing.T) {
+	dataDir := t.TempDir()
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:8080",
+		DataDir:    dataDir,
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+	}
+
+	app, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer app.Close()
+	ctx := context.Background()
+
+	ns := store.Namespace{ID: idgen.NewNS(), Slug: "upstream-org", Type: "team", Name: "upstream-org"}
+	if err := app.Store.CreateNamespace(ctx, ns); err != nil {
+		t.Fatalf("CreateNamespace: %v", err)
+	}
+
+	repo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   ns.ID,
+		Name:          "engine",
+		FullName:      "upstream-org/engine",
+		DefaultBranch: "main",
+		Visibility:    "public",
+		Description:   "core engine",
+	}
+	if err := app.Store.CreateRepo(ctx, repo); err != nil {
+		t.Fatalf("CreateRepo: %v", err)
+	}
+
+	if _, err := app.Git.Init("upstream-org", "engine", "main"); err != nil {
+		t.Fatalf("Git.Init: %v", err)
+	}
+	sig := object.Signature{Name: "Dev", Email: "dev@upstream.org", When: time.Now()}
+	if _, err := app.Git.WriteFiles("upstream-org", "engine", "main", []gitstore.FileChange{
+		{Path: "main.go", Content: "package main\n"},
+	}, sig, "init"); err != nil {
+		t.Fatalf("WriteFiles: %v", err)
+	}
+
+	// 1. POST /api/v1/repos/upstream-org/engine/forks
+	forkBody := `{"organization":"fork-team","name":"custom-engine"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/repos/upstream-org/engine/forks", strings.NewReader(forkBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected 202 Accepted, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var forkedRepo store.Repo
+	if err := json.Unmarshal(rec.Body.Bytes(), &forkedRepo); err != nil {
+		t.Fatalf("decode fork response: %v", err)
+	}
+	if forkedRepo.FullName != "fork-team/custom-engine" || !forkedRepo.IsFork || forkedRepo.ParentRepoID != repo.ID {
+		t.Errorf("unexpected forked repo metadata: %+v", forkedRepo)
+	}
+
+	// 2. GET /api/v1/repos/upstream-org/engine/forks
+	reqGet := httptest.NewRequest(http.MethodGet, "/api/v1/repos/upstream-org/engine/forks", nil)
+	recGet := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recGet, reqGet)
+
+	if recGet.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", recGet.Code, recGet.Body.String())
+	}
+	var forksList []store.Repo
+	if err := json.Unmarshal(recGet.Body.Bytes(), &forksList); err != nil {
+		t.Fatalf("decode forks list: %v", err)
+	}
+	if len(forksList) != 1 || forksList[0].ID != forkedRepo.ID {
+		t.Errorf("expected 1 fork with ID %s, got %v", forkedRepo.ID, forksList)
+	}
+
+	// 3. Prevent forking into itself
+	selfForkBody := `{"organization":"upstream-org","name":"engine"}`
+	reqSelf := httptest.NewRequest(http.MethodPost, "/api/v1/repos/upstream-org/engine/forks", strings.NewReader(selfForkBody))
+	recSelf := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recSelf, reqSelf)
+	if recSelf.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for self-fork, got %d", recSelf.Code)
+	}
+}
+
+
 

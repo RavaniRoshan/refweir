@@ -1172,3 +1172,74 @@ func TestMCP_ScopeEnforcement_ReadOnlyTokenBlockedOnWrite(t *testing.T) {
 	}
 }
 
+func TestMCP_ForkTools(t *testing.T) {
+	srv, db, git := setupTestMCP(t)
+	ctx := context.Background()
+	rwHandler := srv.Handler(false)
+
+	// Seed source repo
+	ns := store.Namespace{ID: idgen.NewNS(), Slug: "upstream-dev", Type: "team", Name: "upstream-dev"}
+	_ = db.CreateNamespace(ctx, ns)
+	repo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   ns.ID,
+		Name:          "tooling",
+		FullName:      "upstream-dev/tooling",
+		DefaultBranch: "main",
+		Visibility:    "public",
+	}
+	_ = db.CreateRepo(ctx, repo)
+	_, _ = git.Init("upstream-dev", "tooling", "main")
+	sig := object.Signature{Name: "Dev", Email: "dev@upstream.org", When: time.Now()}
+	_, _ = git.WriteFiles("upstream-dev", "tooling", "main", []gitstore.FileChange{
+		{Path: "cli.go", Content: "package main\n"},
+	}, sig, "init")
+
+	// 1. Call fork_repository
+	rec := callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "fork_repository",
+			"arguments": map[string]any{
+				"ownerSlug":       "upstream-dev",
+				"repoName":        "tooling",
+				"targetNamespace": "agent-user",
+				"forkName":        "forked-tooling",
+			},
+		},
+	})
+	var resp rpcResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	res, ok := resp.Result.(map[string]any)
+	if !ok || res["isError"] == true {
+		t.Fatalf("expected fork_repository to succeed, got: %+v", resp)
+	}
+
+	// 2. Call list_forks
+	recList := callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "list_forks",
+			"arguments": map[string]any{
+				"ownerSlug": "upstream-dev",
+				"repoName":  "tooling",
+			},
+		},
+	})
+	var respList rpcResponse
+	_ = json.Unmarshal(recList.Body.Bytes(), &respList)
+	resList, ok := respList.Result.(map[string]any)
+	if !ok || resList["isError"] == true {
+		t.Fatalf("expected list_forks to succeed, got: %+v", respList)
+	}
+	content := resList["content"].([]any)[0].(map[string]any)["text"].(string)
+	if !strings.Contains(content, "agent-user/forked-tooling") {
+		t.Fatalf("expected agent-user/forked-tooling in forks list, got: %s", content)
+	}
+}
+
+

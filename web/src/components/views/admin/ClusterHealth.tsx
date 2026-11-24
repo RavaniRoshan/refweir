@@ -447,7 +447,7 @@ export const ClusterHealth: React.FC = () => {
               <Bot className="w-4 h-4 text-primary" />
               <span className="text-xs font-semibold text-foreground">MCP Agent Runtime</span>
             </div>
-            <Badge variant="agent" className="text-[10px] font-mono py-0">55 Tools</Badge>
+            <Badge variant="agent" className="text-[10px] font-mono py-0">57 Tools</Badge>
           </BoxHeader>
           <BoxBody className="p-3.5 space-y-2.5">
             <p className="text-xs text-muted-foreground">

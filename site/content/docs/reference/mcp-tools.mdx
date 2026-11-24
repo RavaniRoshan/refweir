@@ -21,6 +21,8 @@ Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 | `list_branches` | Read | `ownerSlug` (string), `repoName` (string) | List all branches in the repository with target commit SHAs. |
 | `list_commits` | Read | `ownerSlug` (string), `repoName` (string), `ref` (string, opt), `limit` (int, opt) | List commits reachable from a reference. |
 | `compare_commits` | Read | `ownerSlug` (string), `repoName` (string), `base` (string), `head` (string) | Compare differences between two commit SHAs or branch refs. |
+| `fork_repository` | Write | `ownerSlug` (string), `repoName` (string), `targetNamespace` (string, opt), `forkName` (string, opt) | Fork a repository into an organization or user namespace with lineage tracking. |
+| `list_forks` | Read | `ownerSlug` (string), `repoName` (string), `limit` (int, opt) | List repositories forked from a specified parent repository. |
 | `sync_mirror` | Write | `ownerSlug` (string), `repoName` (string) | Trigger an immediate sync of a mirrored repository from upstream. |
 
 ---

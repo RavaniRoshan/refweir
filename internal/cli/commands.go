@@ -205,7 +205,7 @@ func (c *CLI) runAuth(args []string) error {
 // Repo commands
 func (c *CLI) runRepo(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: refweir repo <list|view|get|create|delete|mirror>")
+		return errors.New("usage: refweir repo <list|view|get|create|delete|mirror|fork|forks>")
 	}
 	switch args[0] {
 	case "list":
@@ -297,6 +297,86 @@ func (c *CLI) runRepo(args []string) error {
 
 	case "mirror":
 		return c.runRepoMirror(args[1:])
+
+	case "fork":
+		fs := flag.NewFlagSet("repo fork", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		orgFlag := fs.String("org", "", "Target organization or user namespace")
+		nameFlag := fs.String("name", "", "Target repository name")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		repoArg := ""
+		if fs.NArg() > 0 {
+			repoArg = fs.Arg(0)
+		} else if c.DefaultRepo != "" {
+			repoArg = c.DefaultRepo
+		}
+		if repoArg == "" {
+			return errors.New("repository argument required (owner/name)")
+		}
+		parts := strings.Split(repoArg, "/")
+		if len(parts) != 2 {
+			return errors.New("invalid repository format, expected owner/name")
+		}
+		body := map[string]any{}
+		if *orgFlag != "" {
+			body["organization"] = *orgFlag
+		}
+		if *nameFlag != "" {
+			body["name"] = *nameFlag
+		}
+		data, code, err := c.doRequest(http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/forks", parts[0], parts[1]), body)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		fmt.Fprintf(c.Stdout, "Forked repository: %s\n", string(data))
+		return nil
+
+	case "forks":
+		fs := flag.NewFlagSet("repo forks", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		jsonFlag := fs.Bool("json", false, "Output in JSON format")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		repoArg := ""
+		if fs.NArg() > 0 {
+			repoArg = fs.Arg(0)
+		} else if c.DefaultRepo != "" {
+			repoArg = c.DefaultRepo
+		}
+		if repoArg == "" {
+			return errors.New("repository argument required (owner/name)")
+		}
+		parts := strings.Split(repoArg, "/")
+		if len(parts) != 2 {
+			return errors.New("invalid repository format, expected owner/name")
+		}
+		data, code, err := c.doRequest(http.MethodGet, fmt.Sprintf("/api/v1/repos/%s/%s/forks", parts[0], parts[1]), nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		if *jsonFlag {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+		var forks []map[string]any
+		if err := json.Unmarshal(data, &forks); err == nil && len(forks) > 0 {
+			fmt.Fprintf(c.Stdout, "Forks of %s (%d total):\n", repoArg, len(forks))
+			for _, f := range forks {
+				fmt.Fprintf(c.Stdout, "  - %s (created: %v)\n", f["full_name"], f["created_at"])
+			}
+			return nil
+		}
+		fmt.Fprintf(c.Stdout, "No forks found for %s\n", repoArg)
+		return nil
 
 	default:
 		return fmt.Errorf("unknown repo subcommand %q", args[0])
@@ -1785,7 +1865,7 @@ _refweir_completion() {
 
     case "${words[1]}" in
         repo)
-            COMPREPLY=( $(compgen -W "list view get create mirror" -- "$cur") )
+            COMPREPLY=( $(compgen -W "list view get create delete mirror fork forks" -- "$cur") )
             ;;
         pr)
             COMPREPLY=( $(compgen -W "list view create close" -- "$cur") )

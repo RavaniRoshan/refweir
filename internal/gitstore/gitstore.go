@@ -267,6 +267,43 @@ func (s *Store) Clone(namespaceSlug, repoName, remoteURL string, auth *Auth) (*g
 	return repo, nil
 }
 
+// Fork creates a bare copy of an existing repository into targetNamespace/targetName with 2-phase lock synchronization.
+func (s *Store) Fork(sourceNamespace, sourceName, targetNamespace, targetName string) (*git.Repository, error) {
+	srcKey := sourceNamespace + "/" + sourceName
+	targetKey := targetNamespace + "/" + targetName
+
+	srcLock := s.RepoLock(sourceNamespace, sourceName)
+	targetLock := s.RepoLock(targetNamespace, targetName)
+
+	if srcKey < targetKey {
+		srcLock.RLock()
+		defer srcLock.RUnlock()
+		targetLock.Lock()
+		defer targetLock.Unlock()
+	} else {
+		targetLock.Lock()
+		defer targetLock.Unlock()
+		srcLock.RLock()
+		defer srcLock.RUnlock()
+	}
+
+	srcPath := s.repoPath(sourceNamespace, sourceName)
+	if srcPath == "" {
+		return nil, fmt.Errorf("gitstore: invalid source repository slug %s/%s", sourceNamespace, sourceName)
+	}
+	if _, err := os.Stat(srcPath); err != nil {
+		return nil, fmt.Errorf("gitstore: source repository does not exist: %w", err)
+	}
+
+	repo, err := s.Clone(targetNamespace, targetName, srcPath, nil)
+	if err != nil {
+		return nil, fmt.Errorf("gitstore: fork clone: %w", err)
+	}
+
+	_ = EnsureHooks(s.repoPath(targetNamespace, targetName))
+	return repo, nil
+}
+
 // Push pushes local refs to a remote.
 func (s *Store) Push(namespaceSlug, repoName, remoteURL, refspec string, auth *Auth) error {
 	repo, err := s.Open(namespaceSlug, repoName)

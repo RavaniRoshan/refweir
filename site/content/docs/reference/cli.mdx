@@ -44,6 +44,12 @@ refweir repo list [namespace]
 # View repository details
 refweir repo get <namespace>/<repo-name>
 
+# Fork a repository into an organization or user namespace
+refweir repo fork <owner/repo> [--org <namespace>] [--name <new-name>]
+
+# List all forks of a parent repository
+refweir repo forks <owner/repo> [--json]
+
 # Delete a repository
 refweir repo delete <namespace>/<repo-name>
 ```

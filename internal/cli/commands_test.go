@@ -889,3 +889,55 @@ func TestCLI_HookCommand(t *testing.T) {
 	}
 }
 
+func TestCLI_RepoForkCommands(t *testing.T) {
+	var requestedPath, requestedMethod string
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.Path
+		requestedMethod = r.Method
+
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodPost {
+			w.WriteHeader(http.StatusAccepted)
+			_, _ = w.Write([]byte(`{"id":"repo_123","full_name":"contributor/forked-repo"}`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[{"id":"repo_123","full_name":"contributor/forked-repo","created_at":"2026-11-24T00:00:00Z"}]`))
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "test_tok_123",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. repo fork
+	if err := c.Run([]string{"repo", "fork", "upstream/original", "--org", "contributor", "--name", "forked-repo"}); err != nil {
+		t.Fatalf("repo fork: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/upstream/original/forks" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/upstream/original/forks, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "contributor/forked-repo") {
+		t.Errorf("expected forked repo in stdout: %s", stdout.String())
+	}
+
+	// 2. repo forks
+	stdout.Reset()
+	if err := c.Run([]string{"repo", "forks", "upstream/original"}); err != nil {
+		t.Fatalf("repo forks: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/upstream/original/forks" || requestedMethod != http.MethodGet {
+		t.Errorf("expected GET /api/v1/repos/upstream/original/forks, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "contributor/forked-repo") {
+		t.Errorf("expected forks listing in stdout: %s", stdout.String())
+	}
+}
+
+

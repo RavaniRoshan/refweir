@@ -252,3 +252,62 @@ func TestEnsureHooks_ScriptAndPermissions(t *testing.T) {
 	}
 }
 
+func TestStore_Fork(t *testing.T) {
+	s := newStore(t)
+
+	// 1. Init upstream repo and create a root commit
+	repo, err := s.Init("upstream", "core", "main")
+	if err != nil {
+		t.Fatalf("Init upstream/core: %v", err)
+	}
+	blob := repo.Storer.NewEncodedObject()
+	blob.SetType(plumbing.BlobObject)
+	w, _ := blob.Writer()
+	_, _ = w.Write([]byte("core code"))
+	w.Close()
+	blobHash, _ := repo.Storer.SetEncodedObject(blob)
+	tree := &object.Tree{Entries: []object.TreeEntry{{Name: "main.go", Mode: 0o100644, Hash: blobHash}}}
+	treeObj := repo.Storer.NewEncodedObject()
+	_ = tree.Encode(treeObj)
+	treeHash, _ := repo.Storer.SetEncodedObject(treeObj)
+	sig := object.Signature{Name: "CoreDev", Email: "dev@upstream.org"}
+	commitHash, err := CommitObject(repo, "initial release", sig, sig, treeHash, nil)
+	if err != nil {
+		t.Fatalf("CommitObject: %v", err)
+	}
+
+	// Update HEAD reference
+	ref := plumbing.NewHashReference(plumbing.ReferenceName("refs/heads/main"), commitHash)
+	if err := repo.Storer.SetReference(ref); err != nil {
+		t.Fatalf("SetReference: %v", err)
+	}
+
+	// 2. Fork into contributor/core
+	forkedRepo, err := s.Fork("upstream", "core", "contributor", "core")
+	if err != nil {
+		t.Fatalf("Fork: %v", err)
+	}
+	if !s.Exists("contributor", "core") {
+		t.Fatal("expected contributor/core to exist on disk")
+	}
+
+	// 3. Object retrievability in fork
+	c, err := forkedRepo.CommitObject(commitHash)
+	if err != nil {
+		t.Fatalf("forkedRepo CommitObject: %v", err)
+	}
+	if c.Message != "initial release" {
+		t.Errorf("commit message = %q, want 'initial release'", c.Message)
+	}
+
+	// 4. Verify pre-receive hook in fork
+	hookInfo, err := os.Stat(filepath.Join(s.repoPath("contributor", "core"), "hooks", "pre-receive"))
+	if err != nil {
+		t.Fatalf("fork hooks/pre-receive not created: %v", err)
+	}
+	if hookInfo.Mode()&0o111 == 0 {
+		t.Error("fork hook not executable")
+	}
+}
+
+

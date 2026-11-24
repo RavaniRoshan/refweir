@@ -204,3 +204,46 @@ func mustNS(t *testing.T, db *DB, slug string) string {
 	}
 	return ns.ID
 }
+
+func TestRepo_Forks(t *testing.T) {
+	db := openMem(t)
+	ctx := context.Background()
+	ns1 := seedNamespace(t, db, "upstream-org")
+	ns2 := seedNamespace(t, db, "contributor")
+
+	parentRepo := Repo{
+		ID: idgen.NewRepo(), NamespaceID: ns1.ID, Name: "framework", FullName: "upstream-org/framework",
+		DefaultBranch: "main", Visibility: "public",
+	}
+	if err := db.CreateRepo(ctx, parentRepo); err != nil {
+		t.Fatalf("CreateRepo parent: %v", err)
+	}
+
+	forkRepo := Repo{
+		ID: idgen.NewRepo(), NamespaceID: ns2.ID, Name: "framework", FullName: "contributor/framework",
+		DefaultBranch: "main", Visibility: "public",
+		ParentRepoID: parentRepo.ID, IsFork: true,
+	}
+	if err := db.CreateRepo(ctx, forkRepo); err != nil {
+		t.Fatalf("CreateRepo fork: %v", err)
+	}
+
+	// 1. GetRepo verifies fork lineage
+	gotFork, err := db.GetRepo(ctx, "contributor", "framework")
+	if err != nil {
+		t.Fatalf("GetRepo fork: %v", err)
+	}
+	if !gotFork.IsFork || gotFork.ParentRepoID != parentRepo.ID {
+		t.Errorf("expected fork pointing to %s, got %+v", parentRepo.ID, gotFork)
+	}
+
+	// 2. ListForks on parent repo
+	forks, err := db.ListForks(ctx, parentRepo.ID, 10)
+	if err != nil {
+		t.Fatalf("ListForks: %v", err)
+	}
+	if len(forks) != 1 || forks[0].ID != forkRepo.ID {
+		t.Fatalf("expected 1 fork with ID %s, got %v", forkRepo.ID, forks)
+	}
+}
+

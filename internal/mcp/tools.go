@@ -2128,5 +2128,124 @@ func BuiltinTools() []ToolDef {
 				return map[string]any{"ok": true, "deleted": webhookID}, nil
 			},
 		},
+		// 56. fork_repository
+		{
+			Name:        "fork_repository",
+			Description: "Fork a repository into an organization or user namespace",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug":       map[string]any{"type": "string", "description": "Source repository owner namespace"},
+				"repoName":        map[string]any{"type": "string", "description": "Source repository name"},
+				"targetNamespace": map[string]any{"type": "string", "description": "Target namespace slug to fork into (defaults to caller's namespace or 'refweir')"},
+				"forkName":        map[string]any{"type": "string", "description": "Target repository name (defaults to source repository name)"},
+			}, []string{"ownerSlug", "repoName"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				sourceRepo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, fmt.Errorf("source repository not found: %w", err)
+				}
+
+				targetOrg := getString(args, "targetNamespace")
+				if targetOrg == "" {
+					targetOrg = "refweir"
+				}
+				forkName := getString(args, "forkName")
+				if forkName == "" {
+					forkName = sourceRepo.Name
+				}
+
+				if targetOrg == owner && forkName == sourceRepo.Name {
+					return nil, fmt.Errorf("cannot fork repository into itself")
+				}
+
+				if _, err := s.store.GetRepo(ctx, targetOrg, forkName); err == nil {
+					return nil, fmt.Errorf("repository %s/%s already exists", targetOrg, forkName)
+				}
+
+				targetNS, err := s.store.GetNamespaceBySlug(ctx, targetOrg)
+				if err != nil {
+					targetNS = store.Namespace{
+						ID:   idgen.NewNS(),
+						Slug: targetOrg,
+						Name: targetOrg,
+						Type: "user",
+					}
+					_ = s.store.CreateNamespace(ctx, targetNS)
+				}
+
+				if _, err := s.git.Fork(owner, sourceRepo.Name, targetOrg, forkName); err != nil {
+					return nil, fmt.Errorf("fork git repository: %w", err)
+				}
+
+				targetFullName := targetOrg + "/" + forkName
+				cloneURL := fmt.Sprintf("http://localhost:8080/%s/%s.git", targetOrg, forkName)
+				webURL := fmt.Sprintf("http://localhost:8080/%s/%s", targetOrg, forkName)
+
+				forkRecord := store.Repo{
+					ID:                  idgen.NewRepo(),
+					NamespaceID:         targetNS.ID,
+					Name:                forkName,
+					FullName:            targetFullName,
+					Description:         sourceRepo.Description,
+					DefaultBranch:       sourceRepo.DefaultBranch,
+					Visibility:          sourceRepo.Visibility,
+					CloneURL:            cloneURL,
+					WebURL:              webURL,
+					AllowMergeCommit:    sourceRepo.AllowMergeCommit,
+					AllowSquashMerge:    sourceRepo.AllowSquashMerge,
+					DeleteBranchOnMerge: sourceRepo.DeleteBranchOnMerge,
+					ParentRepoID:        sourceRepo.ID,
+					IsFork:              true,
+				}
+
+				if err := s.store.CreateRepo(ctx, forkRecord); err != nil {
+					return nil, fmt.Errorf("record fork: %w", err)
+				}
+
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "repo.fork",
+					Resource:  targetFullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Agent forked repository %s/%s to %s", owner, name, targetFullName),
+				})
+
+				return forkRecord, nil
+			},
+		},
+		// 57. list_forks
+		{
+			Name:        "list_forks",
+			Description: "List repositories forked from a specified parent repository",
+			ReadOnly:    true,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug": map[string]any{"type": "string", "description": "Repository owner namespace"},
+				"repoName":  map[string]any{"type": "string", "description": "Repository name"},
+				"limit":     map[string]any{"type": "integer", "description": "Maximum number of forks to return (default 30)"},
+			}, []string{"ownerSlug", "repoName"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				sourceRepo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, fmt.Errorf("repository not found: %w", err)
+				}
+				limit := getInt(args, "limit")
+				if limit <= 0 {
+					limit = 30
+				}
+				forks, err := s.store.ListForks(ctx, sourceRepo.ID, limit)
+				if err != nil {
+					return nil, err
+				}
+				if forks == nil {
+					forks = []store.Repo{}
+				}
+				return forks, nil
+			},
+		},
 	}
 }

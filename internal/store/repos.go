@@ -123,6 +123,8 @@ type Repo struct {
 	AllowSquashMerge    bool
 	DeleteBranchOnMerge bool
 	Archived            bool
+	ParentRepoID        string
+	IsFork              bool
 	CreatedAt           string
 	UpdatedAt           string
 	PushedAt            string
@@ -134,12 +136,12 @@ func (db *DB) CreateRepo(ctx context.Context, r Repo) error {
 		(id, namespace_id, name, full_name, default_branch, visibility, clone_url, web_url,
 		 mirror_source, mirror_source_id, mirror_status,
 		 allow_merge_commit, allow_squash_merge, delete_branch_on_merge,
-		 description, archived, created_at, updated_at, pushed_at)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		 description, archived, parent_repo_id, is_fork, created_at, updated_at, pushed_at)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 		r.ID, r.NamespaceID, r.Name, r.FullName, r.DefaultBranch, r.Visibility,
 		nullStr(r.CloneURL), nullStr(r.WebURL), nullStr(r.MirrorSource), nullStr(r.MirrorSourceID), nullStr(r.MirrorStatus),
 		b2i(r.AllowMergeCommit), b2i(r.AllowSquashMerge), b2i(r.DeleteBranchOnMerge),
-		r.Description, b2i(r.Archived),
+		r.Description, b2i(r.Archived), nullStr(r.ParentRepoID), b2i(r.IsFork),
 		now(), now(), nullStr(r.PushedAt))
 	if err != nil {
 		if isConflict(err) {
@@ -156,7 +158,8 @@ func (db *DB) GetRepo(ctx context.Context, ownerSlug, name string) (Repo, error)
 		r.visibility, r.clone_url, r.web_url, r.mirror_source, r.mirror_source_id, r.mirror_status,
 		r.allow_merge_commit, r.allow_squash_merge, r.delete_branch_on_merge,
 		r.created_at, r.updated_at, r.pushed_at,
-		COALESCE(r.description, ''), COALESCE(r.archived, 0)
+		COALESCE(r.description, ''), COALESCE(r.archived, 0),
+		COALESCE(r.parent_repo_id, ''), COALESCE(r.is_fork, 0)
 		FROM repos r JOIN namespaces n ON n.id = r.namespace_id
 		WHERE n.slug = ? AND r.name = ?`, ownerSlug, name)
 	return scanRepo(row)
@@ -168,7 +171,8 @@ func (db *DB) GetRepoByID(ctx context.Context, id string) (Repo, error) {
 		visibility, clone_url, web_url, mirror_source, mirror_source_id, mirror_status,
 		allow_merge_commit, allow_squash_merge, delete_branch_on_merge,
 		created_at, updated_at, pushed_at,
-		COALESCE(description, ''), COALESCE(archived, 0) FROM repos WHERE id = ?`, id)
+		COALESCE(description, ''), COALESCE(archived, 0),
+		COALESCE(parent_repo_id, ''), COALESCE(is_fork, 0) FROM repos WHERE id = ?`, id)
 	return scanRepo(row)
 }
 
@@ -187,7 +191,8 @@ func (db *DB) ListRepos(ctx context.Context, ownerSlug string, pageSize int, pag
 		r.visibility, r.clone_url, r.web_url, r.mirror_source, r.mirror_source_id, r.mirror_status,
 		r.allow_merge_commit, r.allow_squash_merge, r.delete_branch_on_merge,
 		r.created_at, r.updated_at, r.pushed_at,
-		COALESCE(r.description, ''), COALESCE(r.archived, 0)
+		COALESCE(r.description, ''), COALESCE(r.archived, 0),
+		COALESCE(r.parent_repo_id, ''), COALESCE(r.is_fork, 0)
 		FROM repos r JOIN namespaces n ON n.id = r.namespace_id
 		WHERE n.slug = ? AND (? = '' OR r.id > ?)
 		ORDER BY r.id ASC LIMIT ?`, ownerSlug, pageToken, pageToken, pageSize+1)
@@ -224,8 +229,39 @@ func (db *DB) ListAllRepos(ctx context.Context, limit int) ([]Repo, error) {
 		r.visibility, r.clone_url, r.web_url, r.mirror_source, r.mirror_source_id, r.mirror_status,
 		r.allow_merge_commit, r.allow_squash_merge, r.delete_branch_on_merge,
 		r.created_at, r.updated_at, r.pushed_at,
-		COALESCE(r.description, ''), COALESCE(r.archived, 0)
+		COALESCE(r.description, ''), COALESCE(r.archived, 0),
+		COALESCE(r.parent_repo_id, ''), COALESCE(r.is_fork, 0)
 		FROM repos r ORDER BY r.updated_at DESC LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var repos []Repo
+	for rows.Next() {
+		r, err := scanRepoRows(rows)
+		if err != nil {
+			return nil, err
+		}
+		repos = append(repos, r)
+	}
+	return repos, rows.Err()
+}
+
+// ListForks returns repositories forked from a parent repository id.
+func (db *DB) ListForks(ctx context.Context, parentRepoID string, limit int) ([]Repo, error) {
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	rows, err := db.sql.QueryContext(ctx, `SELECT r.id, r.namespace_id, r.name, r.full_name, r.default_branch,
+		r.visibility, r.clone_url, r.web_url, r.mirror_source, r.mirror_source_id, r.mirror_status,
+		r.allow_merge_commit, r.allow_squash_merge, r.delete_branch_on_merge,
+		r.created_at, r.updated_at, r.pushed_at,
+		COALESCE(r.description, ''), COALESCE(r.archived, 0),
+		COALESCE(r.parent_repo_id, ''), COALESCE(r.is_fork, 0)
+		FROM repos r WHERE r.parent_repo_id = ? ORDER BY r.created_at DESC LIMIT ?`, parentRepoID, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -401,12 +437,12 @@ func scanRepoRows(rows *sql.Rows) (Repo, error) {
 
 func scanRepoCols(scan func(dest ...any) error) (Repo, error) {
 	var r Repo
-	var cloneURL, webURL, mSrc, mSrcID, mStatus, pushedAt, desc sql.NullString
-	var amc, asm, dbom, arch int
+	var cloneURL, webURL, mSrc, mSrcID, mStatus, pushedAt, desc, parentRepoID sql.NullString
+	var amc, asm, dbom, arch, isFork int
 	err := scan(&r.ID, &r.NamespaceID, &r.Name, &r.FullName, &r.DefaultBranch,
 		&r.Visibility, &cloneURL, &webURL, &mSrc, &mSrcID, &mStatus,
 		&amc, &asm, &dbom, &r.CreatedAt, &r.UpdatedAt, &pushedAt,
-		&desc, &arch)
+		&desc, &arch, &parentRepoID, &isFork)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Repo{}, ErrNotFound
 	}
@@ -424,6 +460,8 @@ func scanRepoCols(scan func(dest ...any) error) (Repo, error) {
 	r.AllowSquashMerge = asm != 0
 	r.DeleteBranchOnMerge = dbom != 0
 	r.Archived = arch != 0
+	r.ParentRepoID = parentRepoID.String
+	r.IsFork = isFork != 0
 	return r, nil
 }
 

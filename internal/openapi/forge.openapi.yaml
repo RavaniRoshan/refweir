@@ -867,6 +867,63 @@ paths:
         '403':
           description: Administrator privileges required
 
+  /api/v1/repos/{owner}/{name}/forks:
+    get:
+      summary: List repository forks
+      description: Lists all repositories forked from this parent repository.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of forked repositories
+    post:
+      summary: Create repository fork
+      description: Fork a repository into an organization or user namespace with 2-phase lock concurrency safety and lineage tracking.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                organization:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '202':
+          description: Fork created successfully
+        '400':
+          description: Invalid request or cannot fork into self
+        '404':
+          description: Source repository not found
+        '409':
+          description: Destination repository conflict
+
 components:
   schemas:
     SystemInfo:
@@ -900,6 +957,10 @@ components:
           type: string
         description:
           type: string
+        parent_repo_id:
+          type: string
+        is_fork:
+          type: boolean
         stars:
           type: integer
         forks:
@@ -921,6 +982,10 @@ components:
         isPrivate:
           type: boolean
         isArchived:
+          type: boolean
+        parentRepoId:
+          type: string
+        isFork:
           type: boolean
         starsCount:
           type: integer
