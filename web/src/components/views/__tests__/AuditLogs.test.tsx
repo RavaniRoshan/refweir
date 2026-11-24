@@ -93,4 +93,25 @@ describe('AuditLogs Admin View', () => {
     expect(screen.getByText('pr.merged')).toBeInTheDocument()
     expect(screen.queryByText('auth.failed')).not.toBeInTheDocument()
   })
+
+  it('renders Export SIEM (NDJSON) button and triggers download', async () => {
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      blob: async () => new Blob(['{"id":"aud-1"}\n'], { type: 'application/x-ndjson' }),
+    } as any)
+
+    render(<AuditLogs />)
+
+    await waitFor(() => {
+      expect(screen.getByText('ruleset.updated')).toBeInTheDocument()
+    })
+
+    const exportBtn = screen.getByRole('button', { name: /Export SIEM \(NDJSON\)/i })
+    expect(exportBtn).toBeInTheDocument()
+    fireEvent.click(exportBtn)
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/v1/admin/audit-logs/export?format=ndjson')
+    })
+  })
 })

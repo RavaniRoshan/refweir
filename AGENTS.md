@@ -159,7 +159,7 @@ go test ./...
 # Run tests without cache for specific packages
 go test -v -count=1 ./internal/app ./internal/store ./internal/sshserver ./internal/security
 
-# Build the exist companion CLI and refweird daemon
+# Build the refweir companion CLI and refweird daemon
 go build -o bin/refweir ./cmd/refweir
 go build -o bin/refweird ./cmd/refweird
 ```

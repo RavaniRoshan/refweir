@@ -263,6 +263,29 @@ export const AuditLogs: React.FC = () => {
     URL.revokeObjectURL(url)
   }
 
+  const exportFullSIEM = async (format: 'ndjson' | 'csv' = 'ndjson') => {
+    try {
+      const resp = await fetch(`/api/v1/admin/audit-logs/export?format=${format}`)
+      if (!resp.ok) {
+        throw new Error(`Export failed with HTTP ${resp.status}`)
+      }
+      const blob = await resp.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `refweir-audit-siem-${Date.now()}.${format === 'ndjson' ? 'ndjson' : 'csv'}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Failed to export SIEM audit logs', err)
+      if (format === 'csv') {
+        exportToCsv()
+      } else {
+        exportToJson()
+      }
+    }
+  }
+
   const selectedCount = Object.keys(rowSelection).length
 
   return (
@@ -280,12 +303,22 @@ export const AuditLogs: React.FC = () => {
         </div>
 
         {/* Export Buttons */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           {selectedCount > 0 && (
             <span className="text-xs font-mono text-primary font-medium mr-1">
               {selectedCount} selected
             </span>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportFullSIEM('ndjson')}
+            className="text-xs gap-1.5"
+            title="Download full streaming newline-delimited JSON audit logs for SIEM ingestion"
+          >
+            <Download className="w-3.5 h-3.5 text-primary" />
+            <span>Export SIEM (NDJSON)</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"

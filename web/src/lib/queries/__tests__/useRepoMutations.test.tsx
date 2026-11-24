@@ -44,7 +44,7 @@ describe('useRepoMutations', () => {
     } as any);
 
     const { result } = renderHook(
-      () => useCreatePullRequestMutation('shiva', 'exist'),
+      () => useCreatePullRequestMutation('shiva', 'refweir'),
       { wrapper: createWrapper(queryClient) }
     );
 
@@ -56,14 +56,14 @@ describe('useRepoMutations', () => {
       });
     });
 
-    expect(api.createPullRequest).toHaveBeenCalledWith('shiva', 'exist', {
+    expect(api.createPullRequest).toHaveBeenCalledWith('shiva', 'refweir', {
       title: 'New PR',
       head: 'feature',
       base: 'main',
       body: undefined,
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['repos', 'pulls', 'shiva', 'exist'],
+      queryKey: ['repos', 'pulls', 'shiva', 'refweir'],
     });
   });
 
@@ -75,7 +75,7 @@ describe('useRepoMutations', () => {
     } as any);
 
     const { result } = renderHook(
-      () => useMergePullRequestMutation('shiva', 'exist'),
+      () => useMergePullRequestMutation('shiva', 'refweir'),
       { wrapper: createWrapper(queryClient) }
     );
 
@@ -86,12 +86,12 @@ describe('useRepoMutations', () => {
       });
     });
 
-    expect(api.mergePullRequest).toHaveBeenCalledWith('shiva', 'exist', 42, 'squash');
+    expect(api.mergePullRequest).toHaveBeenCalledWith('shiva', 'refweir', 42, 'squash');
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['repos', 'pulls', 'shiva', 'exist'],
+      queryKey: ['repos', 'pulls', 'shiva', 'refweir'],
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['repos', 'commits', 'shiva', 'exist'],
+      queryKey: ['repos', 'commits', 'shiva', 'refweir'],
     });
   });
 
@@ -104,7 +104,7 @@ describe('useRepoMutations', () => {
     } as any);
 
     const { result } = renderHook(
-      () => useCreateIssueMutation('shiva', 'exist'),
+      () => useCreateIssueMutation('shiva', 'refweir'),
       { wrapper: createWrapper(queryClient) }
     );
 
@@ -115,9 +115,9 @@ describe('useRepoMutations', () => {
       });
     });
 
-    expect(api.createIssue).toHaveBeenCalledWith('shiva', 'exist', 'Bug', 'Details');
+    expect(api.createIssue).toHaveBeenCalledWith('shiva', 'refweir', 'Bug', 'Details');
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['repos', 'issues', 'shiva', 'exist'],
+      queryKey: ['repos', 'issues', 'shiva', 'refweir'],
     });
   });
 
@@ -130,7 +130,7 @@ describe('useRepoMutations', () => {
     } as any);
 
     const { result } = renderHook(
-      () => useCreateReleaseMutation('shiva', 'exist'),
+      () => useCreateReleaseMutation('shiva', 'refweir'),
       { wrapper: createWrapper(queryClient) }
     );
 
@@ -141,12 +141,12 @@ describe('useRepoMutations', () => {
       });
     });
 
-    expect(api.createRelease).toHaveBeenCalledWith('shiva', 'exist', {
+    expect(api.createRelease).toHaveBeenCalledWith('shiva', 'refweir', {
       tagName: 'v1.1.0',
       name: 'v1.1.0',
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: ['repos', 'releases', 'shiva', 'exist'],
+      queryKey: ['repos', 'releases', 'shiva', 'refweir'],
     });
   });
 });

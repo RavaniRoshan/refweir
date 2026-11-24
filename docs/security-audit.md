@@ -37,7 +37,7 @@ vulnerabilities.
 - **Usage Analysis & Exception Rationale:**
   - `Refweir` **does not import or invoke** `golang.org/x/crypto/openpgp`.
   - OpenPGP commit signature parsing and verification in Refweir uses `github.com/ProtonMail/go-crypto/openpgp` (`v1.5.2`), which is actively maintained and secure.
-  - No symbol from `golang.org/x/crypto/openpgp` is referenced or reachable from Refweir production binaries (`refweird`, `exist`).
+  - No symbol from `golang.org/x/crypto/openpgp` is referenced or reachable from Refweir production binaries (`refweird`, `refweir`).
   - **Verdict:** Accepted transitive risk with zero reachable attack surface.
 
 ---

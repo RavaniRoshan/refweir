@@ -45,7 +45,7 @@ flowchart LR
 - [x] **Model Context Protocol (MCP) Server:** Built-in JSON-RPC 2.0 server at `/mcp` (34 tools) and `/mcp/readonly` sandbox for AI coding agents.
 - [x] **3-Way Merge & Ruleset Engine:** Native 3-way merge, squash merge, conflict detection, required review gates, and passing check enforcement.
 - [x] **Enterprise Security & Policy:** Branch/tag rulesets, bypass actor hierarchies, inbound IP allowlists (CIDR filtering), and SSH Certificate Authorities.
-- [x] **Companion CLI:** `exist` command-line utility in `cmd/refweir` for managing repos, PRs, apps, and credentials.
+- [x] **Companion CLI:** `refweir` command-line utility in `cmd/refweir` for managing repos, PRs, apps, and credentials.
 - [x] **Hermetic Storage:** Pure-Go SQLite in WAL mode (`modernc.org/sqlite`, zero cgo) paired with `go-git/v6` bare repository storage.
 
 ---
