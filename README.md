@@ -190,7 +190,7 @@ Every pull request is validated by automated CI gates. Capability counts are syn
 # Run all Go unit and integration tests
 go test ./...
 
-# Run frontend Vitest automated test suite (52 test files)
+# Run frontend Vitest automated test suite (53 test files, 222 tests)
 cd web && npm test
 
 # Verify production frontend build
