@@ -26,7 +26,7 @@ This section analyzes the primary attack vectors available to a malicious, misco
 
 ### Threat 1: Escalate Capability Lease to Forge Administrator
 
-- **Attack Vector:** An agent holding a capability lease token attempts to invoke administrative endpoints (e.g. `/api/v1/admin/users`, `/v1/origin/meta`, `/api/v1/sso/*`, deleting organizations or namespaces) or mint long-lived Personal Access Tokens (PATs).
+- **Attack Vector:** An agent holding a capability lease token attempts to invoke administrative endpoints (e.g. `/api/v1/admin/users`, `/api/v1/system/info`, `/api/v1/sso/*`, deleting organizations or namespaces) or mint long-lived Personal Access Tokens (PATs).
 - **Impact:** Complete forge takeover, administrative user impersonation, arbitrary repository manipulation.
 - **Mitigation:**
   - Capability leases are strictly typed (`TypeAgentLease`) and separate from user sessions and PATs (`TypeUser`).

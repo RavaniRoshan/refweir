@@ -4,11 +4,11 @@ Common questions from developers, engineering leaders, and AI agent operators ab
 
 ---
 
-### 1. Is Refweir a clone of Cursor Origin?
+### 1. Is Refweir tied to any specific vendor or IDE?
 
 **No.** Refweir is an independent, vendor-neutral Git forge engineered from first principles in pure Go.
 
-While Cursor Origin is a hosted service tied to Cursor accounts and proprietary infrastructure, Refweir is:
+Unlike proprietary hosted services tied to specific IDE accounts and cloud infrastructure, Refweir is:
 - **100% self-hosted:** Runs on your laptop, home server, air-gapped machine, or private cloud.
 - **Vendor-neutral:** Designed equally for Claude Code, Cursor, Cline, OpenAI Codex, or any agent speaking the Model Context Protocol (MCP).
 - **Hermetic & Open Source:** Zero external proprietary cloud dependencies, zero CGO, and licensed under the permissive Apache-2.0 license.

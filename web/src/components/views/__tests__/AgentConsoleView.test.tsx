@@ -40,7 +40,6 @@ vi.mock('@/lib/api', async () => {
 
 describe('AgentConsoleView Component', () => {
   beforeEach(() => {
-    vi.restoreAllMocks()
     vi.clearAllMocks()
   })
 
@@ -106,7 +105,7 @@ describe('AgentConsoleView Component', () => {
 
   it('subscribes to live SSE agent activity and prepends incoming events', async () => {
     let capturedHandler: ((act: any) => void) | undefined
-    vi.spyOn(events, 'subscribeAgentActivity').mockImplementation((opts: any) => {
+    const spy = vi.spyOn(events, 'subscribeAgentActivity').mockImplementation((opts: any) => {
       capturedHandler = opts.onActivity
       opts.onSnapshot?.([
         {
@@ -141,6 +140,8 @@ describe('AgentConsoleView Component', () => {
       expect(screen.getByText('live-agent')).toBeInTheDocument()
       expect(screen.getByText('Found 12 symbols in AST')).toBeInTheDocument()
     })
+
+    spy.mockRestore()
   })
 
   it('filters operational timeline by keyword search and category buttons', async () => {

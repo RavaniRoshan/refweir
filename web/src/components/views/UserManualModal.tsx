@@ -94,6 +94,7 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close user manual"
             className="p-1 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />

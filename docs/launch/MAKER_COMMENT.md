@@ -10,7 +10,7 @@ Hey Product Hunt community! 👋 I’m Roshan, the creator of **Refweir**.
 
 Git platforms like GitHub and GitLab were built 15+ years ago for human developers clicking through web browsers. Over the past year, my day-to-day workflow shifted dramatically: AI coding agents (Claude Code, Cursor, Cline, Codex) now write significant portions of my codebase.
 
-When Cursor announced Origin, I loved the concept of an agent-first forge—but I wanted two things they couldn't offer:
+When modern agentic development emerged, I loved the concept of an agent-first forge—but I wanted two things existing platforms couldn't offer:
 1. **Neutrality:** I didn't want my Git infrastructure tied to a single proprietary editor or cloud account.
 2. **Self-hosted sovereignty:** I wanted to run the forge on my own hardware, air-gapped or on a cheap VPS, with zero third-party telemetry or vendor lock-in.
 
