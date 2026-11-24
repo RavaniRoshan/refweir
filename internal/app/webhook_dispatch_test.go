@@ -29,6 +29,7 @@ func newWebhookTestDB(t *testing.T) *store.DB {
 }
 
 func TestDispatchRepoWebhook_RealHTTP(t *testing.T) {
+	t.Setenv("REFWEIR_ALLOW_LOOPBACK_WEBHOOKS", "true")
 	db := newWebhookTestDB(t)
 	ctx := context.Background()
 
@@ -118,6 +119,7 @@ func TestDispatchRepoWebhook_RealHTTP(t *testing.T) {
 }
 
 func TestDispatchRepoEvent_AsyncFiltering(t *testing.T) {
+	t.Setenv("REFWEIR_ALLOW_LOOPBACK_WEBHOOKS", "true")
 	db := newWebhookTestDB(t)
 	ctx := context.Background()
 

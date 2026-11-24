@@ -213,3 +213,14 @@ npm run lint
   - `docs(<domain>): description` (e.g. `docs(roadmap): update Phase 5 milestones`)
 - Keep working tree clean. Never leave dangling untracked test files.
 - Always verify both `go test ./...` and `npm test` + `npm run build` pass before pushing.
+
+---
+
+## 7. Superpowers Antigravity Standard Compliance
+
+Refweir strictly complies with the [Superpowers Antigravity](https://roundpilot.github.io/superpowers-antigravity/) engineering methodology and BCP 14 requirements codified in the root [`AGENT.md`](../AGENT.md):
+1. **5-Stage Workflow Enforcement:** Brainstorm & Research -> Plan & Blueprint -> Build (TDD) -> Review & Adversarial Verification -> Ship & Reflect.
+2. **Evidence Before Assertions:** No code is claimed working or bug claimed resolved without direct execution output in the current session.
+3. **Red-Green-Refactor TDD:** Write failing tests first for every bugfix or new feature before writing implementation code.
+4. **Brand Neutrality:** Never reference deprecated vendor products or unverified competitor claims in production code or UI.
+

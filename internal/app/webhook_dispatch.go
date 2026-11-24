@@ -20,6 +20,11 @@ import (
 
 // DispatchRepoWebhook delivers an outbound event payload to a configured repository webhook.
 func DispatchRepoWebhook(ctx context.Context, db *store.DB, hook *store.RepoWebhook, event string, payload any) (*store.RepoWebhookDelivery, error) {
+	return DispatchRepoWebhookWithGUID(ctx, db, hook, event, payload, "")
+}
+
+// DispatchRepoWebhookWithGUID delivers an outbound event payload, preserving delivery GUID across retries for subscriber idempotency.
+func DispatchRepoWebhookWithGUID(ctx context.Context, db *store.DB, hook *store.RepoWebhook, event string, payload any, guid string) (*store.RepoWebhookDelivery, error) {
 	if hook == nil {
 		return nil, fmt.Errorf("webhook is nil")
 	}
@@ -29,7 +34,9 @@ func DispatchRepoWebhook(ctx context.Context, db *store.DB, hook *store.RepoWebh
 		return nil, fmt.Errorf("marshal payload: %w", err)
 	}
 
-	guid := idgen.New("guid")
+	if guid == "" {
+		guid = idgen.New("guid")
+	}
 	now := time.Now().UTC()
 
 	reqHeaders := http.Header{
@@ -61,6 +68,12 @@ func DispatchRepoWebhook(ctx context.Context, db *store.DB, hook *store.RepoWebh
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			return security.ValidateWebhookURL(req.URL.String())
+		},
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: hook.InsecureSSL, // #nosec G402 -- controlled by repo webhook setting
@@ -146,11 +159,15 @@ func DispatchRepoEvent(ctx context.Context, db *store.DB, repoID string, event s
 			dispatchCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
 			del, err := DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
-			// If initial attempt failed or returned a 5xx server error, retry once after short backoff
+			// If initial attempt failed or returned a 5xx server error, retry once after short backoff preserving GUID for idempotency
 			if (err != nil || (del != nil && !del.Delivered && del.ResponseStatusCode >= 500)) && dispatchCtx.Err() == nil {
+				deliveryGUID := ""
+				if del != nil && del.GUID != "" {
+					deliveryGUID = del.GUID
+				}
 				select {
 				case <-time.After(500 * time.Millisecond):
-					_, _ = DispatchRepoWebhook(dispatchCtx, db, h, event, payload)
+					_, _ = DispatchRepoWebhookWithGUID(dispatchCtx, db, h, event, payload, deliveryGUID)
 				case <-dispatchCtx.Done():
 				}
 			}

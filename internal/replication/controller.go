@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -170,19 +171,6 @@ func (c *Controller) CreateSnapshot(ctx context.Context) (*SnapshotMetadata, err
 	now := time.Now().UTC()
 
 	dbPath := filepath.Join(c.cfg.DataDir, "meta.db")
-	srcFile, err := os.Open(dbPath) // #nosec G304 -- path comes from operator configuration or a validated internal identifier
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// If meta.db does not exist yet (e.g. in-memory or fresh startup), return empty snapshot
-			return &SnapshotMetadata{
-				Seq:       seq,
-				Timestamp: now,
-			}, nil
-		}
-		return nil, fmt.Errorf("replication: open db for snapshot: %w", err)
-	}
-	defer srcFile.Close()
-
 	snapshotsDir := filepath.Join(c.cfg.DataDir, "snapshots")
 	if err := os.MkdirAll(snapshotsDir, 0750); err != nil {
 		return nil, err
@@ -192,32 +180,78 @@ func (c *Controller) CreateSnapshot(ctx context.Context) (*SnapshotMetadata, err
 	destPath := filepath.Join(snapshotsDir, filename)
 	tmpDest := destPath + ".tmp"
 
-	outFile, err := os.OpenFile(tmpDest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600) // #nosec G304 -- path comes from operator configuration or a validated internal identifier
-	if err != nil {
-		return nil, fmt.Errorf("replication: create snapshot file: %w", err)
+	// Prefer SQLite VACUUM INTO for atomic, consistent, torn-page-free snapshot
+	vacuumSucceeded := false
+	if c.db != nil && c.db.SQL() != nil {
+		cleanTmp := strings.ReplaceAll(tmpDest, "'", "''")
+		_, vErr := c.db.SQL().ExecContext(ctx, fmt.Sprintf("VACUUM INTO '%s'", cleanTmp))
+		if vErr == nil {
+			vacuumSucceeded = true
+		}
 	}
 
-	hasher := sha256.New()
-	multiWriter := io.MultiWriter(outFile, hasher)
+	var copiedBytes int64
+	var checksum string
 
-	copiedBytes, err := io.Copy(multiWriter, srcFile)
-	if err != nil {
+	if vacuumSucceeded {
+		f, err := os.Open(tmpDest) // #nosec G304
+		if err != nil {
+			return nil, fmt.Errorf("replication: open vacuumed snapshot: %w", err)
+		}
+		hasher := sha256.New()
+		copiedBytes, err = io.Copy(hasher, f)
+		_ = f.Close()
+		if err != nil {
+			_ = os.Remove(tmpDest)
+			return nil, fmt.Errorf("replication: hash vacuumed snapshot: %w", err)
+		}
+		if err := os.Rename(tmpDest, destPath); err != nil {
+			_ = os.Remove(tmpDest)
+			return nil, fmt.Errorf("replication: commit snapshot file: %w", err)
+		}
+		checksum = hex.EncodeToString(hasher.Sum(nil))
+	} else {
+		// Fallback to file copy if DB handle is unavailable or meta.db is in-memory
+		srcFile, err := os.Open(dbPath) // #nosec G304 -- path comes from operator configuration or a validated internal identifier
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				// If meta.db does not exist yet (e.g. in-memory or fresh startup), return empty snapshot
+				return &SnapshotMetadata{
+					Seq:       seq,
+					Timestamp: now,
+				}, nil
+			}
+			return nil, fmt.Errorf("replication: open db for snapshot: %w", err)
+		}
+		defer srcFile.Close()
+
+		outFile, err := os.OpenFile(tmpDest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600) // #nosec G304
+		if err != nil {
+			return nil, fmt.Errorf("replication: create snapshot file: %w", err)
+		}
+
+		hasher := sha256.New()
+		multiWriter := io.MultiWriter(outFile, hasher)
+
+		copiedBytes, err = io.Copy(multiWriter, srcFile)
+		if err != nil {
+			_ = outFile.Close()
+			_ = os.Remove(tmpDest)
+			return nil, fmt.Errorf("replication: write snapshot stream: %w", err)
+		}
+		if err := outFile.Sync(); err != nil {
+			_ = outFile.Close()
+			_ = os.Remove(tmpDest)
+			return nil, err
+		}
 		_ = outFile.Close()
-		_ = os.Remove(tmpDest)
-		return nil, fmt.Errorf("replication: write snapshot stream: %w", err)
-	}
-	if err := outFile.Sync(); err != nil {
-		_ = outFile.Close()
-		_ = os.Remove(tmpDest)
-		return nil, err
-	}
-	_ = outFile.Close()
 
-	if err := os.Rename(tmpDest, destPath); err != nil {
-		return nil, fmt.Errorf("replication: commit snapshot file: %w", err)
-	}
+		if err := os.Rename(tmpDest, destPath); err != nil {
+			return nil, fmt.Errorf("replication: commit snapshot file: %w", err)
+		}
 
-	checksum := hex.EncodeToString(hasher.Sum(nil))
+		checksum = hex.EncodeToString(hasher.Sum(nil))
+	}
 
 	meta := &SnapshotMetadata{
 		Seq:            seq,

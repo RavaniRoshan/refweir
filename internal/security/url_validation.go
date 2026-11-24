@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -16,10 +17,14 @@ var (
 	ErrEmptyURLHost = errors.New("webhook URL host cannot be empty")
 	// ErrBlockedMetadataHost indicates the URL targets a restricted cloud metadata address.
 	ErrBlockedMetadataHost = errors.New("webhook URL host targets a restricted cloud metadata address")
+	// ErrBlockedLoopbackHost indicates the URL targets loopback or localhost.
+	ErrBlockedLoopbackHost = errors.New("webhook URL cannot target loopback or localhost")
+	// ErrBlockedUnspecifiedHost indicates the URL targets an unspecified network address.
+	ErrBlockedUnspecifiedHost = errors.New("webhook URL cannot target unspecified network address")
 )
 
 // ValidateWebhookURL verifies that a target webhook URL is syntactically valid,
-// uses an allowed HTTP/HTTPS scheme, and does not target cloud instance metadata endpoints (SSRF defense).
+// uses an allowed HTTP/HTTPS scheme, and does not target cloud instance metadata endpoints or loopback (SSRF defense).
 func ValidateWebhookURL(rawURL string) error {
 	rawURL = strings.TrimSpace(rawURL)
 	if rawURL == "" {
@@ -41,14 +46,29 @@ func ValidateWebhookURL(rawURL string) error {
 		return ErrEmptyURLHost
 	}
 
-	// Block AWS / GCP / Azure link-local metadata addresses and aliases
 	lowerHost := strings.ToLower(hostname)
+
+	// Check if loopback is permitted for testing or isolated local harnesses
+	allowLoopback := os.Getenv("REFWEIR_ALLOW_LOOPBACK_WEBHOOKS") == "true"
+
+	// Block loopback hostname and subdomains (localhost, *.localhost)
+	if !allowLoopback && (lowerHost == "localhost" || strings.HasSuffix(lowerHost, ".localhost")) {
+		return ErrBlockedLoopbackHost
+	}
+
+	// Block AWS / GCP / Azure link-local metadata addresses and aliases
 	if lowerHost == "169.254.169.254" || lowerHost == "metadata.google.internal" || lowerHost == "instance-data" {
 		return ErrBlockedMetadataHost
 	}
 
-	// Check if IP matches link-local metadata subnet (169.254.0.0/16 or IPv6 link-local)
+	// Check if IP matches loopback, unspecified, or link-local metadata subnet (169.254.0.0/16 or IPv6 link-local)
 	if ip := net.ParseIP(hostname); ip != nil {
+		if !allowLoopback && ip.IsLoopback() {
+			return ErrBlockedLoopbackHost
+		}
+		if ip.IsUnspecified() {
+			return ErrBlockedUnspecifiedHost
+		}
 		if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
 			return ErrBlockedMetadataHost
 		}

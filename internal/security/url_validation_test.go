@@ -66,6 +66,41 @@ func TestValidateWebhookURL(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "loopback IPv4 rejected",
+			url:     "http://127.0.0.1:8080/events",
+			wantErr: true,
+		},
+		{
+			name:    "loopback IPv4 other address in /8 rejected",
+			url:     "http://127.0.0.2:8080/events",
+			wantErr: true,
+		},
+		{
+			name:    "localhost rejected",
+			url:     "http://localhost:8080/events",
+			wantErr: true,
+		},
+		{
+			name:    "subdomain of localhost rejected",
+			url:     "http://api.localhost:3000/webhook",
+			wantErr: true,
+		},
+		{
+			name:    "unspecified IPv4 0.0.0.0 rejected",
+			url:     "http://0.0.0.0:8080/events",
+			wantErr: true,
+		},
+		{
+			name:    "loopback IPv6 rejected",
+			url:     "http://[::1]:8080/events",
+			wantErr: true,
+		},
+		{
+			name:    "unspecified IPv6 rejected",
+			url:     "http://[::]:8080/events",
+			wantErr: true,
+		},
+		{
 			name:    "no scheme",
 			url:     "ci.example.com/webhook",
 			wantErr: true,

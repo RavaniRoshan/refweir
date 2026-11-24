@@ -74,6 +74,26 @@ func NewScanner() *Scanner {
 				Description: "High-Entropy JSON Web Token (JWT)",
 				Regex:       regexp.MustCompile(`\bey[A-Za-z0-9_-]{20,}\.ey[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\b`),
 			},
+			{
+				ID:          "openai-api-key",
+				Description: "OpenAI API Key or Project Token",
+				Regex:       regexp.MustCompile(`\b(?:sk-proj-[A-Za-z0-9_-]{48,}|sk-[A-Za-z0-9]{48})\b`),
+			},
+			{
+				ID:          "anthropic-api-key",
+				Description: "Anthropic Claude API Key",
+				Regex:       regexp.MustCompile(`\bsk-ant-[A-Za-z0-9_-]{80,}\b`),
+			},
+			{
+				ID:          "gitlab-pat",
+				Description: "GitLab Personal Access Token",
+				Regex:       regexp.MustCompile(`\bglpat-[0-9a-zA-Z_-]{20}\b`),
+			},
+			{
+				ID:          "stripe-secret-key",
+				Description: "Stripe Secret Key",
+				Regex:       regexp.MustCompile(`\bsk_live_[0-9a-zA-Z]{24,}\b`),
+			},
 		},
 	}
 }

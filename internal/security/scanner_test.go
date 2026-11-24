@@ -106,6 +106,31 @@ func TestScannerDetectsExtendedSecrets(t *testing.T) {
 			diff:   "+api_key = \"ab12cd34ef56ab12cd34ef56ab12cd34ef56\"",
 			wantID: "generic-high-entropy",
 		},
+		{
+			name:   "OpenAI Project Key",
+			diff:   "+openai_key = \"" + "sk-" + "proj-" + "abcde12345ABCDE12345abcde12345ABCDE12345abcde12345\"",
+			wantID: "openai-api-key",
+		},
+		{
+			name:   "OpenAI Legacy Secret Key",
+			diff:   "+openai_legacy = \"" + "sk-" + "123456789012345678901234567890123456789012345678\"",
+			wantID: "openai-api-key",
+		},
+		{
+			name:   "Anthropic API Key",
+			diff:   "+anthropic_key = \"" + "sk-" + "ant-" + "api03-123456789012345678901234567890123456789012345678901234567890123456789012345678901234\"",
+			wantID: "anthropic-api-key",
+		},
+		{
+			name:   "GitLab Personal Access Token",
+			diff:   "+gitlab_token = \"" + "glpat-" + "1234567890abcdefghij\"",
+			wantID: "gitlab-pat",
+		},
+		{
+			name:   "Stripe Secret Key",
+			diff:   "+stripe_key = \"" + "sk_" + "live_" + "51Abcdefghijklmnopqrstuvwx\"",
+			wantID: "stripe-secret-key",
+		},
 	}
 
 	for _, tc := range cases {

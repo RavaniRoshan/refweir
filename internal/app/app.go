@@ -433,9 +433,16 @@ func Open(cfg config.Config) (*App, error) {
 			reason = "Revoked by operator via console"
 		}
 
-		actor := "anonymous"
+		count, _ := db.CountUsers(r.Context())
+		actor := "system"
 		actorType := "system"
-		if u, err := auth.ResolveUser(r.Context(), db, r); err == nil && u != nil {
+		u, err := auth.ResolveUser(r.Context(), db, r)
+		if err != nil || u == nil {
+			if count > 0 {
+				http.Error(w, "Unauthorized: Authentication required to revoke capability leases", http.StatusUnauthorized)
+				return
+			}
+		} else {
 			actor = u.ID
 			actorType = "user"
 		}
