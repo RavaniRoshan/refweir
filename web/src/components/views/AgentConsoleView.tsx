@@ -112,6 +112,11 @@ export const AgentConsoleView: React.FC = () => {
   // Timeline Filtering State
   const [activitySearchQuery, setActivitySearchQuery] = useState('')
   const [activityCategoryFilter, setActivityCategoryFilter] = useState<'all' | 'pulls' | 'symbols' | 'reviews'>('all')
+  const [expandedActivityIds, setExpandedActivityIds] = useState<Record<string, boolean>>({})
+
+  const toggleActivityExpanded = (id: string) => {
+    setExpandedActivityIds((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   // Lease Management State
   const [leases, setLeases] = useState<ManagedLeaseRecord[]>(INITIAL_MOCK_LEASES)
@@ -704,13 +709,22 @@ export const AgentConsoleView: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs font-mono self-start sm:self-auto">
+                        <div className="flex items-center gap-2.5 text-xs font-mono self-start sm:self-auto">
                           <span className={`flex items-center gap-1 text-[11px] ${
                             (act.latencyMs || 0) < 50 ? 'text-success' : (act.latencyMs || 0) < 200 ? 'text-blue-500' : 'text-amber-500'
                           }`}>
                             <Clock className="w-3 h-3" /> {act.latencyMs}ms
                           </span>
                           <span className="text-muted-foreground text-[11px]">{act.timestamp}</span>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={() => toggleActivityExpanded(act.id)}
+                            className="text-xs text-primary gap-1 h-6 px-2 hover:bg-secondary/60 cursor-pointer"
+                          >
+                            <Code2 className="w-3 h-3" />
+                            <span>{expandedActivityIds[act.id] ? 'Hide' : 'Inspect'}</span>
+                          </Button>
                         </div>
                       </div>
 
@@ -725,6 +739,23 @@ export const AgentConsoleView: React.FC = () => {
                           <span className="text-foreground">{act.responseSummary}</span>
                         </div>
                       </div>
+
+                      {expandedActivityIds[act.id] && (
+                        <div className="p-3 rounded-md bg-background/90 border border-border space-y-2 font-mono text-xs">
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">Full Request Payload:</span>
+                            <pre className="p-2 rounded bg-secondary/40 text-foreground overflow-x-auto text-[11px] leading-relaxed max-h-48 border border-border/50">
+                              {JSON.stringify(act.requestPayload, null, 2)}
+                            </pre>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">Detailed Response:</span>
+                            <pre className="p-2 rounded bg-secondary/40 text-foreground overflow-x-auto text-[11px] leading-relaxed max-h-48 border border-border/50">
+                              {typeof act.responseSummary === 'object' ? JSON.stringify(act.responseSummary, null, 2) : act.responseSummary}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1036,6 +1067,7 @@ export const AgentConsoleView: React.FC = () => {
                     <th className="py-2.5 px-3">Agent Identifier</th>
                     <th className="py-2.5 px-3">Target Repo</th>
                     <th className="py-2.5 px-3">Allowed Ref Prefix</th>
+                    <th className="py-2.5 px-3">TTL Progress & Expiry</th>
                     <th className="py-2.5 px-3">Lifecycle State</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
@@ -1043,13 +1075,20 @@ export const AgentConsoleView: React.FC = () => {
                 <tbody className="divide-y divide-border">
                   {filteredLeases.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-muted-foreground text-xs font-mono">
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground text-xs font-mono">
                         No capability leases match the current filter.
                       </td>
                     </tr>
                   ) : (
                     filteredLeases.map((l) => {
                       const state = getLeaseLifecycleState(l)
+                      const now = Date.now()
+                      const exp = new Date(l.expiresAt).getTime()
+                      const issued = l.issuedAt ? new Date(l.issuedAt).getTime() : exp - 1800000
+                      const totalTtl = Math.max(1, exp - issued)
+                      const remaining = Math.max(0, exp - now)
+                      const pct = l.revoked ? 0 : Math.min(100, Math.max(0, Math.round((remaining / totalTtl) * 100)))
+
                       return (
                         <tr key={l.id} className="hover:bg-secondary/10 transition-colors">
                           <td className="py-2.5 px-3 font-mono font-medium text-foreground">
@@ -1061,6 +1100,29 @@ export const AgentConsoleView: React.FC = () => {
                           <td className="py-2.5 px-3 font-mono text-muted-foreground">{l.repoId}</td>
                           <td className="py-2.5 px-3 font-mono text-primary text-[11px]">
                             {l.refPrefixes?.join(', ') || l.allowedRefs?.join(', ') || 'refs/heads/agent/*'}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-xs min-w-[140px]">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                <span>{l.revoked ? 'Revoked' : remaining <= 0 ? 'Expired' : formatCountdown(Math.floor(remaining / 1000))}</span>
+                                <span>{pct}%</span>
+                              </div>
+                              <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden border border-border/50">
+                                <div
+                                  className={`h-full transition-all duration-300 ${
+                                    l.revoked
+                                      ? 'bg-destructive'
+                                      : pct < 20
+                                      ? 'bg-amber-500'
+                                      : 'bg-emerald-500'
+                                  }`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div className="text-[10px] text-muted-foreground truncate">
+                                {new Date(l.expiresAt).toLocaleTimeString()}
+                              </div>
+                            </div>
                           </td>
                           <td className="py-2.5 px-3">
                             <Badge variant={state.variant} className={`text-[10px] ${state.color}`}>

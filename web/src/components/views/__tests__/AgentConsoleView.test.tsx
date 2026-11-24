@@ -195,4 +195,27 @@ describe('AgentConsoleView Component', () => {
     expect(screen.getByText('0 Allowed')).toBeInTheDocument()
     expect(screen.getByText('Direct Pushes Blocked')).toBeInTheDocument()
   })
+
+  it('toggles expansion of activity event for detailed payload inspection', async () => {
+    render(<AgentConsoleView />)
+
+    await waitFor(() => {
+      expect(screen.getByText('refweir-agent')).toBeInTheDocument()
+    })
+
+    const inspectBtn = screen.getByRole('button', { name: /inspect/i })
+    fireEvent.click(inspectBtn)
+
+    expect(screen.getByText(/Full Request Payload/i)).toBeInTheDocument()
+    expect(screen.getByText(/Detailed Response/i)).toBeInTheDocument()
+  })
+
+  it('displays TTL progress and countdown in capability leases table', async () => {
+    render(<AgentConsoleView />)
+
+    const leasesTab = screen.getByText('Capability Leases')
+    fireEvent.click(leasesTab)
+
+    expect(screen.getByText('TTL Progress & Expiry')).toBeInTheDocument()
+  })
 })
