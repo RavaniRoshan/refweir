@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { GitMerge, CheckCircle2, ChevronDown, Check } from 'lucide-react'
+import { GitMerge, CheckCircle2, ChevronDown, Check, AlertCircle } from 'lucide-react'
 import { Button } from './Button'
 import { cn } from '@/lib/utils'
 
@@ -15,6 +15,11 @@ export interface MergeBoxProps {
   autoMergeEnabled?: boolean
   autoMergeMethod?: 'merge' | 'squash' | 'rebase'
   onToggleAutoMerge?: (enabled: boolean, method: 'merge' | 'squash' | 'rebase') => Promise<void> | void
+  agentReviewBlocker?: {
+    blocked: boolean
+    summary?: string
+    violationsCount?: number
+  }
 }
 
 /**
@@ -34,12 +39,15 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
   autoMergeEnabled = false,
   autoMergeMethod,
   onToggleAutoMerge,
+  agentReviewBlocker,
 }) => {
   const [method, setMethod] = useState<'merge' | 'squash' | 'rebase'>(defaultMethod)
   const [isConfirming, setIsConfirming] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [commitTitle, setCommitTitle] = useState(defaultTitle)
   const [commitMessage, setCommitMessage] = useState(defaultMessage)
+
+  const isBlocked = disabled || Boolean(agentReviewBlocker?.blocked)
 
   const methodLabels = {
     merge: 'Create a merge commit',
@@ -71,20 +79,32 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
     <div className={cn('rounded-md border border-border bg-card overflow-hidden text-xs', className)}>
       {/* Status Header */}
       <div className="px-4 py-3 bg-secondary/30 border-b border-border flex items-start gap-3">
-        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', checksPassed ? 'text-success bg-success/10' : 'text-warn bg-warn/10')}>
-          <CheckCircle2 className="w-5 h-5" />
+        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5', agentReviewBlocker?.blocked ? 'text-destructive bg-destructive/10' : checksPassed ? 'text-success bg-success/10' : 'text-warn bg-warn/10')}>
+          {agentReviewBlocker?.blocked ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
         </div>
         <div className="space-y-0.5 flex-1">
           <span className="font-semibold text-foreground block">
-            {checksPassed ? 'This branch has no conflicts with the base branch' : 'Checks or policy gates in progress'}
+            {agentReviewBlocker?.blocked
+              ? 'Blocked by Agent Policy Review'
+              : checksPassed
+              ? 'This branch has no conflicts with the base branch'
+              : 'Checks or policy gates in progress'}
           </span>
           <p className="text-muted-foreground">
-            {checksPassed
+            {agentReviewBlocker?.blocked
+              ? (agentReviewBlocker.summary || 'Unresolved security violations or review changes are required before merging.')
+              : checksPassed
               ? 'Merging can be performed automatically. All ruleset conditions satisfied.'
               : 'Review checks and required approval policies before proceeding.'}
           </p>
         </div>
       </div>
+
+      {agentReviewBlocker?.blocked && (
+        <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/20 text-xs text-destructive flex items-center gap-2">
+          <span className="font-medium">Direct merge disabled until agent review criteria are resolved.</span>
+        </div>
+      )}
 
       {/* Main Action Area */}
       <div className="p-4 space-y-3">
@@ -93,7 +113,7 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
             {/* Primary Action Button */}
             <Button
               variant="primary"
-              disabled={disabled}
+              disabled={isBlocked}
               onClick={() => setIsConfirming(true)}
               className="rounded-r-none border-r-0 font-semibold gap-1.5"
             >
@@ -104,7 +124,7 @@ export const MergeBox: React.FC<MergeBoxProps> = ({
             {/* Strategy Selector Dropdown Button */}
             <Button
               variant="primary"
-              disabled={disabled}
+              disabled={isBlocked}
               onClick={() => setShowDropdown(!showDropdown)}
               className="rounded-l-none px-2 border-l border-primary-foreground/20"
               title="Select merge strategy"

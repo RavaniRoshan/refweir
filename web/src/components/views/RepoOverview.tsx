@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Folder,
   FileText,
@@ -192,7 +192,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
   }
 
   // Compute dynamic language distribution from file extensions
-  const calculateLanguages = () => {
+  const languages = useMemo(() => {
     if (files.length === 0) return []
     const counts: Record<string, { count: number; color: string }> = {}
     let total = 0
@@ -237,9 +237,7 @@ export const RepoOverview: React.FC<RepoOverviewProps> = ({
       color: data.color,
       percent: Math.round((data.count / total) * 100),
     }))
-  }
-
-  const languages = calculateLanguages()
+  }, [files])
   const hasReadmeFile = files.some((f) => f.name.toLowerCase() === 'readme.md')
 
   return (

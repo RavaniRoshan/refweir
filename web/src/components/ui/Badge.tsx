@@ -60,8 +60,8 @@ export const StateLabel: React.FC<{
 }> = ({ state, icon, children, className }) => {
   const styles = {
     open: 'bg-signal text-signal-ink border-signal',
-    merged: 'bg-chart-4 text-white border-chart-4',
-    closed: 'bg-destructive text-white border-destructive',
+    merged: 'bg-chart-4 text-zinc-950 font-medium border-chart-4',
+    closed: 'bg-destructive text-destructive-foreground border-destructive',
     draft: 'bg-raised text-text-3 border-hairline',
   }[state]
 

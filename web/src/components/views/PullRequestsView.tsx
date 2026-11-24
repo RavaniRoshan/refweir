@@ -298,9 +298,9 @@ export const PullRequestsView: React.FC<PullRequestsViewProps> = ({
   const handleAddComment = async () => {
     if (!newCommentText.trim() || !selectedPr) return
     const text = newCommentText
-    setNewCommentText('')
     try {
       const added = await addPullRequestComment(owner, repoName, selectedPr.number, text)
+      setNewCommentText('')
       const newComment = {
         id: added?.id || `c-${Date.now()}`,
         author: added?.author || 'Current Operator',
@@ -519,41 +519,78 @@ git push origin feature/agent-capabilities`
                       </Box>
                     ))}
 
-                    {/* Check runs status box */}
-                    <Box>
-                      <BoxHeader className="bg-secondary/25 py-2">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-success" />
-                          <span className="font-semibold text-foreground">
-                            All checks have passed ({ (selectedPr.checks || []).length } successful checks)
-                          </span>
-                        </div>
-                      </BoxHeader>
-                      <BoxBody className="p-0 divide-y divide-border">
-                        {(selectedPr.checks || []).map((chk) => (
-                          <div key={chk.id} className="flex items-center justify-between px-4 py-2 text-xs">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                              <span className="font-medium text-foreground">{chk.name}</span>
-                              <span className="text-muted-foreground">— Successful in {chk.duration}</span>
-                            </div>
-                            <span className="text-muted-foreground font-mono text-[11px]">Details</span>
-                          </div>
-                        ))}
-                      </BoxBody>
-                    </Box>
+                    {/* Checks evaluation */}
+                    {(() => {
+                      const hasFailedCheck = (selectedPr.checks || []).some(
+                        (c) => c.conclusion === 'failure' || c.conclusion === 'action_required'
+                      )
+                      const agentCheck = (selectedPr.checks || []).find((c) =>
+                        c.name.toLowerCase().includes('agent')
+                      )
+                      const agentReviewBlocker =
+                        agentCheck && (agentCheck.conclusion === 'failure' || agentCheck.conclusion === 'action_required')
+                          ? {
+                              blocked: true,
+                              summary: `Agent Reviewer conclusion: ${agentCheck.conclusion}. Security rules or test gates require resolution.`,
+                            }
+                          : undefined
 
-                    {/* GitHub Canonical Merge Box */}
-                    <MergeBox
-                      onMerge={handleMergePr}
-                      isMerged={selectedPr.state === 'merged'}
-                      checksPassed={true}
-                      defaultTitle={`${selectedPr.title} (#${selectedPr.number})`}
-                      defaultMessage={`Squash and merge pull request #${selectedPr.number} into ${selectedPr.baseRef}.`}
-                      autoMergeEnabled={autoMergeEnabled}
-                      autoMergeMethod={autoMergeMethod}
-                      onToggleAutoMerge={handleToggleAutoMerge}
-                    />
+                      return (
+                        <>
+                          {/* Check runs status box */}
+                          <Box>
+                            <BoxHeader className="bg-secondary/25 py-2">
+                              <div className="flex items-center gap-2">
+                                {hasFailedCheck ? (
+                                  <AlertCircle className="w-4 h-4 text-destructive" />
+                                ) : (
+                                  <CheckCircle2 className="w-4 h-4 text-success" />
+                                )}
+                                <span className="font-semibold text-foreground">
+                                  {hasFailedCheck
+                                    ? 'Some checks were not successful'
+                                    : `All checks have passed (${(selectedPr.checks || []).length} successful checks)`}
+                                </span>
+                              </div>
+                            </BoxHeader>
+                            <BoxBody className="p-0 divide-y divide-border">
+                              {(selectedPr.checks || []).map((chk) => {
+                                const isFailed = chk.conclusion === 'failure' || chk.conclusion === 'action_required'
+                                return (
+                                  <div key={chk.id} className="flex items-center justify-between px-4 py-2 text-xs">
+                                    <div className="flex items-center gap-2">
+                                      {isFailed ? (
+                                        <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                                      ) : (
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                                      )}
+                                      <span className="font-medium text-foreground">{chk.name}</span>
+                                      <span className="text-muted-foreground">
+                                        — {isFailed ? `Failed (${chk.conclusion})` : `Successful in ${chk.duration}`}
+                                      </span>
+                                    </div>
+                                    <span className="text-muted-foreground font-mono text-[11px]">Details</span>
+                                  </div>
+                                )
+                              })}
+                            </BoxBody>
+                          </Box>
+
+                          {/* GitHub Canonical Merge Box */}
+                          <MergeBox
+                            onMerge={handleMergePr}
+                            isMerged={selectedPr.state === 'merged'}
+                            checksPassed={!hasFailedCheck}
+                            agentReviewBlocker={agentReviewBlocker}
+                            defaultTitle={`${selectedPr.title} (#${selectedPr.number})`}
+                            defaultMessage={`Squash and merge pull request #${selectedPr.number} into ${selectedPr.baseRef}.`}
+                            autoMergeEnabled={autoMergeEnabled}
+                            autoMergeMethod={autoMergeMethod}
+                            onToggleAutoMerge={handleToggleAutoMerge}
+                          />
+                        </>
+                      )
+                    })()}
 
                     {/* New Comment Box */}
                     <Box>

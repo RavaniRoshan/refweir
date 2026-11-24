@@ -50,7 +50,7 @@ export interface CheckRun {
   id: string
   name: string
   status: 'completed' | 'in_progress' | 'queued'
-  conclusion: 'success' | 'failure' | 'neutral'
+  conclusion: 'success' | 'failure' | 'neutral' | 'action_required'
   duration: string
 }
 
@@ -254,6 +254,7 @@ export interface AgentLease {
   repoId: string
   issuedAt: string
   expiresAt: string
+  allowedRefs?: string[]
 }
 
 export interface AgentReviewResult {

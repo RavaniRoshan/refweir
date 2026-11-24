@@ -1011,6 +1011,7 @@ export async function issueAgentLease(
       repoId,
       issuedAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + ttlSeconds * 1000).toISOString(),
+      allowedRefs: allowedPrefixes,
     }
   }
 
@@ -1029,6 +1030,26 @@ export async function issueAgentLease(
     throw new Error(`Failed to issue lease (HTTP ${res.status}): ${errText}`)
   }
   return res.json()
+}
+
+export async function revokeAgentLease(leaseId: string, reason?: string): Promise<{ ok: boolean; error?: string }> {
+  if (isDemoModeActive()) {
+    return { ok: true }
+  }
+  try {
+    const res = await fetch(`/api/v1/agent/leases/${encodeURIComponent(leaseId)}/revoke`, {
+      method: 'POST',
+      headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || 'Revoked by operator via console' }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      return { ok: false, error: text || 'Failed to revoke lease' }
+    }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err.message || 'Network error' }
+  }
 }
 
 

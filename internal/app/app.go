@@ -398,6 +398,57 @@ func Open(cfg config.Config) (*App, error) {
 		}
 		baseLeaseHandler(w, r)
 	})
+	mux.HandleFunc("POST /api/v1/agent/leases/{id}/revoke", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		leaseID := r.PathValue("id")
+		if leaseID == "" {
+			http.Error(w, "Lease ID required", http.StatusBadRequest)
+			return
+		}
+		var req struct {
+			Reason string `json:"reason"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		reason := req.Reason
+		if reason == "" {
+			reason = "Revoked by operator via console"
+		}
+
+		actor := "anonymous"
+		actorType := "system"
+		if u, err := auth.ResolveUser(r.Context(), db, r); err == nil && u != nil {
+			actor = u.ID
+			actorType = "user"
+		}
+
+		if err := db.RevokeAgentLease(r.Context(), leaseID, "", "", reason); err != nil {
+			http.Error(w, "Failed to revoke lease: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_ = audit.Log(audit.Event{
+			Actor:     actor,
+			ActorType: actorType,
+			Action:    "agent.lease_revoked",
+			Resource:  leaseID,
+			ClientIP:  r.RemoteAddr,
+			Severity:  audit.SeverityWarning,
+			Details:   "Capability lease revoked: " + reason,
+		})
+
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok":      true,
+			"leaseId": leaseID,
+			"revoked": true,
+			"reason":  reason,
+		})
+	})
 
 	// Web Authentication & Session Management
 	mux.HandleFunc("POST /api/v1/auth/login", auth.LoginHandler(db))

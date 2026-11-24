@@ -83,6 +83,9 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
   };
 
   const handleNav = (id: string) => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
     if (onNavChange) {
       onNavChange(id);
     } else {
@@ -124,15 +127,25 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
 
   return (
     <div className="flex h-screen w-full overflow-hidden overflow-x-clip bg-background text-foreground font-sans">
+      {/* Mobile Backdrop Overlay */}
+      <div
+        className={cn(
+          'fixed inset-0 z-30 bg-black/50 backdrop-blur-xs transition-opacity duration-200 md:hidden',
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
       {/* Global rail */}
       <aside
         className={cn(
-          'flex flex-col border-r border-border bg-slab transition-all duration-200 shrink-0 select-none z-20',
-          sidebarOpen ? 'w-14 md:w-56' : 'w-14',
+          'flex flex-col border-r border-border bg-slab transition-all duration-200 shrink-0 select-none z-40',
+          sidebarOpen ? 'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:w-56 max-md:shadow-2xl md:w-56' : 'w-14'
         )}
       >
         <div className="flex h-12 items-center justify-between px-3 border-b border-border">
-          <span className={cn('font-semibold text-sm text-text-1 tracking-tight hidden md:inline', !sidebarOpen && 'md:hidden')}>
+          <span className={cn('font-semibold text-sm text-text-1 tracking-tight', !sidebarOpen && 'hidden')}>
             Refweir
           </span>
           <button
@@ -141,8 +154,7 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
             aria-label="Toggle sidebar"
             aria-expanded={sidebarOpen}
           >
-            {sidebarOpen ? <ChevronLeft className="w-4 h-4 hidden md:block" /> : <ChevronRight className="w-4 h-4 hidden md:block" />}
-            <FolderGit2 className="w-4 h-4 md:hidden text-primary" />
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
 
@@ -167,11 +179,11 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
                   isActive
                     ? 'bg-secondary text-foreground font-medium'
                     : 'text-text-2 hover:bg-raised hover:text-text-1',
-                  !sidebarOpen ? 'justify-center px-0' : 'max-md:justify-center max-md:px-0'
+                  !sidebarOpen && 'justify-center px-0'
                 )}
               >
                 <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-primary' : 'text-text-2')} />
-                {sidebarOpen && <span className="hidden md:inline">{item.label}</span>}
+                {sidebarOpen && <span>{item.label}</span>}
               </button>
             );
           })}
@@ -182,7 +194,7 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
             onClick={toggleTheme}
             className={cn(
               'w-full text-xs text-text-2 hover:text-text-1 flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-raised transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-primary',
-              !sidebarOpen ? 'justify-center p-1.5' : 'max-md:justify-center max-md:p-1.5'
+              !sidebarOpen && 'justify-center p-1.5'
             )}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             title={!sidebarOpen ? (isDark ? 'Switch to light mode' : 'Switch to dark mode') : undefined}
@@ -192,7 +204,7 @@ export function AppShell({ children, activeNav, onNavChange, onTabChange }: AppS
             ) : (
               <Moon className="w-4 h-4 shrink-0 text-text-2" />
             )}
-            {sidebarOpen && <span className="hidden md:inline">{isDark ? 'Light' : 'Dark'}</span>}
+            {sidebarOpen && <span>{isDark ? 'Light' : 'Dark'}</span>}
           </button>
         </div>
       </aside>

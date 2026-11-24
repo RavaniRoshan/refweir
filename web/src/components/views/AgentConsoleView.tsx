@@ -6,6 +6,7 @@ import {
   Play,
   Clock,
   ShieldCheck,
+  ShieldAlert,
   ChevronRight,
   KeyRound,
   Copy,
@@ -21,6 +22,7 @@ import { AgentThinking } from '@/components/agent/agent-thinking'
 import {
   getAgentActivities,
   issueAgentLease,
+  revokeAgentLease,
   queryLocalMcpTools,
   isDemoModeActive,
   sampleAgentActivities,
@@ -50,7 +52,9 @@ export const AgentConsoleView: React.FC = () => {
   const [leaseRefPrefix, setLeaseRefPrefix] = useState('refs/heads/agent/')
   const [leaseTtlMinutes, setLeaseTtlMinutes] = useState(30)
   const [generatingLease, setGeneratingLease] = useState(false)
-  const [issuedLease, setIssuedLease] = useState<AgentLease | null>(null)
+  const [issuedLease, setIssuedLease] = useState<(AgentLease & { revoked?: boolean }) | null>(null)
+  const [leaseSecondsRemaining, setLeaseSecondsRemaining] = useState<number>(0)
+  const [isRevokingLease, setIsRevokingLease] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
 
   const loadActivities = async () => {
@@ -268,6 +272,41 @@ export const AgentConsoleView: React.FC = () => {
     setCopiedToken(true)
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     copyTimeoutRef.current = setTimeout(() => setCopiedToken(false), 2000)
+  }
+
+  useEffect(() => {
+    if (!issuedLease || issuedLease.revoked) return
+    const calcRemaining = () => {
+      const exp = new Date(issuedLease.expiresAt).getTime()
+      return Math.max(0, Math.floor((exp - Date.now()) / 1000))
+    }
+    setLeaseSecondsRemaining(calcRemaining())
+    const interval = setInterval(() => {
+      const rem = calcRemaining()
+      setLeaseSecondsRemaining(rem)
+      if (rem <= 0) clearInterval(interval)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [issuedLease])
+
+  const formatCountdown = (seconds: number) => {
+    if (seconds <= 0) return 'Expired'
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const handleRevokeLease = async () => {
+    if (!issuedLease) return
+    setIsRevokingLease(true)
+    try {
+      await revokeAgentLease(issuedLease.id, 'operator manual revocation')
+      setIssuedLease((prev) => (prev ? { ...prev, revoked: true } : null))
+    } catch (err: any) {
+      alert('Failed to revoke capability lease: ' + err.message)
+    } finally {
+      setIsRevokingLease(false)
+    }
   }
 
   return (
@@ -591,13 +630,42 @@ export const AgentConsoleView: React.FC = () => {
             <BoxBody className="p-4 space-y-3">
               {issuedLease ? (
                 <div className="space-y-3">
-                  <div className="p-2.5 bg-secondary/40 border border-border rounded-md space-y-1">
+                  <div className="p-2.5 bg-secondary/40 border border-border rounded-md space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-mono text-foreground">
                       <span>Lease ID: {issuedLease.id}</span>
-                      <Badge variant="success" className="text-[10px]">Active</Badge>
+                      {issuedLease.revoked ? (
+                        <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40">
+                          Revoked
+                        </Badge>
+                      ) : leaseSecondsRemaining <= 0 ? (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                          Expired
+                        </Badge>
+                      ) : leaseSecondsRemaining < 60 ? (
+                        <Badge variant="outline" className="text-[10px] text-amber-500 border-amber-500/40">
+                          Expiring soon · {formatCountdown(leaseSecondsRemaining)}
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" className="text-[10px]">
+                          Active · {formatCountdown(leaseSecondsRemaining)}
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-[11px] text-muted-foreground font-mono">
                       Expires: {new Date(issuedLease.expiresAt).toLocaleTimeString()} ({issuedLease.expiresAt})
+                    </div>
+                  </div>
+
+                  {/* Authorized Scope Chips */}
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-medium text-foreground">Authorized Ref Scopes:</span>
+                    <div className="flex flex-wrap gap-1.5 text-[10px] font-mono">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        ALLOW: {issuedLease.allowedRefs?.join(', ') || 'refs/heads/agent/*'}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        DENY: refs/heads/main, refs/heads/release/*
+                      </span>
                     </div>
                   </div>
 
@@ -616,6 +684,21 @@ export const AgentConsoleView: React.FC = () => {
                       {issuedLease.token}
                     </pre>
                   </div>
+
+                  {!issuedLease.revoked && leaseSecondsRemaining > 0 && (
+                    <div className="pt-1 flex items-center justify-between">
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={handleRevokeLease}
+                        disabled={isRevokingLease}
+                        className="text-destructive hover:bg-destructive/10 text-xs gap-1"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <span>{isRevokingLease ? 'Revoking...' : 'Revoke Capability Lease'}</span>
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="p-2.5 bg-secondary/30 border border-border rounded-md space-y-1 text-xs text-muted-foreground">
                     <span className="font-semibold text-foreground">How to use:</span>

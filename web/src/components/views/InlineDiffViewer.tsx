@@ -6,6 +6,7 @@ import {
   GitCommit,
   CornerDownRight,
   ChevronDown,
+  ChevronRight,
   Loader2,
   X,
   Send,
@@ -82,6 +83,7 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
   const [appliedSuggestions, setAppliedSuggestions] = useState<Record<string, boolean>>({})
   const [applyingSuggestionId, setApplyingSuggestionId] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [collapsedFiles, setCollapsedFiles] = useState<Record<string, boolean>>({})
 
   // Pre-index comments by path:line:side for O(1) per-line lookup instead of O(N*M) filtering
   const commentsByLine = React.useMemo(() => {
@@ -347,19 +349,36 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
         let currentNewLine = 0
 
         const lines = diff.hunk.split('\n')
+        const isCollapsed = Boolean(collapsedFiles[diff.newPath])
 
         return (
           <Box key={fIdx} className="overflow-hidden">
-            <BoxHeader className="bg-secondary/40 py-2 font-mono text-xs flex items-center justify-between">
-              <span className="font-semibold text-foreground">{diff.newPath}</span>
+            <BoxHeader
+              onClick={() =>
+                setCollapsedFiles((prev) => ({ ...prev, [diff.newPath]: !prev[diff.newPath] }))
+              }
+              className="bg-secondary/40 py-2 font-mono text-xs flex items-center justify-between cursor-pointer select-none hover:bg-secondary/60 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                {isCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span className="font-semibold text-foreground">{diff.newPath}</span>
+              </div>
               <div className="flex items-center gap-2">
                 <span className="text-success font-semibold font-mono">+{diff.additions}</span>
                 <span className="text-danger font-semibold font-mono">-{diff.deletions}</span>
               </div>
             </BoxHeader>
 
-            <div className="font-mono text-xs overflow-x-auto bg-background divide-y divide-border/20">
-              {lines.map((line, lIdx) => {
+            {!isCollapsed && (
+              <div
+                className="font-mono text-xs overflow-x-auto bg-background divide-y divide-border/20"
+                style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 32px' }}
+              >
+                {lines.map((line, lIdx) => {
                 const isAdd = line.startsWith('+')
                 const isDel = line.startsWith('-')
                 const isHeader = line.startsWith('@@')
@@ -651,6 +670,7 @@ export const InlineDiffViewer: React.FC<InlineDiffViewerProps> = ({
                 )
               })}
             </div>
+            )}
           </Box>
         )
       })}
