@@ -105,7 +105,10 @@ export async function getRepoInfo(owner: string, name: string, signal?: AbortSig
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}`, { signal })
+    const res = await fetch(`/api/v1/repos/${owner}/${name}`, {
+      signal,
+      headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
+    })
     if (res.ok) {
       const data = await res.json()
       return {
@@ -122,30 +125,7 @@ export async function getRepoInfo(owner: string, name: string, signal?: AbortSig
         cloneUrlSsh: `git@${window.location.hostname}:2222/${owner}/${name}.git`,
       }
     }
-  } catch {
-    // fallback to origin
-  }
-
-  try {
-    const res = await fetch(`/v1/origin/repos/${owner}/${name}`, {
-      signal,
-      headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    return {
-      ownerSlug: owner,
-      name: name,
-      description: data.description || '',
-      defaultBranch: data.defaultBranch || data.default_branch || 'main',
-      isPrivate: Boolean(data.isPrivate || data.is_private || data.visibility === 'private'),
-      isArchived: Boolean(data.archived || data.is_archived || data.isArchived),
-      starsCount: data.starsCount || data.stars_count || 0,
-      forksCount: data.forksCount || data.forks_count || 0,
-      updatedAt: data.updatedAt || data.updated_at || 'Recently',
-      cloneUrlHttp: data.cloneUrl || data.clone_url || `http://${window.location.host}/${owner}/${name}.git`,
-      cloneUrlSsh: `git@${window.location.hostname}:2222/${owner}/${name}.git`,
-    }
+    throw new Error(`HTTP ${res.status}`)
   } catch (err) {
     console.warn(`[refweir.dev API] Production fetch for repo ${owner}/${name} failed, presenting empty shell:`, err)
     return {
@@ -350,13 +330,10 @@ export async function getFiles(owner: string, name: string, ref = 'main', path =
     if (ref) params.set('ref', ref)
     if (path) params.set('path', path)
 
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, { signal })
-    if (!res.ok) {
-      res = await fetch(`/v1/origin/repos/${owner}/${name}/contents?${params.toString()}`, {
-        signal,
-        headers: getAuthHeader(),
-      })
-    }
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, {
+      signal,
+      headers: getAuthHeader(),
+    })
     if (!res.ok) return []
     const data = await res.json()
     if (Array.isArray(data?.entries)) {
@@ -383,13 +360,10 @@ export async function getFileContent(owner: string, name: string, path: string, 
 
   try {
     const params = new URLSearchParams({ path, ref })
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, { signal })
-    if (!res.ok) {
-      res = await fetch(`/v1/origin/repos/${owner}/${name}/contents?${params.toString()}`, {
-        signal,
-        headers: getAuthHeader(),
-      })
-    }
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/contents?${params.toString()}`, {
+      signal,
+      headers: getAuthHeader(),
+    })
     if (!res.ok) return ''
     const data = await res.json()
     if (data.encoding === 'base64' && data.content) {
@@ -408,13 +382,10 @@ export async function getCommits(owner: string, name: string, ref = 'main', sign
   }
 
   try {
-    let res = await fetch(`/api/v1/repos/${owner}/${name}/commits?ref=${ref}`, { signal })
-    if (!res.ok) {
-      res = await fetch(`/v1/origin/repos/${owner}/${name}/commits?ref=${ref}`, {
-        signal,
-        headers: getAuthHeader(),
-      })
-    }
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/commits?ref=${ref}`, {
+      signal,
+      headers: getAuthHeader(),
+    })
     if (!res.ok) return []
     const data = await res.json()
     if (!Array.isArray(data?.commits)) return []
@@ -459,7 +430,10 @@ export async function getBranches(owner: string, name: string, signal?: AbortSig
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}/branches`, { signal })
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/branches`, {
+      signal,
+      headers: getAuthHeader(),
+    })
     if (res.ok) {
       const data = await res.json()
       if (Array.isArray(data?.branches)) {
@@ -470,19 +444,7 @@ export async function getBranches(owner: string, name: string, signal?: AbortSig
         }))
       }
     }
-    // Fallback to origin
-    const originRes = await fetch(`/v1/origin/repos/${owner}/${name}/branches`, {
-      signal,
-      headers: getAuthHeader(),
-    })
-    if (!originRes.ok) return []
-    const originData = await originRes.json()
-    if (!Array.isArray(originData?.branches)) return []
-    return originData.branches.map((b: any) => ({
-      name: b.name,
-      commitSha: b.commit?.sha || '',
-      isDefault: b.name === 'main',
-    }))
+    return []
   } catch {
     return []
   }
@@ -516,21 +478,12 @@ export async function getPullRequests(owner: string, name: string, signal?: Abor
   }
 
   try {
-    const res = await fetch(`/api/v1/repos/${owner}/${name}/pulls`, { signal })
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data?.pulls)) {
-        return data.pulls
-      }
-    }
-
-    // Fallback to origin
-    const originRes = await fetch(`/v1/origin/repos/${owner}/${name}/pulls`, {
+    const res = await fetch(`/api/v1/repos/${owner}/${name}/pulls`, {
       signal,
       headers: getAuthHeader(),
     })
-    if (!originRes.ok) return []
-    const originData = await originRes.json()
+    if (!res.ok) return []
+    const originData = await res.json()
     const rawList = originData?.pullRequests || originData?.pulls || []
     if (!Array.isArray(rawList)) return []
     return rawList.map((p: any) => ({
@@ -895,19 +848,7 @@ export async function triggerAgentReview(owner: string, repo: string, prNumber: 
   }
 
   // Direct API first
-  try {
-    const res = await fetch(`/api/v1/repos/${owner}/${repo}/pulls/${prNumber}/reviews/agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (res.ok) {
-      return await res.json()
-    }
-  } catch {
-    // try origin fallback
-  }
-
-  const res = await fetch(`/v1/origin/repos/${owner}/${repo}/pulls/${prNumber}/reviews/agent`, {
+  const res = await fetch(`/api/v1/repos/${owner}/${repo}/pulls/${prNumber}/reviews/agent`, {
     method: 'POST',
     headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
   })
@@ -930,25 +871,7 @@ export async function mergePullRequest(
     return { mergeCommitSha: 'a1b2c3d4e5f67890demo' }
   }
 
-  // Direct API first
-  try {
-    const res = await fetch(`/api/v1/repos/${owner}/${repo}/pulls/${prNumber}/merge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mergeMethod: method,
-        commitTitle,
-        commitMessage,
-      }),
-    })
-    if (res.ok) {
-      return await res.json()
-    }
-  } catch {
-    // try origin fallback
-  }
-
-  const res = await fetch(`/v1/origin/repos/${owner}/${repo}/pulls/${prNumber}/merge`, {
+  const res = await fetch(`/api/v1/repos/${owner}/${repo}/pulls/${prNumber}/merge`, {
     method: 'POST',
     headers: { ...getAuthHeader(), 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -986,7 +909,7 @@ export async function searchRepoSymbols(
     if (ref) params.set('ref', ref)
     if (kind) params.set('kind', kind)
 
-    const res = await fetch(`/v1/origin/repos/${owner}/${repo}/symbols?${params.toString()}`, {
+    const res = await fetch(`/api/v1/repos/${owner}/${repo}/symbols?${params.toString()}`, {
       headers: getAuthHeader(),
     })
     if (!res.ok) return []

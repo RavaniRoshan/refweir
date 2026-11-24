@@ -80,6 +80,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     { id: 'webhooks', label: 'Webhooks', icon: Webhook, keywords: 'integrations ci delivery', run: go('webhooks') },
     { id: 'settings', label: 'Repository settings', icon: Settings, keywords: 'config admin', run: go('settings') },
     { id: 'admin', label: 'Admin console', icon: Server, keywords: 'cluster enterprise scim', run: go('admin') },
+    { id: 'docs', label: 'Documentation & Architecture', icon: BookOpen, keywords: 'docs manual guide api mcp architecture', run: go('docs') },
   ]
 
   const actions: PaletteItem[] = [

@@ -20,12 +20,12 @@ All components below are backed by automated unit, contract, and integration tes
 - Integrated token authentication and namespace/repository permission checks.
 
 ### 3. REST API surface
-- Origin-compatible REST routes mounted under `/v1/origin`.
+- Full REST routes mounted under `/api/v1`.
 - Conformance is checked with `refweir conformance` against a running daemon.
 - Full CRUD for namespaces, repositories, branches, commits, trees, blobs, diffs, and tags.
 - Pull request lifecycle: creation, updates, state transitions (`open`, `closed`, `merged`), auto-merge engine.
 - Collaboration features: line-level review threads, general comments, emoji reactions, and label management.
-- Dynamic OpenAPI 3.1 specification publication at `/v1/origin/openapi.yaml`.
+- Dynamic OpenAPI 3.1 specification publication at `/api/v1/openapi.yaml`.
 
 ### 4. Model Context Protocol (MCP) server
 - First-class JSON-RPC 2.0 MCP server mounted at `/mcp` and `/mcp/readonly`.

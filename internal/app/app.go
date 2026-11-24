@@ -38,6 +38,7 @@ import (
 	"refweir.dev/internal/security"
 	"refweir.dev/internal/sshserver"
 	"refweir.dev/internal/store"
+	"refweir.dev/internal/symbolsearch"
 	"refweir.dev/internal/telemetry"
 	"refweir.dev/internal/webui"
 	"refweir.dev/pkg/agentlease"
@@ -988,6 +989,62 @@ func Open(cfg config.Config) (*App, error) {
 			"path":     path,
 			"sha":      blobSHA,
 			"content":  base64.StdEncoding.EncodeToString(data),
+		})
+	})
+
+	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/symbols", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			writeAPIError(w, http.StatusNotFound, "Repository not found")
+			return
+		}
+		if repo.Visibility == "private" {
+			count, _ := db.CountUsers(r.Context())
+			if count > 0 {
+				caller, err := auth.ResolveUser(r.Context(), db, r)
+				if err != nil {
+					http.Error(w, "Unauthorized: Authentication required for private repository", http.StatusUnauthorized)
+					return
+				}
+				allowed, err := db.CheckRepoAccess(r.Context(), repo, caller.ID, false)
+				if err != nil || (!allowed && caller.Role != "admin") {
+					http.Error(w, "Repository not found", http.StatusNotFound)
+					return
+				}
+			}
+		}
+
+		query := r.URL.Query().Get("q")
+		ref := r.URL.Query().Get("ref")
+		if ref == "" {
+			if repo.DefaultBranch != "" {
+				ref = repo.DefaultBranch
+			} else {
+				ref = "main"
+			}
+		}
+		kind := r.URL.Query().Get("kind")
+		limit := 50
+		if lStr := r.URL.Query().Get("limit"); lStr != "" {
+			if l, err := strconv.Atoi(lStr); err == nil && l > 0 {
+				limit = l
+			}
+		}
+
+		symbols, err := symbolsearch.Search(r.Context(), git, owner, name, ref, query, kind, limit)
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "symbol search failed: "+err.Error())
+			return
+		}
+
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"symbols": symbols,
+			"ref":     ref,
+			"count":   len(symbols),
 		})
 	})
 

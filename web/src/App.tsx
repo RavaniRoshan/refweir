@@ -45,6 +45,9 @@ const ProductTour = lazy(() =>
 const UserManualModal = lazy(() =>
   import('@/components/views/UserManualModal').then((m) => ({ default: m.UserManualModal }))
 )
+const DocsView = lazy(() =>
+  import('@/components/views/docs/DocsView').then((m) => ({ default: m.DocsView }))
+)
 const RepoSettingsView = lazy(() =>
   import('@/components/views/RepoSettingsView').then((m) => ({ default: m.RepoSettingsView }))
 )
@@ -75,28 +78,32 @@ export const ViewFallback = () => (
   </div>
 )
 
+export type NavTab = 'home' | 'profile' | 'code' | 'issues' | 'prs' | 'commits' | 'releases' | 'agents' | 'rulesets' | 'webhooks' | 'admin' | 'settings' | 'docs'
+
 export interface AppProps {
-  initialTab?: 'home' | 'profile' | 'code' | 'issues' | 'prs' | 'commits' | 'releases' | 'agents' | 'rulesets' | 'webhooks' | 'admin' | 'settings'
+  initialTab?: NavTab
   initialShell?: boolean
 }
 
 export default function App({ initialTab, initialShell }: AppProps = {}) {
-  const [activeTab, setActiveTab] = useState<'home' | 'profile' | 'code' | 'issues' | 'prs' | 'commits' | 'releases' | 'agents' | 'rulesets' | 'webhooks' | 'admin' | 'settings'>(() => {
-    if (initialTab && ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings'].includes(initialTab)) {
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    const validTabs: NavTab[] = ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings', 'docs']
+    if (initialTab && validTabs.includes(initialTab)) {
       return initialTab
     }
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search)
-      const t = p.get('tab')
-      if (t && ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings'].includes(t)) {
-        return t as any
+      const t = p.get('tab') as NavTab
+      if (t && validTabs.includes(t)) {
+        return t
       }
     }
     return 'code'
   })
 
   useEffect(() => {
-    if (initialTab && ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings'].includes(initialTab)) {
+    const validTabs: NavTab[] = ['home', 'profile', 'code', 'issues', 'prs', 'commits', 'releases', 'agents', 'rulesets', 'webhooks', 'admin', 'settings', 'docs']
+    if (initialTab && validTabs.includes(initialTab)) {
       setActiveTab(initialTab)
     }
   }, [initialTab])
@@ -248,7 +255,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
           }
         }}
         onOpenTour={() => setTourOpen(true)}
-        onOpenManual={() => setManualOpen(true)}
+        onOpenManual={() => setActiveTab('docs')}
       />
 
       {/* Main Content Area */}
@@ -260,7 +267,7 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
             onSelectRepo={(repoSlug) => handleSelectRepo(repoSlug)}
             onSelectTab={(tab) => setActiveTab(tab as any)}
             onOpenTour={() => setTourOpen(true)}
-            onOpenManual={() => setManualOpen(true)}
+            onOpenManual={() => setActiveTab('docs')}
           />
         )}
 
@@ -393,10 +400,17 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
             </section>
           </div>
         )}
+
+        {/* 8. Documentation Center (GitHub Docs Architecture) */}
+        {activeTab === 'docs' && (
+          <Suspense fallback={<ViewFallback />}>
+            <DocsView onNavigateTab={(tab) => setActiveTab(tab as any)} />
+          </Suspense>
+        )}
         </ViewErrorBoundary>
       </main>
 
-      {/* GitHub Primer Footer */}
+      {/* Refweir Enterprise Footer */}
       <footer className="border-t border-border bg-card/60 py-5 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground font-mono">
           <div className="flex items-center gap-3">
@@ -419,21 +433,19 @@ export default function App({ initialTab, initialShell }: AppProps = {}) {
           </div>
 
           <div className="flex items-center gap-4">
-            <a
-              href="https://refweir.dev/docs"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-primary transition-colors hover:underline"
+            <button
+              onClick={() => setActiveTab('docs')}
+              className="hover:text-primary transition-colors hover:underline cursor-pointer"
             >
               Docs & Guide
-            </a>
+            </button>
             <a
-              href="https://github.com/RavaniRoshan/refweir"
+              href="https://refweir.dev"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors hover:underline"
             >
-              Source Code
+              refweir.dev
             </a>
             <span className="text-border">|</span>
             <span className="text-foreground font-semibold">

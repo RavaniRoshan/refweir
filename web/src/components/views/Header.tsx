@@ -60,7 +60,7 @@ export interface HeaderProps {
 }
 
 /**
- * GitHub Primer Repository Header.
+ * Refweir Repository Header.
  * Top bar (56px) + Repository Title Breadcrumb & Actions + UnderlineNav bar.
  */
 export const Header: React.FC<HeaderProps> = ({
@@ -291,17 +291,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {onOpenManual && (
-                <button
-                  onClick={onOpenManual}
-                  className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
-                  title="In-App System Manual & Architecture Map"
-                >
-                  <BookOpen className="w-4 h-4 text-primary" />
-                </button>
-              )}
+              {/* Documentation */}
+              <button
+                onClick={() => onTabChange('docs')}
+                className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-secondary/60 transition-colors cursor-pointer"
+                title="Documentation & Architecture Guides"
+              >
+                <BookOpen className="w-4 h-4 text-primary" />
+              </button>
 
-              {/* GitHub Link */}
+              {/* Source Repository Link */}
               <a
                 href="https://github.com/RavaniRoshan/refweir"
                 target="_blank"
@@ -395,18 +394,16 @@ export const Header: React.FC<HeaderProps> = ({
                           <span>Product Tour</span>
                         </button>
                       )}
-                      {onOpenManual && (
-                        <button
-                          onClick={() => {
-                            setUserMenuOpen(false)
-                            onOpenManual()
-                          }}
-                          className="w-full text-left px-3 py-1.5 hover:bg-secondary/70 text-foreground transition-colors cursor-pointer flex items-center gap-2"
-                        >
-                          <BookOpen className="w-3.5 h-3.5 text-primary" />
-                          <span>User Manual</span>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false)
+                          onTabChange('docs')
+                        }}
+                        className="w-full text-left px-3 py-1.5 hover:bg-secondary/70 text-foreground transition-colors cursor-pointer flex items-center gap-2"
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-primary" />
+                        <span>Documentation</span>
+                      </button>
                       <div className="border-t border-border my-1" />
                       <button
                         onClick={handleLogout}
