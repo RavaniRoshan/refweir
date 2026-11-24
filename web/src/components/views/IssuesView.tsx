@@ -10,6 +10,8 @@ import {
   Sparkles,
   Send,
   GitPullRequest,
+  AlertCircle,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge, StateLabel } from '@/components/ui/Badge'
@@ -48,10 +50,12 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
   const [newBody, setNewBody] = useState('')
   const [newLabels, setNewLabels] = useState<string[]>(['enhancement'])
   const [isSubmittingNew, setIsSubmittingNew] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   // Comment Thread
   const [newCommentBody, setNewCommentBody] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [commentError, setCommentError] = useState<string | null>(null)
   const [isDelegating, setIsDelegating] = useState(false)
 
   useEffect(() => {
@@ -95,6 +99,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
     if (!newTitle.trim()) return
 
     setIsSubmittingNew(true)
+    setCreateError(null)
     try {
       const created = await createIssue(owner, repoName, newTitle.trim(), newBody.trim(), newLabels)
       setIssues((prev) => [created, ...prev])
@@ -104,6 +109,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
       setSelectedIssue(created)
     } catch (err: any) {
       console.error('Failed to create issue', err)
+      setCreateError(err.message || 'Failed to create issue. Please verify network and try again.')
     } finally {
       setIsSubmittingNew(false)
     }
@@ -114,6 +120,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
     if (!selectedIssue || !newCommentBody.trim()) return
 
     setIsSubmittingComment(true)
+    setCommentError(null)
     try {
       const comment = await addIssueComment(owner, repoName, selectedIssue.number, newCommentBody.trim())
       const updatedIssue = {
@@ -125,6 +132,7 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
       setNewCommentBody('')
     } catch (err: any) {
       console.error('Failed to add comment', err)
+      setCommentError(err.message || 'Failed to add comment. Your draft has been preserved.')
     } finally {
       setIsSubmittingComment(false)
     }
@@ -317,6 +325,12 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                     <span>Add a comment</span>
                   </BoxHeader>
                   <BoxBody className="p-4 space-y-3">
+                    {commentError && (
+                      <div className="p-2.5 rounded text-xs bg-destructive/10 border border-destructive/20 text-destructive flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{commentError}</span>
+                      </div>
+                    )}
                     <textarea
                       placeholder="Leave a comment or markdown notes..."
                       value={newCommentBody}
@@ -413,12 +427,26 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                 placeholder="is:issue is:open "
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md bg-input border border-border text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+                className="w-full pl-9 pr-8 py-1.5 text-xs rounded-md bg-input border border-border text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                  title="Clear search"
+                  aria-label="Clear search input"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <Button
-              onClick={() => setIsNewIssueModalOpen(true)}
+              onClick={() => {
+                setCreateError(null)
+                setIsNewIssueModalOpen(true)
+              }}
               size="sm"
               className="gap-1.5 shrink-0 w-full sm:w-auto"
             >
@@ -472,9 +500,20 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
                   Loading issues...
                 </div>
               ) : filteredIssues.length === 0 ? (
-                <div className="py-12 text-center text-xs text-muted-foreground space-y-2">
+                <div className="py-12 text-center text-xs text-muted-foreground space-y-3">
                   <CircleDot className="w-8 h-8 text-muted-foreground mx-auto stroke-1" />
-                  <div>No issues match your current query.</div>
+                  <div>{searchQuery ? 'No issues match your current search query.' : 'No issues match your current filter.'}</div>
+                  {searchQuery && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="text-xs gap-1.5 mx-auto"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>Clear search query</span>
+                    </Button>
+                  )}
                 </div>
               ) : (
                 filteredIssues.map((issue) => (
@@ -556,6 +595,12 @@ export const IssuesView: React.FC<IssuesViewProps> = ({ repo, onSelectPullReques
         description="File a bug report, request a feature, or assign a task to an autonomous agent."
       >
         <form onSubmit={handleCreateNewIssue} className="space-y-4 pt-1">
+          {createError && (
+            <div className="p-2.5 rounded text-xs bg-destructive/10 border border-destructive/20 text-destructive flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{createError}</span>
+            </div>
+          )}
           <div className="space-y-3 text-xs">
             <div>
               <label className="block font-medium text-foreground mb-1">Title</label>

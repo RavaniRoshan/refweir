@@ -194,4 +194,50 @@ describe('IssuesView', () => {
       expect(screen.getByText('New Test Issue')).toBeInTheDocument()
     })
   })
+
+  it('allows searching issues and clearing the query via clear button', async () => {
+    render(<IssuesView />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Support WebAuthn credentials')).toBeInTheDocument()
+    })
+
+    const searchInput = screen.getByPlaceholderText(/is:issue/i)
+    fireEvent.change(searchInput, { target: { value: 'nonexistent-query-123' } })
+
+    expect(screen.getByText('No issues match your current search query.')).toBeInTheDocument()
+
+    // Click clear search query button
+    const clearBtn = screen.getByRole('button', { name: 'Clear search query' })
+    fireEvent.click(clearBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('Support WebAuthn credentials')).toBeInTheDocument()
+    })
+  })
+
+  it('displays error banner when issue creation fails', async () => {
+    vi.mocked(api.createIssue).mockRejectedValueOnce(new Error('Network timeout creating issue'))
+    render(<IssuesView />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Support WebAuthn credentials')).toBeInTheDocument()
+    })
+
+    const newIssueBtn = screen.getByRole('button', { name: /new issue/i })
+    fireEvent.click(newIssueBtn)
+
+    const titleInput = screen.getByPlaceholderText('Title')
+    const descInput = screen.getByPlaceholderText(/describe the steps/i)
+
+    fireEvent.change(titleInput, { target: { value: 'Failing Issue' } })
+    fireEvent.change(descInput, { target: { value: 'Will fail' } })
+
+    const submitBtn = screen.getByRole('button', { name: /submit new issue/i })
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('Network timeout creating issue')).toBeInTheDocument()
+    })
+  })
 })
