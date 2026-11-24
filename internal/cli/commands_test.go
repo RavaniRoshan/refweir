@@ -523,3 +523,166 @@ func TestCLI_WebhookCommands(t *testing.T) {
 		t.Errorf("expected delete confirmation in stdout: %s", stdout.String())
 	}
 }
+
+func TestCLI_Doctor(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/healthz":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"status": "ok"}`))
+		case "/api/v1/admin/health":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"serverStatus": "healthy",
+				"version": "refweird 1.0.0",
+				"uptime": "120s",
+				"goroutines": 15,
+				"sqliteWalSizeBytes": 65536,
+				"allocatedMemoryMb": "8.5"
+			}`))
+		case "/api/v1/auth/session":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{
+				"user": {
+					"id": "usr_001",
+					"login": "alice",
+					"role": "admin"
+				}
+			}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "test_tok_admin",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. Text report
+	if err := c.Run([]string{"doctor"}); err != nil {
+		t.Fatalf("doctor: %v", err)
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "Refweir Diagnostic Report") {
+		t.Errorf("expected title in report, got: %s", out)
+	}
+	if !strings.Contains(out, "Daemon Connectivity") || !strings.Contains(out, "alice") {
+		t.Errorf("expected connectivity and user alice in report: %s", out)
+	}
+
+	// 2. JSON report
+	stdout.Reset()
+	if err := c.Run([]string{"doctor", "--json"}); err != nil {
+		t.Fatalf("doctor --json: %v", err)
+	}
+	var docReport map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &docReport); err != nil {
+		t.Fatalf("failed to parse doctor JSON output: %v, raw: %s", err, stdout.String())
+	}
+	if docReport["healthy"] != true {
+		t.Errorf("expected healthy=true, got %+v", docReport)
+	}
+}
+
+func TestCLI_Completion(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	// 1. bash
+	if err := c.Run([]string{"completion", "bash"}); err != nil {
+		t.Fatalf("completion bash: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "complete -F _refweir_completion refweir") {
+		t.Errorf("expected bash completion script, got: %s", stdout.String())
+	}
+
+	// 2. zsh
+	stdout.Reset()
+	if err := c.Run([]string{"completion", "zsh"}); err != nil {
+		t.Fatalf("completion zsh: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "#compdef refweir") {
+		t.Errorf("expected zsh completion script, got: %s", stdout.String())
+	}
+
+	// 3. fish
+	stdout.Reset()
+	if err := c.Run([]string{"completion", "fish"}); err != nil {
+		t.Fatalf("completion fish: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "complete -c refweir") {
+		t.Errorf("expected fish completion script, got: %s", stdout.String())
+	}
+
+	// 4. unsupported shell
+	if err := c.Run([]string{"completion", "powershell"}); err == nil {
+		t.Fatalf("expected error for unsupported shell, got nil")
+	}
+}
+
+func TestCLI_Audit(t *testing.T) {
+	var requestedPath string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPath = r.URL.RequestURI()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"events": [
+				{
+					"id": "aud_01",
+					"actor": "alice",
+					"action": "agent.lease_issued",
+					"resource": "acme/rocket",
+					"severity": "info",
+					"timestamp": "2026-11-24T06:00:00Z",
+					"details": "Capability lease issued"
+				}
+			]
+		}`))
+	}))
+	defer ts.Close()
+
+	var stdout, stderr bytes.Buffer
+	c := &CLI{
+		Endpoint:   ts.URL,
+		Token:      "test_tok_admin",
+		HTTPClient: ts.Client(),
+		Stdout:     &stdout,
+		Stderr:     &stderr,
+	}
+
+	// 1. audit list formatted
+	if err := c.Run([]string{"audit", "list", "--actor", "alice", "--action", "agent.lease_issued", "--limit", "10"}); err != nil {
+		t.Fatalf("audit list: %v", err)
+	}
+	if !strings.Contains(requestedPath, "actor=alice") || !strings.Contains(requestedPath, "action=agent.lease_issued") {
+		t.Errorf("expected query params in requested path, got: %s", requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "aud_01") || !strings.Contains(stdout.String(), "agent.lease_issued") {
+		t.Errorf("expected aud_01 in stdout: %s", stdout.String())
+	}
+
+	// 2. audit list json
+	stdout.Reset()
+	if err := c.Run([]string{"audit", "list", "--json"}); err != nil {
+		t.Fatalf("audit list --json: %v", err)
+	}
+	var auditResp map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &auditResp); err != nil {
+		t.Fatalf("failed to parse audit json: %v", err)
+	}
+	events, ok := auditResp["events"].([]any)
+	if !ok || len(events) != 1 {
+		t.Errorf("expected 1 audit event, got: %+v", auditResp)
+	}
+}

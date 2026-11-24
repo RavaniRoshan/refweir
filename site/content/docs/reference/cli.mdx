@@ -159,11 +159,53 @@ Issue and revoke cryptographically signed agent capability leases for automated 
 
 ```bash
 # Issue an HMAC-SHA256 capability lease
-refweir lease issue --agent agent:cursor -R acme/rocket --prefix refs/heads/agent/* --ttl 30m
+refweir lease issue --agent agent:worker-1 -R acme/rocket --prefix refs/heads/agent/* --ttl 30m
 
 # Issue lease with raw JSON response for script automation
 refweir lease issue --agent agent:claude -R acme/rocket --ttl 1h --json
 
 # Revoke an active capability lease immediately
 refweir lease revoke lease_cli_123 --reason "operator manual revocation"
+```
+
+### 9. `refweir doctor`
+
+Diagnose daemon connectivity, authentication status, and local environment prerequisites (`git`, `ssh`).
+
+```bash
+# Run comprehensive diagnostic check with formatted terminal output
+refweir doctor
+
+# Output diagnostic results as JSON for CI/CD or automated scripts
+refweir doctor --json
+```
+
+### 10. `refweir completion`
+
+Generate shell autocompletion scripts for `bash`, `zsh`, or `fish`.
+
+```bash
+# Bash completion (add to ~/.bashrc or source directly)
+source <(refweir completion bash)
+
+# Zsh completion (save to a directory in your $fpath)
+refweir completion zsh > ~/.zsh/completion/_refweir
+
+# Fish completion
+refweir completion fish > ~/.config/fish/completions/refweir.fish
+```
+
+### 11. `refweir audit`
+
+Inspect and filter the administrative audit trail directly from the terminal.
+
+```bash
+# List recent audit events (default limit: 30)
+refweir audit list
+
+# Filter audit events by actor and action
+refweir audit list --actor alice --action agent.lease_issued --limit 50
+
+# Output audit trail as JSON
+refweir audit list --json
 ```

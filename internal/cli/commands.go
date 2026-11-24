@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -77,6 +78,12 @@ func (c *CLI) Run(args []string) error {
 		return c.runLease(args[1:])
 	case "app":
 		return c.runApp(args[1:])
+	case "doctor":
+		return c.runDoctor(args[1:])
+	case "completion":
+		return c.runCompletion(args[1:])
+	case "audit":
+		return c.runAudit(args[1:])
 	case "api":
 		return c.runAPI(args[1:])
 	case "conformance":
@@ -97,6 +104,9 @@ Commands:
   refweir webhook            Manage webhooks (list, create, delete, ping, deliveries, redeliver)
   refweir lease              Manage agent capability leases (issue, revoke)
   refweir app                Manage apps
+  refweir doctor             Diagnose daemon connectivity, auth, and local environment
+  refweir completion <shell> Generate shell autocompletion script (bash, zsh, fish)
+  refweir audit              Inspect administrative audit trail (list)
   refweir api <endpoint>     Make an authenticated request to REST API
   refweir conformance        Run API conformance test suite against refweird
 
@@ -1303,4 +1313,349 @@ func reorderFlags(args []string) []string {
 		}
 	}
 	return append(flags, pos...)
+}
+
+type doctorCheck struct {
+	Name    string `json:"name"`
+	Status  string `json:"status"` // "pass", "warn", "fail"
+	Message string `json:"message"`
+	Details string `json:"details,omitempty"`
+}
+
+func (c *CLI) runDoctor(args []string) error {
+	fs := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	fs.SetOutput(c.Stderr)
+	jsonOut := fs.Bool("json", false, "Output report in JSON format")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	var checks []doctorCheck
+	allHealthy := true
+
+	// 1. Daemon Connectivity & Health
+	connCheck := doctorCheck{Name: "Daemon Connectivity"}
+	healthPath := "/api/v1/admin/health"
+	data, code, err := c.doRequest(http.MethodGet, healthPath, nil)
+	if err != nil || code != http.StatusOK {
+		data, code, err = c.doRequest(http.MethodGet, "/healthz", nil)
+	}
+
+	if err != nil {
+		connCheck.Status = "fail"
+		connCheck.Message = fmt.Sprintf("Failed to reach daemon at %s: %v", c.Endpoint, err)
+		allHealthy = false
+	} else if code >= 400 {
+		connCheck.Status = "fail"
+		connCheck.Message = fmt.Sprintf("Daemon responded with HTTP %d at %s", code, c.Endpoint)
+		allHealthy = false
+	} else {
+		connCheck.Status = "pass"
+		connCheck.Message = fmt.Sprintf("Connected to Refweir daemon at %s (HTTP %d)", c.Endpoint, code)
+		var hInfo struct {
+			ServerStatus       string `json:"serverStatus"`
+			Version            string `json:"version"`
+			Uptime             string `json:"uptime"`
+			Goroutines         int    `json:"goroutines"`
+			SqliteWalSizeBytes int64  `json:"sqliteWalSizeBytes"`
+			AllocatedMemoryMb  string `json:"allocatedMemoryMb"`
+		}
+		if err := json.Unmarshal(data, &hInfo); err == nil && hInfo.Version != "" {
+			connCheck.Details = fmt.Sprintf("version=%s, uptime=%s, goroutines=%d, wal=%dKB, memory=%sMB",
+				hInfo.Version, hInfo.Uptime, hInfo.Goroutines, hInfo.SqliteWalSizeBytes/1024, hInfo.AllocatedMemoryMb)
+		}
+	}
+	checks = append(checks, connCheck)
+
+	// 2. Authentication
+	authCheck := doctorCheck{Name: "Authentication"}
+	if c.Token == "" {
+		authCheck.Status = "warn"
+		authCheck.Message = "No REFWEIR_TOKEN configured (anonymous access only)"
+	} else {
+		sessData, sessCode, sessErr := c.doRequest(http.MethodGet, "/api/v1/auth/session", nil)
+		if sessErr == nil && sessCode == http.StatusOK {
+			var sess struct {
+				User struct {
+					ID    string `json:"id"`
+					Login string `json:"login"`
+					Role  string `json:"role"`
+				} `json:"user"`
+			}
+			if err := json.Unmarshal(sessData, &sess); err == nil && sess.User.Login != "" {
+				authCheck.Status = "pass"
+				authCheck.Message = fmt.Sprintf("Authenticated as %s (role: %s)", sess.User.Login, sess.User.Role)
+			} else {
+				authCheck.Status = "pass"
+				authCheck.Message = "Authenticated with active token"
+			}
+		} else {
+			authCheck.Status = "warn"
+			authCheck.Message = fmt.Sprintf("Token present but session verification returned HTTP %d", sessCode)
+		}
+	}
+	checks = append(checks, authCheck)
+
+	// 3. Local Git
+	gitCheck := doctorCheck{Name: "Local Git"}
+	if gitOut, gitErr := exec.Command("git", "version").Output(); gitErr != nil {
+		gitCheck.Status = "fail"
+		gitCheck.Message = "git binary not found in PATH"
+		allHealthy = false
+	} else {
+		gitCheck.Status = "pass"
+		gitCheck.Message = strings.TrimSpace(string(gitOut))
+	}
+	checks = append(checks, gitCheck)
+
+	// 4. Local SSH
+	sshCheck := doctorCheck{Name: "Local SSH"}
+	if sshOut, sshErr := exec.Command("ssh", "-V").CombinedOutput(); sshErr != nil && len(sshOut) == 0 {
+		sshCheck.Status = "warn"
+		sshCheck.Message = "ssh client not found in PATH"
+	} else {
+		sshCheck.Status = "pass"
+		sshCheck.Message = strings.TrimSpace(string(sshOut))
+	}
+	checks = append(checks, sshCheck)
+
+	if *jsonOut {
+		report := map[string]any{
+			"healthy":  allHealthy,
+			"endpoint": c.Endpoint,
+			"checks":   checks,
+		}
+		enc := json.NewEncoder(c.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(report)
+	}
+
+	fmt.Fprintln(c.Stdout, "======================================================")
+	fmt.Fprintln(c.Stdout, "              Refweir Diagnostic Report               ")
+	fmt.Fprintln(c.Stdout, "======================================================")
+	fmt.Fprintf(c.Stdout, "Endpoint: %s\n\n", c.Endpoint)
+
+	for _, chk := range checks {
+		symbol := "[✓]"
+		if chk.Status == "warn" {
+			symbol = "[!]"
+		} else if chk.Status == "fail" {
+			symbol = "[✗]"
+		}
+		fmt.Fprintf(c.Stdout, "%s %s: %s\n", symbol, chk.Name, chk.Message)
+		if chk.Details != "" {
+			fmt.Fprintf(c.Stdout, "    Details: %s\n", chk.Details)
+		}
+	}
+	fmt.Fprintln(c.Stdout, "")
+	if allHealthy {
+		fmt.Fprintln(c.Stdout, "Result: All systems operational.")
+	} else {
+		fmt.Fprintln(c.Stdout, "Result: Diagnostic detected warnings or failures.")
+	}
+	fmt.Fprintln(c.Stdout, "======================================================")
+	return nil
+}
+
+func (c *CLI) runCompletion(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("shell required. Usage: refweir completion <bash|zsh|fish>")
+	}
+	shell := strings.ToLower(args[0])
+	switch shell {
+	case "bash":
+		return c.printBashCompletion()
+	case "zsh":
+		return c.printZshCompletion()
+	case "fish":
+		return c.printFishCompletion()
+	default:
+		return fmt.Errorf("unsupported shell %q. Supported shells: bash, zsh, fish", shell)
+	}
+}
+
+func (c *CLI) printBashCompletion() error {
+	script := `# bash completion for refweir
+_refweir_completion() {
+    local cur prev words cword
+    _init_completion || return
+
+    local commands="auth repo pr issue webhook lease app doctor completion audit api conformance --version --help"
+
+    if [ $cword -eq 1 ]; then
+        COMPREPLY=( $(compgen -W "${commands}" -- "$cur") )
+        return 0
+    fi
+
+    case "${words[1]}" in
+        repo)
+            COMPREPLY=( $(compgen -W "list view get create mirror" -- "$cur") )
+            ;;
+        pr)
+            COMPREPLY=( $(compgen -W "list view create close" -- "$cur") )
+            ;;
+        issue)
+            COMPREPLY=( $(compgen -W "list view create close comment" -- "$cur") )
+            ;;
+        webhook)
+            COMPREPLY=( $(compgen -W "list create delete ping deliveries redeliver" -- "$cur") )
+            ;;
+        lease)
+            COMPREPLY=( $(compgen -W "issue revoke" -- "$cur") )
+            ;;
+        completion)
+            COMPREPLY=( $(compgen -W "bash zsh fish" -- "$cur") )
+            ;;
+        audit)
+            COMPREPLY=( $(compgen -W "list" -- "$cur") )
+            ;;
+        doctor)
+            COMPREPLY=( $(compgen -W "--json" -- "$cur") )
+            ;;
+    esac
+}
+complete -F _refweir_completion refweir
+`
+	fmt.Fprint(c.Stdout, script)
+	return nil
+}
+
+func (c *CLI) printZshCompletion() error {
+	script := `#compdef refweir
+
+_refweir() {
+    local -a commands
+    commands=(
+        'auth:Manage authentication'
+        'repo:Manage repositories'
+        'pr:Manage pull requests'
+        'issue:Manage issues'
+        'webhook:Manage webhooks'
+        'lease:Manage agent capability leases'
+        'app:Manage apps'
+        'doctor:Diagnose daemon connectivity and environment'
+        'completion:Generate shell completion script'
+        'audit:Inspect administrative audit trail'
+        'api:Make authenticated request to REST API'
+        'conformance:Run API conformance test suite'
+    )
+
+    _arguments -C \
+        '--version[Show version number]' \
+        '--help[Show help]' \
+        '1: :->command' \
+        '*:: :->args'
+
+    case $state in
+        command)
+            _describe -t commands 'refweir command' commands
+            ;;
+    esac
+}
+
+_refweir "$@"
+`
+	fmt.Fprint(c.Stdout, script)
+	return nil
+}
+
+func (c *CLI) printFishCompletion() error {
+	script := `# fish completion for refweir
+complete -c refweir -f
+complete -c refweir -n "__fish_use_subcommand" -a "auth" -d "Manage authentication"
+complete -c refweir -n "__fish_use_subcommand" -a "repo" -d "Manage repositories"
+complete -c refweir -n "__fish_use_subcommand" -a "pr" -d "Manage pull requests"
+complete -c refweir -n "__fish_use_subcommand" -a "issue" -d "Manage issues"
+complete -c refweir -n "__fish_use_subcommand" -a "webhook" -d "Manage webhooks"
+complete -c refweir -n "__fish_use_subcommand" -a "lease" -d "Manage agent capability leases"
+complete -c refweir -n "__fish_use_subcommand" -a "app" -d "Manage apps"
+complete -c refweir -n "__fish_use_subcommand" -a "doctor" -d "Diagnose daemon connectivity and environment"
+complete -c refweir -n "__fish_use_subcommand" -a "completion" -d "Generate shell completion script"
+complete -c refweir -n "__fish_use_subcommand" -a "audit" -d "Inspect administrative audit trail"
+complete -c refweir -n "__fish_use_subcommand" -a "api" -d "Make authenticated REST request"
+complete -c refweir -n "__fish_use_subcommand" -a "conformance" -d "Run API conformance suite"
+`
+	fmt.Fprint(c.Stdout, script)
+	return nil
+}
+
+func (c *CLI) runAudit(args []string) error {
+	if len(args) == 0 {
+		args = []string{"list"}
+	}
+	sub := args[0]
+	subArgs := args[1:]
+	if strings.HasPrefix(sub, "-") {
+		sub = "list"
+		subArgs = args
+	}
+
+	switch sub {
+	case "list":
+		fs := flag.NewFlagSet("audit list", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		actor := fs.String("actor", "", "Filter by actor identifier")
+		action := fs.String("action", "", "Filter by action name")
+		limit := fs.Int("limit", 30, "Maximum number of events to return")
+		jsonOut := fs.Bool("json", false, "Output events in JSON format")
+
+		if err := fs.Parse(reorderFlags(subArgs)); err != nil {
+			return err
+		}
+
+		path := fmt.Sprintf("/api/v1/admin/audit-logs?limit=%d", *limit)
+		if *actor != "" {
+			path += "&actor=" + *actor
+		}
+		if *action != "" {
+			path += "&action=" + *action
+		}
+
+		data, code, err := c.doRequest(http.MethodGet, path, nil)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+
+		if *jsonOut {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		var resp struct {
+			Events []struct {
+				ID        string `json:"id"`
+				Timestamp string `json:"timestamp"`
+				Actor     string `json:"actor"`
+				Action    string `json:"action"`
+				Resource  string `json:"resource"`
+				Severity  string `json:"severity"`
+				Details   string `json:"details"`
+			} `json:"events"`
+		}
+		if err := json.Unmarshal(data, &resp); err != nil {
+			fmt.Fprintln(c.Stdout, string(data))
+			return nil
+		}
+
+		if len(resp.Events) == 0 {
+			fmt.Fprintln(c.Stdout, "No audit events found.")
+			return nil
+		}
+
+		fmt.Fprintf(c.Stdout, "%-16s %-20s %-16s %-24s %-20s %s\n", "ID", "TIME", "ACTOR", "ACTION", "RESOURCE", "SEVERITY")
+		for _, e := range resp.Events {
+			tStr := e.Timestamp
+			if len(tStr) > 19 {
+				tStr = tStr[:19]
+			}
+			fmt.Fprintf(c.Stdout, "%-16s %-20s %-16s %-24s %-20s %s\n", e.ID, tStr, e.Actor, e.Action, e.Resource, e.Severity)
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("unknown audit subcommand %q. Run 'refweir audit list' for usage", sub)
+	}
 }
