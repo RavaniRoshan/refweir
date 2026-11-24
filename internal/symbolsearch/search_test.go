@@ -148,7 +148,7 @@ func TestSymbolSearch_Tree(t *testing.T) {
 		t.Fatalf("gitstore.New: %v", err)
 	}
 
-	owner, repo := "origin", "forge"
+	owner, repo := "refweir", "forge"
 	if _, err := gs.Init(owner, repo, "main"); err != nil {
 		t.Fatalf("gs.Init: %v", err)
 	}
@@ -158,12 +158,12 @@ func TestSymbolSearch_Tree(t *testing.T) {
 			Path: "server/server.go",
 			Content: `package server
 
-type OriginServer struct {
+type ForgeServer struct {
 	Addr string
 }
 
-func NewServer(addr string) *OriginServer {
-	return &OriginServer{Addr: addr}
+func NewServer(addr string) *ForgeServer {
+	return &ForgeServer{Addr: addr}
 }
 `,
 		},
@@ -201,3 +201,48 @@ export function connect(): ForgeClient {
 		t.Fatalf("expected 1 class result 'ForgeClient', got %+v", classResults)
 	}
 }
+
+func TestSymbolSearch_SkipVendorAndLargeFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	gs, err := gitstore.New(tmpDir)
+	if err != nil {
+		t.Fatalf("gitstore.New: %v", err)
+	}
+	ctx := context.Background()
+
+	owner, repo := "refweir", "speedy"
+	if _, err := gs.Init(owner, repo, "main"); err != nil {
+		t.Fatalf("gs.Init: %v", err)
+	}
+
+	c1, err := gs.WriteFiles(owner, repo, "main", []gitstore.FileChange{
+		{
+			Path:    "src/app.go",
+			Content: "package src\nfunc AppCoreFunc() {}\n",
+		},
+		{
+			Path:    "vendor/thirdparty/lib.go",
+			Content: "package thirdparty\nfunc VendorFunc() {}\n",
+		},
+		{
+			Path:    "node_modules/pkg/index.js",
+			Content: "function NodeFunc() {}\n",
+		},
+		{
+			Path:    "dist/bundle.min.js",
+			Content: "function MinifiedFunc() {}\n",
+		},
+	}, author(), "commit with vendor")
+	if err != nil {
+		t.Fatalf("commit: %v", err)
+	}
+
+	results, err := Search(ctx, gs, owner, repo, c1.String(), "Func", "", 10)
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if len(results) != 1 || results[0].Name != "AppCoreFunc" {
+		t.Fatalf("expected exactly 1 result 'AppCoreFunc', got %d: %+v", len(results), results)
+	}
+}
+

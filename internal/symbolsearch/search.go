@@ -257,6 +257,26 @@ func ExtractPythonSymbols(filePath string, src []byte) []Symbol {
 	return symbols
 }
 
+// shouldSkipSymbolExtraction filters out vendor trees, dependencies, generated bundles,
+// and large files exceeding 1MB to keep indexing fast and memory-efficient.
+func shouldSkipSymbolExtraction(path string, size int64) bool {
+	if size > 1024*1024 { // Skip files larger than 1MB
+		return true
+	}
+	clean := filepath.ToSlash(path)
+	if strings.HasPrefix(clean, "vendor/") || strings.Contains(clean, "/vendor/") ||
+		strings.HasPrefix(clean, "node_modules/") || strings.Contains(clean, "/node_modules/") ||
+		strings.HasPrefix(clean, "dist/") || strings.Contains(clean, "/dist/") ||
+		strings.HasPrefix(clean, "build/") || strings.Contains(clean, "/build/") ||
+		strings.HasPrefix(clean, ".git/") || strings.Contains(clean, "/.git/") {
+		return true
+	}
+	if strings.HasSuffix(clean, ".min.js") || strings.HasSuffix(clean, ".bundle.js") {
+		return true
+	}
+	return false
+}
+
 // Search searches code symbols across the repository tree matching the query and kind filter.
 func Search(ctx context.Context, gs *gitstore.Store, ownerSlug, repoName, ref, query, kindFilter string, limit int) ([]Symbol, error) {
 	if limit <= 0 {
@@ -281,6 +301,9 @@ func Search(ctx context.Context, gs *gitstore.Store, ownerSlug, repoName, ref, q
 
 	for _, entry := range entries {
 		if entry.Type != "blob" {
+			continue
+		}
+		if shouldSkipSymbolExtraction(entry.Path, entry.Size) {
 			continue
 		}
 

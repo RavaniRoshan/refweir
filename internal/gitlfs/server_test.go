@@ -248,3 +248,51 @@ func TestGitLFSLocksVerifyAndOwnershipEnforcement(t *testing.T) {
 		t.Fatalf("own unlock status = %d, want 200", recUnlockOwn.Code)
 	}
 }
+
+func TestGitLFS_InvalidOIDRejection(t *testing.T) {
+	dataDir := t.TempDir()
+	db, err := store.Open(filepath.Join(dataDir, "meta.db"))
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	defer db.Close()
+
+	lfsStorage := filepath.Join(dataDir, "lfs")
+	lfsServer := New(db, lfsStorage, "http://localhost:8080")
+
+	// 1. Path traversal upload attempt
+	traversalOID := "../../../../../../../../../../../../../../../../tmp/evil_file_1234"
+	putReq := httptest.NewRequest(http.MethodPut, "/acme/models.git/info/lfs/objects/"+traversalOID, strings.NewReader("bad payload"))
+	putRec := httptest.NewRecorder()
+	lfsServer.HandleLFS(putRec, putReq, "acme", "models", "objects/"+traversalOID, "user1")
+	if putRec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for path traversal upload, got %d", putRec.Code)
+	}
+
+	// 2. Non-hex characters upload attempt
+	nonHexOID := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789zzzzzz"
+	putReq2 := httptest.NewRequest(http.MethodPut, "/acme/models.git/info/lfs/objects/"+nonHexOID, strings.NewReader("bad payload"))
+	putRec2 := httptest.NewRecorder()
+	lfsServer.HandleLFS(putRec2, putReq2, "acme", "models", "objects/"+nonHexOID, "user1")
+	if putRec2.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for non-hex upload, got %d", putRec2.Code)
+	}
+
+	// 3. Download with invalid OID
+	dlReq := httptest.NewRequest(http.MethodGet, "/acme/models.git/info/lfs/objects/"+traversalOID, nil)
+	dlRec := httptest.NewRecorder()
+	lfsServer.HandleLFS(dlRec, dlReq, "acme", "models", "objects/"+traversalOID, "user1")
+	if dlRec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid download OID, got %d", dlRec.Code)
+	}
+
+	// 4. Verify with invalid OID
+	verifyBody, _ := json.Marshal(VerifyRequest{OID: traversalOID, Size: 100})
+	vReq := httptest.NewRequest(http.MethodPost, "/acme/models.git/info/lfs/objects/verify", bytes.NewReader(verifyBody))
+	vRec := httptest.NewRecorder()
+	lfsServer.HandleLFS(vRec, vReq, "acme", "models", "objects/verify", "user1")
+	if vRec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid verify OID, got %d", vRec.Code)
+	}
+}
+

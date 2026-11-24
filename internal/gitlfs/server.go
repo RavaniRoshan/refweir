@@ -10,12 +10,19 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"refweir.dev/internal/store"
 	"refweir.dev/pkg/idgen"
 )
+
+var hex64Regex = regexp.MustCompile(`^[0-9a-fA-F]{64}$`)
+
+func isValidOID(oid string) bool {
+	return hex64Regex.MatchString(oid)
+}
 
 const (
 	LFSMediaType = "application/vnd.git-lfs+json"
@@ -138,6 +145,15 @@ func (s *Server) handleBatch(w http.ResponseWriter, r *http.Request, ownerSlug, 
 			Authenticated: true,
 		}
 
+		if !isValidOID(obj.OID) {
+			objResp.Error = &BatchError{
+				Code:    http.StatusBadRequest,
+				Message: "Invalid OID format",
+			}
+			resp.Objects = append(resp.Objects, objResp)
+			continue
+		}
+
 		exists, err := s.store.HasLFSObject(ctx, obj.OID)
 		if err != nil {
 			http.Error(w, "internal database error", http.StatusInternalServerError)
@@ -181,10 +197,11 @@ func (s *Server) handleBatch(w http.ResponseWriter, r *http.Request, ownerSlug, 
 }
 
 func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request, oid string) {
-	if len(oid) != 64 {
+	if !isValidOID(oid) {
 		http.Error(w, "invalid oid format", http.StatusBadRequest)
 		return
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 5*1024*1024*1024)
 
 	tmpDir := filepath.Join(s.storageDir, "tmp")
 	_ = os.MkdirAll(tmpDir, 0750)
@@ -244,6 +261,10 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request, oid string
 }
 
 func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request, oid string) {
+	if !isValidOID(oid) {
+		http.Error(w, "invalid oid format", http.StatusBadRequest)
+		return
+	}
 	ctx := r.Context()
 	obj, err := s.store.GetLFSObject(ctx, oid)
 	if err != nil {
@@ -281,6 +302,10 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 	var req VerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json payload", http.StatusBadRequest)
+		return
+	}
+	if !isValidOID(req.OID) {
+		http.Error(w, "invalid oid format", http.StatusBadRequest)
 		return
 	}
 
