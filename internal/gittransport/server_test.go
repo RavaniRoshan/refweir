@@ -2,6 +2,7 @@ package gittransport
 
 import (
 	"context"
+	"crypto/ed25519"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -369,6 +370,23 @@ func TestGitSmartHTTP_AgentLeaseEnforcement(t *testing.T) {
 	out, err = gitExec(cloneDir, "push", authCloneURL, "agent/patch-1:refs/heads/agent/patch-3")
 	if err == nil {
 		t.Fatalf("expected push with revoked lease to fail, but succeeded: %s", out)
+	}
+
+	// 9. Asymmetric Ed25519 capability lease push -> MUST SUCCEED
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate ed25519 key: %v", err)
+	}
+	gitHandler.SetLeasePublicKey(pub)
+
+	edTok, _, err := agentlease.IssueEd25519(priv, "agent-ed", repoID, []string{"refs/heads/agent/"}, []string{"refs/heads/main"}, 15*time.Minute)
+	if err != nil {
+		t.Fatalf("issue ed25519 lease: %v", err)
+	}
+	edCloneURL := strings.Replace(srv.URL, "http://", "http://agent:"+edTok+"@", 1) + "/agentteam/agent-repo.git"
+	out, err = gitExec(cloneDir, "push", edCloneURL, "agent/patch-1:refs/heads/agent/patch-ed")
+	if err != nil {
+		t.Fatalf("push under ed25519 lease failed: %v\nOutput: %s", err, out)
 	}
 }
 

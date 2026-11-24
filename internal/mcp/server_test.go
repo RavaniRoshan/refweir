@@ -3,6 +3,7 @@ package mcp
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"refweir.dev/internal/auth"
 	"refweir.dev/internal/gitstore"
 	"refweir.dev/internal/store"
+	"refweir.dev/pkg/agentlease"
 	"refweir.dev/pkg/idgen"
 )
 
@@ -335,6 +337,38 @@ func TestMCP_LeaseTools(t *testing.T) {
 		if !strings.Contains(logged, want) {
 			t.Fatalf("expected lease audit stream to contain %q, got: %s", want, logged)
 		}
+	}
+
+	// 4. Ed25519 asymmetric capability lease inspection
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate ed25519 key: %v", err)
+	}
+	srv.SetLeasePublicKey(pub)
+
+	edToken, edLease, err := agentlease.IssueEd25519(priv, "agent-ed25519", "agentcorp/demo-repo", []string{"refs/heads/agent/*"}, nil, 30*time.Minute)
+	if err != nil {
+		t.Fatalf("issue ed25519 lease: %v", err)
+	}
+
+	rec = callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      4,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "lease_inspect",
+			"arguments": map[string]any{
+				"token": edToken,
+			},
+		},
+	})
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	res = resp.Result.(map[string]any)
+	content = res["content"].([]any)[0].(map[string]any)["text"].(string)
+	var edInspectData map[string]any
+	_ = json.Unmarshal([]byte(content), &edInspectData)
+	if edInspectData["id"] != edLease.ID || edInspectData["agentId"] != "agent-ed25519" {
+		t.Fatalf("unexpected ed25519 inspect result: %+v", edInspectData)
 	}
 }
 

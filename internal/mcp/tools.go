@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -1657,12 +1658,28 @@ func BuiltinTools() []ToolDef {
 				"token": map[string]any{"type": "string", "description": "Capability lease token"},
 			}, []string{"token"}),
 			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
-				secret := s.LeaseSecret()
-				if len(secret) == 0 {
-					return nil, fmt.Errorf("lease signing secret is not configured")
-				}
 				token := getString(args, "token")
-				lease, err := agentlease.Verify(secret, token)
+				secret := s.LeaseSecret()
+				pubKey := s.LeasePublicKey()
+				if len(secret) == 0 && len(pubKey) == 0 {
+					return nil, fmt.Errorf("lease verification keys are not configured")
+				}
+				var lease *agentlease.Lease
+				var err error
+				if strings.HasPrefix(token, "ed25519.") {
+					if len(pubKey) == ed25519.PublicKeySize {
+						lease, err = agentlease.VerifyEd25519(pubKey, token)
+					} else if len(secret) == ed25519.PublicKeySize {
+						lease, err = agentlease.Verify(secret, token)
+					} else {
+						return nil, agentlease.ErrInvalidSignature
+					}
+				} else {
+					if len(secret) == 0 {
+						return nil, fmt.Errorf("lease signing secret is not configured")
+					}
+					lease, err = agentlease.Verify(secret, token)
+				}
 				if err != nil {
 					return nil, err
 				}

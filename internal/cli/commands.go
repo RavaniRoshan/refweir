@@ -2,7 +2,13 @@ package cli
 
 import (
 	"bytes"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"refweir.dev/pkg/agentlease"
 )
 
 // CLI is the runner for the refweir CLI client.
@@ -104,7 +112,7 @@ Commands:
   refweir pr                 Manage pull requests
   refweir issue              Manage issues (list, view, create, close, comment)
   refweir webhook            Manage webhooks (list, create, delete, ping, deliveries, redeliver)
-  refweir lease              Manage agent capability leases (issue, revoke)
+  refweir lease              Manage agent capability leases (issue, revoke, verify)
   refweir app                Manage apps
   refweir doctor             Diagnose daemon connectivity, auth, and local environment
   refweir completion <shell> Generate shell autocompletion script (bash, zsh, fish)
@@ -865,7 +873,7 @@ func (c *CLI) runAPI(args []string) error {
 // Lease commands
 func (c *CLI) runLease(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: refweir lease <issue|revoke>")
+		return errors.New("usage: refweir lease <issue|revoke|verify>")
 	}
 	switch args[0] {
 	case "issue":
@@ -875,7 +883,13 @@ func (c *CLI) runLease(args []string) error {
 		repoFlag := fs.String("R", c.DefaultRepo, "Target repository owner/name")
 		repoLong := fs.String("repo", "", "Target repository owner/name")
 		prefix := fs.String("prefix", "refs/heads/agent/*", "Comma-separated allowed ref prefixes")
+		disallow := fs.String("disallow", "", "Comma-separated disallowed ref prefixes (e.g. refs/heads/main,refs/heads/master)")
 		ttlStr := fs.String("ttl", "30m", "TTL duration (e.g. 30m, 1h, 900s)")
+		algoFlag := fs.String("algorithm", "hmac", "Signing algorithm: hmac or ed25519")
+		algoShort := fs.String("a", "", "Signing algorithm shorthand (hmac or ed25519)")
+		keyFile := fs.String("key-file", "", "Path to signing key or secret file")
+		privKey := fs.String("privkey", "", "Inline signing key or secret string")
+		ed25519Flag := fs.Bool("ed25519", false, "Use Ed25519 asymmetric signature algorithm")
 		jsonOut := fs.Bool("json", false, "Output response in JSON format")
 
 		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
@@ -908,11 +922,129 @@ func (c *CLI) runLease(args []string) error {
 			prefixes = []string{"refs/heads/agent/*"}
 		}
 
+		var disallowed []string
+		if *disallow != "" {
+			for _, d := range strings.Split(*disallow, ",") {
+				d = strings.TrimSpace(d)
+				if d != "" {
+					disallowed = append(disallowed, d)
+				}
+			}
+		}
+
+		selectedAlgo := strings.ToLower(strings.TrimSpace(*algoFlag))
+		if *algoShort != "" {
+			selectedAlgo = strings.ToLower(strings.TrimSpace(*algoShort))
+		}
+		if *ed25519Flag {
+			selectedAlgo = "ed25519"
+		}
+
+		var rawKey []byte
+		if *privKey != "" {
+			rawKey = []byte(*privKey)
+		} else if *keyFile != "" {
+			data, err := os.ReadFile(*keyFile)
+			if err != nil {
+				return fmt.Errorf("read key file: %w", err)
+			}
+			rawKey = data
+		}
+
+		// Local asymmetric Ed25519 signing
+		if selectedAlgo == "ed25519" {
+			var priv ed25519.PrivateKey
+			var err error
+			if len(rawKey) > 0 {
+				priv, err = parseEd25519PrivateKey(rawKey)
+				if err != nil {
+					return fmt.Errorf("parse ed25519 private key: %w", err)
+				}
+			} else {
+				_, priv, err = ed25519.GenerateKey(rand.Reader)
+				if err != nil {
+					return fmt.Errorf("generate ed25519 key pair: %w", err)
+				}
+			}
+
+			token, lease, err := agentlease.IssueEd25519(priv, *agent, repoTarget, prefixes, disallowed, time.Duration(ttlSeconds)*time.Second)
+			if err != nil {
+				return fmt.Errorf("issue ed25519 lease: %w", err)
+			}
+
+			pubKey := priv.Public().(ed25519.PublicKey)
+			pubKeyB64 := base64.RawURLEncoding.EncodeToString(pubKey)
+
+			if *jsonOut {
+				res := map[string]any{
+					"id":                    lease.ID,
+					"token":                 token,
+					"algorithm":             "ed25519",
+					"publicKey":             pubKeyB64,
+					"agentId":               lease.AgentID,
+					"repoId":                lease.RepoID,
+					"allowedRefPrefixes":    lease.AllowedRefPrefixes,
+					"disallowedRefPrefixes": lease.DisallowedRefPrefixes,
+					"issuedAt":              lease.IssuedAt.Format(time.RFC3339),
+					"expiresAt":             lease.ExpiresAt.Format(time.RFC3339),
+				}
+				out, _ := json.MarshalIndent(res, "", "  ")
+				fmt.Fprintln(c.Stdout, string(out))
+				return nil
+			}
+
+			fmt.Fprintf(c.Stdout, "Capability Lease Issued: %s\n", lease.ID)
+			fmt.Fprintf(c.Stdout, "Algorithm:  ed25519\n")
+			fmt.Fprintf(c.Stdout, "Agent:      %s\n", lease.AgentID)
+			fmt.Fprintf(c.Stdout, "Repo:       %s\n", lease.RepoID)
+			fmt.Fprintf(c.Stdout, "Expires:    %s\n", lease.ExpiresAt.Format(time.RFC3339))
+			fmt.Fprintf(c.Stdout, "Public Key: %s\n", pubKeyB64)
+			fmt.Fprintf(c.Stdout, "Token:      %s\n", token)
+			return nil
+		}
+
+		// Local symmetric HMAC signing if key/secret is supplied
+		if len(rawKey) > 0 {
+			token, lease, err := agentlease.Issue(bytes.TrimSpace(rawKey), *agent, repoTarget, prefixes, disallowed, time.Duration(ttlSeconds)*time.Second)
+			if err != nil {
+				return fmt.Errorf("issue hmac lease: %w", err)
+			}
+
+			if *jsonOut {
+				res := map[string]any{
+					"id":                    lease.ID,
+					"token":                 token,
+					"algorithm":             "hmac-sha256",
+					"agentId":               lease.AgentID,
+					"repoId":                lease.RepoID,
+					"allowedRefPrefixes":    lease.AllowedRefPrefixes,
+					"disallowedRefPrefixes": lease.DisallowedRefPrefixes,
+					"issuedAt":              lease.IssuedAt.Format(time.RFC3339),
+					"expiresAt":             lease.ExpiresAt.Format(time.RFC3339),
+				}
+				out, _ := json.MarshalIndent(res, "", "  ")
+				fmt.Fprintln(c.Stdout, string(out))
+				return nil
+			}
+
+			fmt.Fprintf(c.Stdout, "Capability Lease Issued: %s\n", lease.ID)
+			fmt.Fprintf(c.Stdout, "Algorithm:  hmac-sha256\n")
+			fmt.Fprintf(c.Stdout, "Agent:      %s\n", lease.AgentID)
+			fmt.Fprintf(c.Stdout, "Repo:       %s\n", lease.RepoID)
+			fmt.Fprintf(c.Stdout, "Expires:    %s\n", lease.ExpiresAt.Format(time.RFC3339))
+			fmt.Fprintf(c.Stdout, "Token:      %s\n", token)
+			return nil
+		}
+
+		// Default daemon-issued capability lease via HTTP API
 		reqBody := map[string]any{
 			"agentId":         *agent,
 			"repoId":          repoTarget,
 			"allowedPrefixes": prefixes,
 			"ttlSeconds":      ttlSeconds,
+		}
+		if len(disallowed) > 0 {
+			reqBody["disallowedRefPrefixes"] = disallowed
 		}
 
 		data, code, err := c.doRequest(http.MethodPost, "/api/v1/agent/leases", reqBody)
@@ -980,6 +1112,161 @@ func (c *CLI) runLease(args []string) error {
 		}
 
 		fmt.Fprintf(c.Stdout, "Revoked capability lease %s\n", leaseID)
+		return nil
+
+	case "verify":
+		fs := flag.NewFlagSet("lease verify", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		pubKeyFlag := fs.String("pubkey", "", "Ed25519 public key (hex, base64, or raw)")
+		secretFlag := fs.String("secret", "", "HMAC signing secret string")
+		keyFile := fs.String("key-file", "", "Path to public key or secret file")
+		jsonOut := fs.Bool("json", false, "Output response in JSON format")
+
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+
+		if fs.NArg() == 0 {
+			return errors.New("lease token is required: refweir lease verify <token>")
+		}
+		token := strings.TrimSpace(fs.Arg(0))
+
+		var verificationKey []byte
+		if *pubKeyFlag != "" {
+			verificationKey = []byte(*pubKeyFlag)
+		} else if *secretFlag != "" {
+			verificationKey = []byte(*secretFlag)
+		} else if *keyFile != "" {
+			data, err := os.ReadFile(*keyFile)
+			if err != nil {
+				return fmt.Errorf("read key file: %w", err)
+			}
+			verificationKey = data
+		}
+
+		isEd := strings.HasPrefix(token, "ed25519.")
+		algo := "hmac-sha256"
+		if isEd {
+			algo = "ed25519"
+		}
+
+		var lease *agentlease.Lease
+		var verifyErr error
+		signatureVerified := false
+
+		if isEd {
+			if len(verificationKey) > 0 {
+				pub, err := parseEd25519PublicKey(verificationKey)
+				if err != nil {
+					if priv, privErr := parseEd25519PrivateKey(verificationKey); privErr == nil {
+						pub = priv.Public().(ed25519.PublicKey)
+						err = nil
+					}
+				}
+				if err != nil {
+					return fmt.Errorf("invalid ed25519 public key: %w", err)
+				}
+				lease, verifyErr = agentlease.VerifyEd25519(pub, token)
+				if verifyErr == nil || errors.Is(verifyErr, agentlease.ErrExpiredLease) {
+					signatureVerified = true
+				}
+			} else {
+				parts := strings.Split(token, ".")
+				if len(parts) == 3 {
+					if payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1]); err == nil {
+						var parsed agentlease.Lease
+						if json.Unmarshal(payloadBytes, &parsed) == nil {
+							lease = &parsed
+							if time.Now().UTC().After(lease.ExpiresAt) {
+								verifyErr = agentlease.ErrExpiredLease
+							}
+						}
+					}
+				}
+			}
+		} else {
+			if len(verificationKey) > 0 {
+				lease, verifyErr = agentlease.Verify(bytes.TrimSpace(verificationKey), token)
+				if verifyErr == nil || errors.Is(verifyErr, agentlease.ErrExpiredLease) {
+					signatureVerified = true
+				}
+			} else {
+				parts := strings.Split(token, ".")
+				if len(parts) == 2 {
+					if payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[0]); err == nil {
+						var parsed agentlease.Lease
+						if json.Unmarshal(payloadBytes, &parsed) == nil {
+							lease = &parsed
+							if time.Now().UTC().After(lease.ExpiresAt) {
+								verifyErr = agentlease.ErrExpiredLease
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if lease == nil {
+			return fmt.Errorf("invalid or malformed capability lease token: %v", verifyErr)
+		}
+
+		if len(verificationKey) > 0 && !signatureVerified {
+			if verifyErr != nil {
+				return fmt.Errorf("verification failed: %w", verifyErr)
+			}
+			return errors.New("verification failed: invalid lease signature")
+		}
+
+		expired := time.Now().UTC().After(lease.ExpiresAt)
+		status := "VALID"
+		if expired {
+			status = "EXPIRED"
+		}
+
+		if *jsonOut {
+			res := map[string]any{
+				"valid":                 !expired && (len(verificationKey) == 0 || signatureVerified),
+				"status":                status,
+				"signatureVerified":     signatureVerified,
+				"algorithm":             algo,
+				"id":                    lease.ID,
+				"agentId":               lease.AgentID,
+				"repoId":                lease.RepoID,
+				"allowedRefPrefixes":    lease.AllowedRefPrefixes,
+				"disallowedRefPrefixes": lease.DisallowedRefPrefixes,
+				"issuedAt":              lease.IssuedAt.Format(time.RFC3339),
+				"expiresAt":             lease.ExpiresAt.Format(time.RFC3339),
+				"expired":               expired,
+			}
+			out, _ := json.MarshalIndent(res, "", "  ")
+			fmt.Fprintln(c.Stdout, string(out))
+			if expired {
+				return agentlease.ErrExpiredLease
+			}
+			return nil
+		}
+
+		fmt.Fprintf(c.Stdout, "Capability Lease Status: %s\n", status)
+		fmt.Fprintf(c.Stdout, "Algorithm:  %s\n", algo)
+		if signatureVerified {
+			fmt.Fprintf(c.Stdout, "Signature:  VERIFIED\n")
+		} else {
+			fmt.Fprintf(c.Stdout, "Signature:  UNVERIFIED (provide --pubkey, --secret, or --key-file to verify cryptographic signature)\n")
+		}
+		fmt.Fprintf(c.Stdout, "Lease ID:   %s\n", lease.ID)
+		fmt.Fprintf(c.Stdout, "Agent:      %s\n", lease.AgentID)
+		fmt.Fprintf(c.Stdout, "Repo:       %s\n", lease.RepoID)
+		fmt.Fprintf(c.Stdout, "Issued:     %s\n", lease.IssuedAt.Format(time.RFC3339))
+		fmt.Fprintf(c.Stdout, "Expires:    %s\n", lease.ExpiresAt.Format(time.RFC3339))
+		if len(lease.AllowedRefPrefixes) > 0 {
+			fmt.Fprintf(c.Stdout, "Allowed:    %s\n", strings.Join(lease.AllowedRefPrefixes, ", "))
+		}
+		if len(lease.DisallowedRefPrefixes) > 0 {
+			fmt.Fprintf(c.Stdout, "Disallowed: %s\n", strings.Join(lease.DisallowedRefPrefixes, ", "))
+		}
+		if expired {
+			return agentlease.ErrExpiredLease
+		}
 		return nil
 
 	default:
@@ -1504,7 +1791,7 @@ _refweir_completion() {
             COMPREPLY=( $(compgen -W "list create delete ping deliveries redeliver" -- "$cur") )
             ;;
         lease)
-            COMPREPLY=( $(compgen -W "issue revoke" -- "$cur") )
+            COMPREPLY=( $(compgen -W "issue revoke verify" -- "$cur") )
             ;;
         completion)
             COMPREPLY=( $(compgen -W "bash zsh fish" -- "$cur") )
@@ -1815,4 +2102,80 @@ func (c *CLI) runCluster(args []string) error {
 	default:
 		return fmt.Errorf("unknown cluster subcommand %q. Run 'refweir cluster' for usage", sub)
 	}
+}
+
+func parseEd25519PrivateKey(raw []byte) (ed25519.PrivateKey, error) {
+	trimmed := bytes.TrimSpace(raw)
+	// 1. PEM decode check
+	if block, _ := pem.Decode(trimmed); block != nil {
+		if key, err := x509.ParsePKCS8PrivateKey(block.Bytes); err == nil {
+			if edKey, ok := key.(ed25519.PrivateKey); ok {
+				return edKey, nil
+			}
+		}
+		trimmed = block.Bytes
+	}
+
+	// 2. Raw 64-byte private key
+	if len(trimmed) == ed25519.PrivateKeySize {
+		return ed25519.PrivateKey(trimmed), nil
+	}
+	// 3. Raw 32-byte seed
+	if len(trimmed) == ed25519.SeedSize {
+		return ed25519.NewKeyFromSeed(trimmed), nil
+	}
+
+	str := string(trimmed)
+	// 4. Hex encoded (128 chars for 64-byte key or 64 chars for 32-byte seed)
+	if len(str) == ed25519.PrivateKeySize*2 {
+		if b, err := hex.DecodeString(str); err == nil && len(b) == ed25519.PrivateKeySize {
+			return ed25519.PrivateKey(b), nil
+		}
+	}
+	if len(str) == ed25519.SeedSize*2 {
+		if b, err := hex.DecodeString(str); err == nil && len(b) == ed25519.SeedSize {
+			return ed25519.NewKeyFromSeed(b), nil
+		}
+	}
+
+	// 5. Base64 RawURL / Std
+	for _, enc := range []*base64.Encoding{base64.RawURLEncoding, base64.StdEncoding, base64.URLEncoding, base64.RawStdEncoding} {
+		if b, err := enc.DecodeString(str); err == nil {
+			if len(b) == ed25519.PrivateKeySize {
+				return ed25519.PrivateKey(b), nil
+			}
+			if len(b) == ed25519.SeedSize {
+				return ed25519.NewKeyFromSeed(b), nil
+			}
+		}
+	}
+
+	return nil, errors.New("unsupported ed25519 private key format (expected 32-byte seed or 64-byte key in raw, hex, base64, or PKCS#8 PEM)")
+}
+
+func parseEd25519PublicKey(raw []byte) (ed25519.PublicKey, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if block, _ := pem.Decode(trimmed); block != nil {
+		if pub, err := x509.ParsePKIXPublicKey(block.Bytes); err == nil {
+			if edPub, ok := pub.(ed25519.PublicKey); ok {
+				return edPub, nil
+			}
+		}
+		trimmed = block.Bytes
+	}
+	if len(trimmed) == ed25519.PublicKeySize {
+		return ed25519.PublicKey(trimmed), nil
+	}
+	str := string(trimmed)
+	if len(str) == ed25519.PublicKeySize*2 {
+		if b, err := hex.DecodeString(str); err == nil && len(b) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(b), nil
+		}
+	}
+	for _, enc := range []*base64.Encoding{base64.RawURLEncoding, base64.StdEncoding, base64.URLEncoding, base64.RawStdEncoding} {
+		if b, err := enc.DecodeString(str); err == nil && len(b) == ed25519.PublicKeySize {
+			return ed25519.PublicKey(b), nil
+		}
+	}
+	return nil, errors.New("unsupported ed25519 public key format (expected 32-byte key in raw, hex, base64, or PKIX PEM)")
 }

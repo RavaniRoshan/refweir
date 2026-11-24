@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"io"
@@ -38,12 +39,18 @@ type Server struct {
 	backendPath string
 	sem         chan struct{}
 	leaseSecret []byte
+	leasePubKey ed25519.PublicKey
 	onPushHook  func(ctx context.Context, repoID, ownerSlug, repoName string)
 }
 
 // SetPushHook registers a callback invoked after a successful git-receive-pack push.
 func (s *Server) SetPushHook(hook func(ctx context.Context, repoID, ownerSlug, repoName string)) {
 	s.onPushHook = hook
+}
+
+// SetLeasePublicKey sets the Ed25519 public key used to verify asymmetric capability leases.
+func (s *Server) SetLeasePublicKey(pub ed25519.PublicKey) {
+	s.leasePubKey = pub
 }
 
 // NewServer returns an initialized Git Smart HTTP transport Server.
@@ -234,22 +241,36 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.execBackend(w, r, repo.ID, ownerSlug, repoName, subPath, userID, activeLease, activeLeaseToken)
 }
 
+func (s *Server) verifyLease(candidate string) (*agentlease.Lease, error) {
+	if strings.HasPrefix(candidate, "ed25519.") {
+		if len(s.leasePubKey) == ed25519.PublicKeySize {
+			return agentlease.VerifyEd25519(s.leasePubKey, candidate)
+		}
+		if len(s.leaseSecret) == ed25519.PublicKeySize {
+			return agentlease.Verify(s.leaseSecret, candidate)
+		}
+		return nil, agentlease.ErrInvalidSignature
+	}
+	if len(s.leaseSecret) > 0 {
+		return agentlease.Verify(s.leaseSecret, candidate)
+	}
+	return nil, agentlease.ErrInvalidSignature
+}
+
 func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.Repo) (string, *agentlease.Lease, string, error) {
 	// 1. Basic Auth (standard Git credential helper or capability lease)
 	if user, pass, ok := r.BasicAuth(); ok {
-		if len(s.leaseSecret) > 0 {
-			for _, candidate := range []string{pass, user} {
-				lease, lerr := agentlease.Verify(s.leaseSecret, candidate)
-				if lerr == nil {
-					if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
-						return "", lease, candidate, leaseErr
-					}
-					return "agent:" + lease.AgentID, lease, candidate, nil
+		for _, candidate := range []string{pass, user} {
+			lease, lerr := s.verifyLease(candidate)
+			if lerr == nil {
+				if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
+					return "", lease, candidate, leaseErr
 				}
-				// Keep the decoded lease so a rejected push can be attributed.
-				if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
-					return "", lease, candidate, lerr
-				}
+				return "agent:" + lease.AgentID, lease, candidate, nil
+			}
+			// Keep the decoded lease so a rejected push can be attributed.
+			if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
+				return "", lease, candidate, lerr
 			}
 		}
 		if id, err := s.checkCredential(ctx, pass); err == nil {
@@ -280,17 +301,15 @@ func (s *Server) authenticate(ctx context.Context, r *http.Request, repo *store.
 	authHeader := r.Header.Get("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		tok := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
-		if len(s.leaseSecret) > 0 {
-			lease, lerr := agentlease.Verify(s.leaseSecret, tok)
-			if lerr == nil {
-				if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
-					return "", lease, tok, leaseErr
-				}
-				return "agent:" + lease.AgentID, lease, tok, nil
+		lease, lerr := s.verifyLease(tok)
+		if lerr == nil {
+			if leaseErr := s.validateLease(ctx, repo, lease); leaseErr != nil {
+				return "", lease, tok, leaseErr
 			}
-			if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
-				return "", lease, tok, lerr
-			}
+			return "agent:" + lease.AgentID, lease, tok, nil
+		}
+		if errors.Is(lerr, agentlease.ErrExpiredLease) && lease != nil {
+			return "", lease, tok, lerr
 		}
 		if id, err := s.checkCredential(ctx, tok); err == nil {
 			if s.isUserSuspended(ctx, id) {

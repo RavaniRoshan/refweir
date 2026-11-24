@@ -4364,6 +4364,9 @@ func Open(cfg config.Config) (*App, error) {
 	if cfg.JWTSecret != "" {
 		mcpServer.SetLeaseSecret([]byte(cfg.JWTSecret))
 	}
+	if len(cfg.LeasePublicKey) > 0 {
+		mcpServer.SetLeasePublicKey(cfg.LeasePublicKey)
+	}
 	mux.Handle("/mcp", mcpServer.Handler(false))
 	mux.Handle("/mcp/readonly", mcpServer.Handler(true))
 
@@ -4378,6 +4381,9 @@ func Open(cfg config.Config) (*App, error) {
 	gitTransport := gittransport.NewServer(db, git, lfsServer)
 	if cfg.JWTSecret != "" {
 		gitTransport.SetLeaseSecret([]byte(cfg.JWTSecret))
+	}
+	if len(cfg.LeasePublicKey) > 0 {
+		gitTransport.SetLeasePublicKey(cfg.LeasePublicKey)
 	}
 	gitTransport.SetPushHook(func(ctx context.Context, repoID, ownerSlug, repoName string) {
 		DispatchRepoEvent(ctx, db, repoID, "push", map[string]any{

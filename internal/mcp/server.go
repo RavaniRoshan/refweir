@@ -4,6 +4,7 @@ package mcp
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,6 +26,7 @@ type Server struct {
 	allTools    []ToolDef
 	toolMap     map[string]ToolDef
 	leaseSecret []byte
+	leasePubKey ed25519.PublicKey
 	mergeHook   func(context.Context, store.PullRequest)
 }
 
@@ -56,6 +58,16 @@ func (s *Server) SetLeaseSecret(secret []byte) {
 // LeaseSecret returns the configured HMAC signing secret for capability leases.
 func (s *Server) LeaseSecret() []byte {
 	return s.leaseSecret
+}
+
+// SetLeasePublicKey sets the Ed25519 public key used to verify asymmetric capability leases.
+func (s *Server) SetLeasePublicKey(pub ed25519.PublicKey) {
+	s.leasePubKey = pub
+}
+
+// LeasePublicKey returns the configured Ed25519 public key for capability leases.
+func (s *Server) LeasePublicKey() ed25519.PublicKey {
+	return s.leasePubKey
 }
 
 // JSON-RPC request and response envelopes

@@ -155,14 +155,23 @@ refweir api repos/acme/my-service/labels --method POST --body '{"name": "bug", "
 
 ### 8. `refweir lease`
 
-Issue and revoke cryptographically signed agent capability leases for automated workflows.
+Issue, revoke, and verify cryptographically signed agent capability leases supporting both symmetric HMAC-SHA256 and asymmetric Ed25519 signing.
 
 ```bash
-# Issue an HMAC-SHA256 capability lease
+# Issue an HMAC-SHA256 capability lease via daemon HTTP endpoint
 refweir lease issue --agent agent:worker-1 -R acme/rocket --prefix refs/heads/agent/* --ttl 30m
 
-# Issue lease with raw JSON response for script automation
-refweir lease issue --agent agent:claude -R acme/rocket --ttl 1h --json
+# Issue an asymmetric Ed25519 capability lease (generates keypair and signs locally)
+refweir lease issue --agent agent:cursor -R acme/rocket --algorithm ed25519 --ttl 15m
+
+# Issue an Ed25519 lease using a designated private key file
+refweir lease issue --agent agent:claude -R acme/rocket --algorithm ed25519 --key-file ~/.refweir/agent_ed25519.key
+
+# Verify an active capability lease token using its Ed25519 public key
+refweir lease verify ed25519.ey... --pubkey <base64-or-hex-public-key>
+
+# Verify a capability lease using an HMAC signing secret
+refweir lease verify ey... --secret "my-hmac-secret" --json
 
 # Revoke an active capability lease immediately
 refweir lease revoke lease_cli_123 --reason "operator manual revocation"

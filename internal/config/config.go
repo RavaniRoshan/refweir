@@ -3,6 +3,7 @@
 package config
 
 import (
+	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"refweir.dev/internal/auth"
 )
 
 const (
@@ -38,6 +41,7 @@ type Config struct {
 	SSHAddr        string
 	SSHHostKeyPath string
 	JWTSecret      string
+	LeasePublicKey ed25519.PublicKey
 
 	ClusterRole string
 	ReplicaDir  string
@@ -115,6 +119,21 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	var leasePubKey ed25519.PublicKey
+	leasePubVal := getVal("REFWEIR_LEASE_PUBKEY", "agentlease", "pubkey", "")
+	if leasePubVal == "" {
+		if pubFile := getVal("REFWEIR_LEASE_PUBKEY_FILE", "agentlease", "pubkey_file", ""); pubFile != "" {
+			if data, err := os.ReadFile(pubFile); err == nil {
+				leasePubVal = string(data)
+			}
+		}
+	}
+	if leasePubVal != "" {
+		if pk, err := auth.ParseEd25519PublicKey(leasePubVal); err == nil {
+			leasePubKey = pk
+		}
+	}
+
 	clusterRole := getVal("REFWEIR_CLUSTER_ROLE", "cluster", "role", "primary")
 	replicaDir := getVal("REFWEIR_REPLICA_DIR", "cluster", "replica_dir", "")
 	nodeID := getVal("REFWEIR_NODE_ID", "cluster", "node_id", "")
@@ -158,6 +177,7 @@ func Load() (Config, error) {
 		SSHAddr:        sshAddr,
 		SSHHostKeyPath: sshHostKeyPath,
 		JWTSecret:      jwtSecret,
+		LeasePublicKey: leasePubKey,
 		ClusterRole:    clusterRole,
 		ReplicaDir:     replicaDir,
 		NodeID:         nodeID,

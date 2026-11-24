@@ -32,7 +32,9 @@ A capability lease token encapsulates immutable constraints evaluated during Git
 - **Permitted Operations (`ops`):** Granular flags such as `push`, `create_branch`, `delete_branch`. Force pushes (`+ref`) are forbidden by default.
 - **Temporal Bounds (`issued_at`, `expires_at`):** Strict TTL with a maximum default lifetime of 60 minutes. Once expired, the lease is rejected at the transport level.
 
-Tokens are signed using HMAC-SHA256 with the forge server's secret master key (`LEASES_SECRET`), preventing tampering or claim elevation.
+Tokens support two cryptographic signing modes:
+1. **Symmetric HMAC-SHA256 (`<payload>.<signature>`):** Signed with the forge server's secret master key (`REFWEIR_JWT_SECRET`), preventing tampering or claim elevation within a centralized deployment.
+2. **Asymmetric Ed25519 (`ed25519.<payload>.<signature>`):** Signed with an Ed25519 private key and validated with public keys, enabling decentralized agent swarms and isolated microVM runners to verify leases without exposing shared secrets.
 
 ## 2. Enforcement at Transport and Hook Boundaries
 
@@ -40,7 +42,7 @@ Capability leases are verified at multiple defensive layers:
 
 ### A. Git Smart-HTTP & SSH Authentication
 - Agents supply the lease token as the password for Smart-HTTP requests (`http://localhost:8080/<owner>/<repo>.git`) or as the session token via SSH (`ssh://git@localhost:2222`).
-- The transport layer decrypts and validates the signature, ensuring the token is currently active and belongs to the requested repository.
+- The transport layer verifies the signature (against `REFWEIR_JWT_SECRET` for HMAC or `REFWEIR_LEASE_PUBKEY` for Ed25519), ensuring the token is active, unrevoked, and bound to the requested repository.
 
 ### B. Pre-Receive Hook Sandboxing
 - Before Git updates any reference in the bare repository, the pre-receive hook (`internal/security/hook.go`) inspects the ref mutation list `(old-sha, new-sha, refname)`.
@@ -52,3 +54,15 @@ Capability leases are verified at multiple defensive layers:
 Because capability leases expire automatically:
 1. Forgotten or crashed agents leave zero lingering attack surface.
 2. Changes pushed to `refs/heads/agent/*` trigger the automated Review Agent (`internal/agentreviewer`), ensuring code quality, security checks, and secret scanning are verified before human maintainers approve the merge into `main`.
+
+## 4. CLI & Local Cryptographic Issuance
+
+The `refweir` CLI provides offline and online issuance and verification tooling:
+
+```bash
+# Mint an asymmetric Ed25519 lease locally (offline, zero daemon dependency)
+refweir lease issue --agent agent:claude -R acme/rocket --algorithm ed25519 --ttl 30m
+
+# Verify lease validity, remaining TTL, and cryptographic signature
+refweir lease verify ed25519.ey... --pubkey <public-key>
+```

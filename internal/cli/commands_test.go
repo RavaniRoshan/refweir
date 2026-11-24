@@ -290,6 +290,73 @@ func TestCLI_LeaseCommands(t *testing.T) {
 	if revokeBody["reason"] != "security rotation" {
 		t.Errorf("expected reason 'security rotation', got: %v", revokeBody["reason"])
 	}
+
+	// 4. lease issue with asymmetric Ed25519 (fresh generated key)
+	stdout.Reset()
+	requestedPath = ""
+	if err := c.Run([]string{"lease", "issue", "--agent", "agent:bot-ed", "-R", "acme/rocket", "--algorithm", "ed25519", "--ttl", "15m"}); err != nil {
+		t.Fatalf("lease issue --algorithm ed25519: %v", err)
+	}
+	if requestedPath != "" {
+		t.Errorf("expected local issuance without HTTP request, but got request to %s", requestedPath)
+	}
+	outEd := stdout.String()
+	if !strings.Contains(outEd, "Algorithm:  ed25519") || !strings.Contains(outEd, "Token:      ed25519.") {
+		t.Errorf("expected ed25519 token output, got: %s", outEd)
+	}
+	var pubKeyStr, tokenStr string
+	for _, line := range strings.Split(outEd, "\n") {
+		if strings.HasPrefix(line, "Public Key:") {
+			pubKeyStr = strings.TrimSpace(strings.TrimPrefix(line, "Public Key:"))
+		}
+		if strings.HasPrefix(line, "Token:") {
+			tokenStr = strings.TrimSpace(strings.TrimPrefix(line, "Token:"))
+		}
+	}
+	if pubKeyStr == "" || tokenStr == "" {
+		t.Fatalf("failed to extract public key or token from output: %s", outEd)
+	}
+
+	// 5. lease verify Ed25519 token with extracted public key
+	stdout.Reset()
+	if err := c.Run([]string{"lease", "verify", tokenStr, "--pubkey", pubKeyStr}); err != nil {
+		t.Fatalf("lease verify ed25519 token: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "VALID") || !strings.Contains(stdout.String(), "ed25519") {
+		t.Errorf("expected VALID ed25519 verification, got: %s", stdout.String())
+	}
+
+	// 6. lease issue with local HMAC secret via --privkey and verify
+	stdout.Reset()
+	hmacSecret := "super-secure-cluster-hmac-secret-12345"
+	if err := c.Run([]string{"lease", "issue", "--agent", "agent:bot-hmac", "-R", "acme/rocket", "--privkey", hmacSecret, "--json"}); err != nil {
+		t.Fatalf("lease issue --privkey hmac: %v", err)
+	}
+	var hmacResp struct {
+		Token     string `json:"token"`
+		ID        string `json:"id"`
+		Algorithm string `json:"algorithm"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &hmacResp); err != nil {
+		t.Fatalf("failed to unmarshal hmac json: %v, raw: %s", err, stdout.String())
+	}
+	if hmacResp.Algorithm != "hmac-sha256" || strings.HasPrefix(hmacResp.Token, "ed25519.") {
+		t.Errorf("unexpected hmac response: %+v", hmacResp)
+	}
+
+	stdout.Reset()
+	if err := c.Run([]string{"lease", "verify", hmacResp.Token, "--secret", hmacSecret, "--json"}); err != nil {
+		t.Fatalf("lease verify hmac token: %v", err)
+	}
+	if !strings.Contains(stdout.String(), `"valid": true`) {
+		t.Errorf("expected valid hmac verification, got: %s", stdout.String())
+	}
+
+	// 7. lease verify with invalid signature fails
+	stdout.Reset()
+	if err := c.Run([]string{"lease", "verify", hmacResp.Token, "--secret", "wrong-secret"}); err == nil {
+		t.Errorf("expected verification failure with wrong secret, but got nil error")
+	}
 }
 
 func TestCLI_IssueCommands(t *testing.T) {
