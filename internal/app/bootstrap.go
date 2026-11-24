@@ -56,6 +56,9 @@ func Bootstrap(ctx context.Context, cfg config.Config, email, namespaceSlug stri
 	if _, err := application.Store.UpsertUserByEmail(ctx, email, func() string { return userID }); err != nil {
 		return nil, fmt.Errorf("bootstrap: create user: %w", err)
 	}
+	if err := application.Store.UpdateUserRole(ctx, userID, "admin"); err != nil {
+		return nil, fmt.Errorf("bootstrap: set admin role: %w", err)
+	}
 	user, err := application.Store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap: get user: %w", err)
@@ -141,7 +144,7 @@ func Bootstrap(ctx context.Context, cfg config.Config, email, namespaceSlug stri
 	initialChanges := []gitstore.FileChange{
 		{
 			Path:    "README.md",
-			Content: fmt.Sprintf("# %s\n\nWelcome to refweir.dev — the neutral, self-hosted Git forge for coding agents.\n", repoName),
+			Content: fmt.Sprintf("# %s\n\nWelcome to refweir.dev - the neutral, self-hosted Git forge for coding agents.\n", repoName),
 		},
 	}
 	sig := object.Signature{
