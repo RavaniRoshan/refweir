@@ -2247,5 +2247,60 @@ func BuiltinTools() []ToolDef {
 				return forks, nil
 			},
 		},
+		// 58. sync_fork
+		{
+			Name:        "sync_fork",
+			Description: "Synchronize a forked repository branch with its upstream parent repository",
+			ReadOnly:    false,
+			InputSchema: makeSchema(map[string]any{
+				"ownerSlug": map[string]any{"type": "string", "description": "Fork repository owner namespace"},
+				"repoName":  map[string]any{"type": "string", "description": "Fork repository name"},
+				"branch":    map[string]any{"type": "string", "description": "Branch name to synchronize (defaults to repository default branch)"},
+			}, []string{"ownerSlug", "repoName"}),
+			Handler: func(ctx context.Context, s *Server, args map[string]any) (any, error) {
+				owner := getString(args, "ownerSlug")
+				name := getString(args, "repoName")
+				branch := getString(args, "branch")
+
+				repo, err := s.store.GetRepo(ctx, owner, name)
+				if err != nil {
+					return nil, fmt.Errorf("repository not found: %w", err)
+				}
+				if !repo.IsFork || repo.ParentRepoID == "" {
+					return nil, fmt.Errorf("repository %s/%s is not a fork", owner, name)
+				}
+
+				parentRepo, err := s.store.GetRepoByID(ctx, repo.ParentRepoID)
+				if err != nil {
+					return nil, fmt.Errorf("upstream repository not found: %w", err)
+				}
+
+				if branch == "" {
+					branch = repo.DefaultBranch
+					if branch == "" {
+						branch = "main"
+					}
+				}
+
+				parentParts := strings.Split(parentRepo.FullName, "/")
+				parentNS := parentParts[0]
+				sig := object.Signature{Name: "Refweir Agent", Email: "agent@refweir.local", When: time.Now()}
+				res, err := s.git.SyncFork(parentNS, parentRepo.Name, owner, name, branch, sig)
+				if err != nil {
+					return nil, err
+				}
+
+				_ = audit.Log(audit.Event{
+					Actor:     "mcp-agent",
+					ActorType: "agent",
+					Action:    "repo.fork_sync",
+					Resource:  repo.FullName,
+					Severity:  audit.SeverityInfo,
+					Details:   fmt.Sprintf("Agent synchronized fork %s from upstream %s (branch %s, type %s)", repo.FullName, parentRepo.FullName, branch, res.MergeType),
+				})
+
+				return res, nil
+			},
+		},
 	}
 }

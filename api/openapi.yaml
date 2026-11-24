@@ -924,8 +924,58 @@ paths:
         '409':
           description: Destination repository conflict
 
+  /api/v1/repos/{owner}/{name}/forks/sync:
+    post:
+      summary: Synchronize repository fork
+      description: Synchronize a forked repository branch with its upstream parent repository via fast-forward or 3-way merge.
+      parameters:
+        - name: owner
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                branch:
+                  type: string
+                  description: Branch to synchronize (defaults to repository default branch)
+      responses:
+        '200':
+          description: Fork synchronized successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncForkResult'
+        '400':
+          description: Repository is not a fork
+        '404':
+          description: Repository not found
+        '409':
+          description: Merge conflict during fork synchronization
+
 components:
   schemas:
+    SyncForkResult:
+      type: object
+      properties:
+        merge_type:
+          type: string
+          enum: [none, fast-forward, merge]
+        message:
+          type: string
+        base_branch:
+          type: string
+        commit_sha:
+          type: string
     SystemInfo:
       type: object
       properties:

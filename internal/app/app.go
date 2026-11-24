@@ -1747,6 +1747,106 @@ func Open(cfg config.Config) (*App, error) {
 		_ = json.NewEncoder(w).Encode(forks)
 	})
 
+	syncForkHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		owner := r.PathValue("owner")
+		name := r.PathValue("name")
+
+		repo, err := db.GetRepo(r.Context(), owner, name)
+		if err != nil {
+			http.Error(w, "Repository not found", http.StatusNotFound)
+			return
+		}
+
+		if !repo.IsFork || repo.ParentRepoID == "" {
+			http.Error(w, fmt.Sprintf("Repository %s/%s is not a fork", owner, name), http.StatusBadRequest)
+			return
+		}
+
+		parentRepo, err := db.GetRepoByID(r.Context(), repo.ParentRepoID)
+		if err != nil {
+			http.Error(w, "Upstream parent repository not found: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var req struct {
+			Branch string `json:"branch"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+
+		branch := strings.TrimSpace(req.Branch)
+		if branch == "" {
+			branch = repo.DefaultBranch
+			if branch == "" {
+				branch = "main"
+			}
+		}
+
+		caller, _ := auth.ResolveUser(r.Context(), db, r)
+		actor := "api"
+		email := "noreply@refweir.local"
+		if caller != nil {
+			if caller.Email != "" {
+				actor = caller.Email
+				email = caller.Email
+			} else if caller.Login != "" {
+				actor = caller.Login
+			}
+		}
+
+		sig := object.Signature{
+			Name:  actor,
+			Email: email,
+			When:  time.Now(),
+		}
+
+		parentParts := strings.Split(parentRepo.FullName, "/")
+		parentNS := parentParts[0]
+		res, err := git.SyncFork(parentNS, parentRepo.Name, owner, name, branch, sig)
+		if err != nil {
+			if errors.Is(err, gitstore.ErrMergeConflict) {
+				http.Error(w, "Merge conflict during fork synchronization: "+err.Error(), http.StatusConflict)
+				return
+			}
+			http.Error(w, "Failed to synchronize fork: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_ = audit.Log(audit.Event{
+			Actor:     actor,
+			ActorType: "user",
+			Action:    "repo.fork_sync",
+			Resource:  repo.FullName,
+			Severity:  audit.SeverityInfo,
+			Details:   fmt.Sprintf("Synchronized fork %s from upstream %s (branch %s, type %s)", repo.FullName, parentRepo.FullName, branch, res.MergeType),
+		})
+
+		DispatchRepoEvent(r.Context(), db, repo.ID, "fork_sync", map[string]any{
+			"action":            "synchronized",
+			"merge_type":        res.MergeType,
+			"base_branch":       res.BaseBranch,
+			"commit_sha":        res.CommitSHA,
+			"repository":        repo,
+			"parent_repository": parentRepo,
+			"sender": map[string]any{
+				"login": actor,
+			},
+		})
+
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(res)
+	}
+
+	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/forks/sync", syncForkHandler)
+	mux.HandleFunc("POST /api/v1/repos/{owner}/{name}/merge-upstream", syncForkHandler)
+
 	mux.HandleFunc("GET /api/v1/repos/{owner}/{name}/collaborators", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")

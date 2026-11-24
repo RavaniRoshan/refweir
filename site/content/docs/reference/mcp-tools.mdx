@@ -23,6 +23,7 @@ Every tool call uses standard JSON-RPC 2.0 with method `tools/call`.
 | `compare_commits` | Read | `ownerSlug` (string), `repoName` (string), `base` (string), `head` (string) | Compare differences between two commit SHAs or branch refs. |
 | `fork_repository` | Write | `ownerSlug` (string), `repoName` (string), `targetNamespace` (string, opt), `forkName` (string, opt) | Fork a repository into an organization or user namespace with lineage tracking. |
 | `list_forks` | Read | `ownerSlug` (string), `repoName` (string), `limit` (int, opt) | List repositories forked from a specified parent repository. |
+| `sync_fork` | Write | `ownerSlug` (string), `repoName` (string), `branch` (string, opt) | Synchronize a forked repository branch with its upstream parent repository via fast-forward or 3-way merge. |
 | `sync_mirror` | Write | `ownerSlug` (string), `repoName` (string) | Trigger an immediate sync of a mirrored repository from upstream. |
 
 ---

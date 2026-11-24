@@ -344,3 +344,142 @@ func (s *Store) PrepareMergeRef(namespaceSlug, repoName, baseRef, headRef string
 
 	return commitHash.String(), nil
 }
+
+// SyncForkResult reports the outcome of synchronizing a fork branch from upstream.
+type SyncForkResult struct {
+	MergeType  string `json:"merge_type"` // "none" | "fast-forward" | "merge"
+	Message    string `json:"message"`
+	BaseBranch string `json:"base_branch"`
+	CommitSHA  string `json:"commit_sha,omitempty"`
+}
+
+// SyncFork synchronizes a branch in a forked repository from its upstream parent repository.
+func (s *Store) SyncFork(upstreamNS, upstreamName, forkNS, forkName, branch string, author object.Signature) (*SyncForkResult, error) {
+	if branch == "" {
+		branch = "main"
+	}
+
+	srcKey := upstreamNS + "/" + upstreamName
+	targetKey := forkNS + "/" + forkName
+
+	srcLock := s.RepoLock(upstreamNS, upstreamName)
+	targetLock := s.RepoLock(forkNS, forkName)
+
+	if srcKey < targetKey {
+		srcLock.RLock()
+		defer srcLock.RUnlock()
+		targetLock.Lock()
+		defer targetLock.Unlock()
+	} else {
+		targetLock.Lock()
+		defer targetLock.Unlock()
+		srcLock.RLock()
+		defer srcLock.RUnlock()
+	}
+
+	srcPath := s.repoPath(upstreamNS, upstreamName)
+	forkPath := s.repoPath(forkNS, forkName)
+	if srcPath == "" || forkPath == "" {
+		return nil, fmt.Errorf("gitstore: invalid repository slugs")
+	}
+
+	// 1. Fetch upstream branch into the fork repository's remotes
+	refSpec := fmt.Sprintf("%s:refs/remotes/upstream/%s", branch, branch)
+	cmd := exec.Command("git", "-C", forkPath, "fetch", srcPath, refSpec) // #nosec G204 -- paths and branch are validated
+	var fetchErrBuf bytes.Buffer
+	cmd.Stderr = &fetchErrBuf
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("gitstore: fetch upstream branch %s: %w: %s", branch, err, fetchErrBuf.String())
+	}
+
+	forkRepo, err := s.Open(forkNS, forkName)
+	if err != nil {
+		return nil, err
+	}
+
+	upstreamRefName := plumbing.ReferenceName("refs/remotes/upstream/" + branch)
+	upstreamRef, err := forkRepo.Reference(upstreamRefName, true)
+	if err != nil {
+		return nil, fmt.Errorf("gitstore: resolve upstream ref: %w", err)
+	}
+	upstreamCommitHash := upstreamRef.Hash()
+
+	forkBranchRefName := plumbing.ReferenceName("refs/heads/" + branch)
+	forkRef, err := forkRepo.Reference(forkBranchRefName, true)
+	if err != nil {
+		// If branch doesn't exist in fork yet, create it pointing to upstream
+		newRef := plumbing.NewHashReference(forkBranchRefName, upstreamCommitHash)
+		if err := forkRepo.Storer.SetReference(newRef); err != nil {
+			return nil, fmt.Errorf("gitstore: set branch ref: %w", err)
+		}
+		return &SyncForkResult{
+			MergeType:  "fast-forward",
+			Message:    "Successfully created branch from upstream",
+			BaseBranch: fmt.Sprintf("upstream:%s", branch),
+			CommitSHA:  upstreamCommitHash.String(),
+		}, nil
+	}
+
+	forkCommitHash := forkRef.Hash()
+	if forkCommitHash == upstreamCommitHash {
+		return &SyncForkResult{
+			MergeType:  "none",
+			Message:    "This branch is already up to date with the upstream repository",
+			BaseBranch: fmt.Sprintf("upstream:%s", branch),
+			CommitSHA:  forkCommitHash.String(),
+		}, nil
+	}
+
+	// Check if fork commit is ancestor of upstream commit (fast-forward candidate)
+	forkCommit, err := forkRepo.CommitObject(forkCommitHash)
+	if err != nil {
+		return nil, err
+	}
+	upstreamCommit, err := forkRepo.CommitObject(upstreamCommitHash)
+	if err != nil {
+		return nil, err
+	}
+
+	isAncestor, err := forkCommit.IsAncestor(upstreamCommit)
+	if err == nil && isAncestor {
+		// Fast-forward
+		newRef := plumbing.NewHashReference(forkBranchRefName, upstreamCommitHash)
+		if err := forkRepo.Storer.SetReference(newRef); err != nil {
+			return nil, fmt.Errorf("gitstore: advance ref: %w", err)
+		}
+		return &SyncForkResult{
+			MergeType:  "fast-forward",
+			Message:    "Successfully fast-forwarded to upstream",
+			BaseBranch: fmt.Sprintf("upstream:%s", branch),
+			CommitSHA:  upstreamCommitHash.String(),
+		}, nil
+	}
+
+	// If not fast-forward, attempt 3-way merge
+	mergeable, treeSHA, conflicts, err := s.CheckMergeable(forkNS, forkName, "refs/heads/"+branch, "refs/remotes/upstream/"+branch)
+	if err != nil {
+		return nil, err
+	}
+	if !mergeable {
+		return nil, fmt.Errorf("%w: %s", ErrMergeConflict, strings.Join(conflicts, "; "))
+	}
+
+	treeHash := plumbing.NewHash(treeSHA)
+	msg := fmt.Sprintf("Merge upstream %s/%s branch '%s' into %s", upstreamNS, upstreamName, branch, branch)
+	mergeCommitHash, err := CommitObject(forkRepo, msg, author, author, treeHash, []plumbing.Hash{forkCommitHash, upstreamCommitHash})
+	if err != nil {
+		return nil, fmt.Errorf("gitstore: commit merge: %w", err)
+	}
+
+	newRef := plumbing.NewHashReference(forkBranchRefName, mergeCommitHash)
+	if err := forkRepo.Storer.SetReference(newRef); err != nil {
+		return nil, fmt.Errorf("gitstore: update branch ref after merge: %w", err)
+	}
+
+	return &SyncForkResult{
+		MergeType:  "merge",
+		Message:    "Successfully merged upstream into fork",
+		BaseBranch: fmt.Sprintf("upstream:%s", branch),
+		CommitSHA:  mergeCommitHash.String(),
+	}, nil
+}

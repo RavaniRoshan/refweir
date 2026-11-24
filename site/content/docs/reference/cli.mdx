@@ -50,6 +50,9 @@ refweir repo fork <owner/repo> [--org <namespace>] [--name <new-name>]
 # List all forks of a parent repository
 refweir repo forks <owner/repo> [--json]
 
+# Synchronize a fork branch from upstream parent
+refweir repo sync-fork <owner/repo> [--branch <branch>]
+
 # Delete a repository
 refweir repo delete <namespace>/<repo-name>
 ```

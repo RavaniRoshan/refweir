@@ -205,7 +205,7 @@ func (c *CLI) runAuth(args []string) error {
 // Repo commands
 func (c *CLI) runRepo(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: refweir repo <list|view|get|create|delete|mirror|fork|forks>")
+		return errors.New("usage: refweir repo <list|view|get|create|delete|mirror|fork|forks|sync-fork>")
 	}
 	switch args[0] {
 	case "list":
@@ -376,6 +376,40 @@ func (c *CLI) runRepo(args []string) error {
 			return nil
 		}
 		fmt.Fprintf(c.Stdout, "No forks found for %s\n", repoArg)
+		return nil
+
+	case "sync-fork", "sync_fork":
+		fs := flag.NewFlagSet("repo sync-fork", flag.ContinueOnError)
+		fs.SetOutput(c.Stderr)
+		branchFlag := fs.String("branch", "", "Branch to synchronize (defaults to repository default branch)")
+		if err := fs.Parse(reorderFlags(args[1:])); err != nil {
+			return err
+		}
+		repoArg := ""
+		if fs.NArg() > 0 {
+			repoArg = fs.Arg(0)
+		} else if c.DefaultRepo != "" {
+			repoArg = c.DefaultRepo
+		}
+		if repoArg == "" {
+			return errors.New("repository argument required (owner/name)")
+		}
+		parts := strings.Split(repoArg, "/")
+		if len(parts) != 2 {
+			return errors.New("invalid repository format, expected owner/name")
+		}
+		body := map[string]any{}
+		if *branchFlag != "" {
+			body["branch"] = *branchFlag
+		}
+		data, code, err := c.doRequest(http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/forks/sync", parts[0], parts[1]), body)
+		if err != nil {
+			return err
+		}
+		if code >= 400 {
+			return fmt.Errorf("server error (%d): %s", code, string(data))
+		}
+		fmt.Fprintf(c.Stdout, "Fork synchronized: %s\n", string(data))
 		return nil
 
 	default:
@@ -1865,7 +1899,7 @@ _refweir_completion() {
 
     case "${words[1]}" in
         repo)
-            COMPREPLY=( $(compgen -W "list view get create delete mirror fork forks" -- "$cur") )
+            COMPREPLY=( $(compgen -W "list view get create delete mirror fork forks sync-fork" -- "$cur") )
             ;;
         pr)
             COMPREPLY=( $(compgen -W "list view create close" -- "$cur") )

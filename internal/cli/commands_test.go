@@ -938,6 +938,18 @@ func TestCLI_RepoForkCommands(t *testing.T) {
 	if !strings.Contains(stdout.String(), "contributor/forked-repo") {
 		t.Errorf("expected forks listing in stdout: %s", stdout.String())
 	}
+
+	// 3. repo sync-fork
+	stdout.Reset()
+	if err := c.Run([]string{"repo", "sync-fork", "contributor/forked-repo", "--branch", "main"}); err != nil {
+		t.Fatalf("repo sync-fork: %v", err)
+	}
+	if requestedPath != "/api/v1/repos/contributor/forked-repo/forks/sync" || requestedMethod != http.MethodPost {
+		t.Errorf("expected POST /api/v1/repos/contributor/forked-repo/forks/sync, got %s %s", requestedMethod, requestedPath)
+	}
+	if !strings.Contains(stdout.String(), "Fork synchronized:") {
+		t.Errorf("expected sync output in stdout: %s", stdout.String())
+	}
 }
 
 

@@ -1240,6 +1240,31 @@ func TestMCP_ForkTools(t *testing.T) {
 	if !strings.Contains(content, "agent-user/forked-tooling") {
 		t.Fatalf("expected agent-user/forked-tooling in forks list, got: %s", content)
 	}
+
+	// 3. Call sync_fork
+	recSync := callRPC(rwHandler, map[string]any{
+		"jsonrpc": "2.0",
+		"id":      3,
+		"method":  "tools/call",
+		"params": map[string]any{
+			"name": "sync_fork",
+			"arguments": map[string]any{
+				"ownerSlug": "agent-user",
+				"repoName":  "forked-tooling",
+				"branch":    "main",
+			},
+		},
+	})
+	var respSync rpcResponse
+	_ = json.Unmarshal(recSync.Body.Bytes(), &respSync)
+	resSync, ok := respSync.Result.(map[string]any)
+	if !ok || resSync["isError"] == true {
+		t.Fatalf("expected sync_fork to succeed, got: %+v", respSync)
+	}
+	syncContent := resSync["content"].([]any)[0].(map[string]any)["text"].(string)
+	if !strings.Contains(syncContent, "merge_type") {
+		t.Fatalf("expected merge_type in sync_fork result, got: %s", syncContent)
+	}
 }
 
 

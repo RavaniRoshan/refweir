@@ -554,5 +554,87 @@ func TestApp_ForkEndpoints(t *testing.T) {
 	}
 }
 
+func TestApp_SyncForkEndpoint(t *testing.T) {
+	dataDir := t.TempDir()
+	cfg := config.Config{
+		ListenAddr: "127.0.0.1:8080",
+		DataDir:    dataDir,
+		PublicURL:  "http://127.0.0.1:8080",
+		GitURL:     "127.0.0.1:8080",
+	}
+
+	app, err := Open(cfg)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer app.Close()
+	ctx := context.Background()
+
+	nsUpstream := store.Namespace{ID: idgen.NewNS(), Slug: "upstream-dev", Type: "team", Name: "upstream-dev"}
+	_ = app.Store.CreateNamespace(ctx, nsUpstream)
+	upstreamRepo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   nsUpstream.ID,
+		Name:          "core",
+		FullName:      "upstream-dev/core",
+		DefaultBranch: "main",
+		Visibility:    "public",
+	}
+	_ = app.Store.CreateRepo(ctx, upstreamRepo)
+	_, _ = app.Git.Init("upstream-dev", "core", "main")
+	sig := object.Signature{Name: "Dev", Email: "dev@upstream.org", When: time.Now()}
+	_, _ = app.Git.WriteFiles("upstream-dev", "core", "main", []gitstore.FileChange{
+		{Path: "readme.txt", Content: "v1\n"},
+	}, sig, "v1")
+
+	// Fork into contributor-dev/core
+	nsFork := store.Namespace{ID: idgen.NewNS(), Slug: "contributor-dev", Type: "user", Name: "contributor-dev"}
+	_ = app.Store.CreateNamespace(ctx, nsFork)
+	forkRepo := store.Repo{
+		ID:            idgen.NewRepo(),
+		NamespaceID:   nsFork.ID,
+		Name:          "core",
+		FullName:      "contributor-dev/core",
+		DefaultBranch: "main",
+		Visibility:    "public",
+		ParentRepoID:  upstreamRepo.ID,
+		IsFork:        true,
+	}
+	_ = app.Store.CreateRepo(ctx, forkRepo)
+	_, _ = app.Git.Fork("upstream-dev", "core", "contributor-dev", "core")
+
+	// 1. Non-fork sync should return 400
+	reqNonFork := httptest.NewRequest(http.MethodPost, "/api/v1/repos/upstream-dev/core/forks/sync", nil)
+	recNonFork := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recNonFork, reqNonFork)
+	if recNonFork.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for non-fork repo sync, got %d", recNonFork.Code)
+	}
+
+	// 2. Advance upstream
+	_, _ = app.Git.WriteFiles("upstream-dev", "core", "main", []gitstore.FileChange{
+		{Path: "feature.txt", Content: "v2 feature\n"},
+	}, sig, "v2")
+
+	// 3. Sync fork via REST
+	syncBody := `{"branch":"main"}`
+	reqSync := httptest.NewRequest(http.MethodPost, "/api/v1/repos/contributor-dev/core/forks/sync", strings.NewReader(syncBody))
+	reqSync.Header.Set("Content-Type", "application/json")
+	recSync := httptest.NewRecorder()
+	app.Handler().ServeHTTP(recSync, reqSync)
+
+	if recSync.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", recSync.Code, recSync.Body.String())
+	}
+
+	var res gitstore.SyncForkResult
+	if err := json.Unmarshal(recSync.Body.Bytes(), &res); err != nil {
+		t.Fatalf("decode sync response: %v", err)
+	}
+	if res.MergeType != "fast-forward" {
+		t.Errorf("expected merge_type 'fast-forward', got %q", res.MergeType)
+	}
+}
+
 
 

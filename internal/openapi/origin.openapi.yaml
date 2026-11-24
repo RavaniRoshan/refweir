@@ -1252,7 +1252,7 @@ paths:
                                             - id: repo_01k2ja2000e0080000000000q4
                                               name: rocket
                                               fullName: acme/rocket
-                                              webUrl: https://cursor.com/codebase/acme/rocket
+                                              webUrl: https://refweir.dev/codebase/acme/rocket
                                               owner:
                                                 slug: acme
                                                 id: ns_01k2ja2000e0080000000000p3
@@ -3175,7 +3175,7 @@ paths:
                                             - id: repo_01k2ja2000e0080000000000q4
                                               name: rocket
                                               fullName: acme/rocket
-                                              webUrl: https://cursor.com/codebase/acme/rocket
+                                              webUrl: https://refweir.dev/codebase/acme/rocket
                                               owner:
                                                 slug: acme
                                                 id: ns_01k2ja2000e0080000000000p3
@@ -3262,7 +3262,7 @@ paths:
                                         id: repo_01k2ja2000e0080000000000q4
                                         name: rocket
                                         fullName: acme/rocket
-                                        webUrl: https://cursor.com/codebase/acme/rocket
+                                        webUrl: https://refweir.dev/codebase/acme/rocket
                                         owner:
                                             slug: acme
                                             id: ns_01k2ja2000e0080000000000p3
@@ -3351,7 +3351,7 @@ paths:
                                         id: repo_01k2ja2000e0080000000000q4
                                         name: rocket
                                         fullName: acme/rocket
-                                        webUrl: https://cursor.com/codebase/acme/rocket
+                                        webUrl: https://refweir.dev/codebase/acme/rocket
                                         owner:
                                             slug: acme
                                             id: ns_01k2ja2000e0080000000000p3
@@ -3490,7 +3490,7 @@ paths:
                                         id: repo_01k2ja2000e0080000000000q4
                                         name: rocket
                                         fullName: acme/rocket
-                                        webUrl: https://cursor.com/codebase/acme/rocket
+                                        webUrl: https://refweir.dev/codebase/acme/rocket
                                         owner:
                                             slug: acme
                                             id: ns_01k2ja2000e0080000000000p3
@@ -4971,7 +4971,7 @@ paths:
                                                 additions: 128
                                                 deletions: 46
                                                 total: 174
-                                              webUrl: https://cursor.com/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
+                                              webUrl: https://refweir.dev/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                 "400":
                     description: Bad Request
                     content:
@@ -5070,7 +5070,7 @@ paths:
                                             additions: 128
                                             deletions: 46
                                             total: 174
-                                        webUrl: https://cursor.com/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                 "400":
                     description: Bad Request
                     content:
@@ -5544,7 +5544,7 @@ paths:
                                                 additions: 128
                                                 deletions: 46
                                                 total: 174
-                                            webUrl: https://cursor.com/codebase/acme/rocket/commit/3b1f9c2d8a7e6f5049c8b7a6d5e4f3a2b1c0d9e8
+                                            webUrl: https://refweir.dev/codebase/acme/rocket/commit/3b1f9c2d8a7e6f5049c8b7a6d5e4f3a2b1c0d9e8
                                         headCommit:
                                             sha: 9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                                             commit:
@@ -5565,7 +5565,7 @@ paths:
                                                 additions: 128
                                                 deletions: 46
                                                 total: 174
-                                            webUrl: https://cursor.com/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
+                                            webUrl: https://refweir.dev/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                                         mergeBaseCommit:
                                             sha: 3b1f9c2d8a7e6f5049c8b7a6d5e4f3a2b1c0d9e8
                                             commit:
@@ -5586,7 +5586,7 @@ paths:
                                                 additions: 128
                                                 deletions: 46
                                                 total: 174
-                                            webUrl: https://cursor.com/codebase/acme/rocket/commit/3b1f9c2d8a7e6f5049c8b7a6d5e4f3a2b1c0d9e8
+                                            webUrl: https://refweir.dev/codebase/acme/rocket/commit/3b1f9c2d8a7e6f5049c8b7a6d5e4f3a2b1c0d9e8
                 "400":
                     description: Bad Request
                     content:
@@ -8086,7 +8086,7 @@ paths:
                                             id: repo_01k2ja2000e0080000000000q4
                                             name: rocket
                                             fullName: acme/rocket
-                                            webUrl: https://cursor.com/codebase/acme/rocket
+                                            webUrl: https://refweir.dev/codebase/acme/rocket
                                             owner:
                                                 slug: acme
                                                 id: ns_01k2ja2000e0080000000000p3
@@ -8326,7 +8326,7 @@ paths:
                                               additions: 128
                                               deletions: 46
                                               changedFiles: 5
-                                              webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                              webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                               labels:
                                                 - id: lbl_01k2ja2000e0080000000000m1
                                                   name: bug
@@ -8501,7 +8501,7 @@ paths:
                                         additions: 128
                                         deletions: 46
                                         changedFiles: 5
-                                        webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                         labels:
                                             - id: lbl_01k2ja2000e0080000000000m1
                                               name: bug
@@ -9203,7 +9203,7 @@ paths:
                                         additions: 128
                                         deletions: 46
                                         changedFiles: 5
-                                        webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                         labels:
                                             - id: lbl_01k2ja2000e0080000000000m1
                                               name: bug
@@ -9394,7 +9394,7 @@ paths:
                                         additions: 128
                                         deletions: 46
                                         changedFiles: 5
-                                        webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                         labels:
                                             - id: lbl_01k2ja2000e0080000000000m1
                                               name: bug
@@ -9552,7 +9552,7 @@ paths:
                                         additions: 128
                                         deletions: 46
                                         changedFiles: 5
-                                        webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                         labels:
                                             - id: lbl_01k2ja2000e0080000000000m1
                                               name: bug
@@ -9673,7 +9673,7 @@ paths:
                                         additions: 128
                                         deletions: 46
                                         changedFiles: 5
-                                        webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                        webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                         labels:
                                             - id: lbl_01k2ja2000e0080000000000m1
                                               name: bug
@@ -10125,7 +10125,7 @@ paths:
                                                 additions: 128
                                                 deletions: 46
                                                 total: 174
-                                              webUrl: https://cursor.com/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
+                                              webUrl: https://refweir.dev/codebase/acme/rocket/commit/9a41f0c3d2b8e7f6a5c4d3e2f1b0a9c8d7e6f5a4
                 "400":
                     description: Bad Request
                     content:
@@ -10848,7 +10848,7 @@ paths:
                                             additions: 128
                                             deletions: 46
                                             changedFiles: 5
-                                            webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                            webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                             labels:
                                                 - id: lbl_01k2ja2000e0080000000000m1
                                                   name: bug
@@ -13281,7 +13281,7 @@ paths:
                                               additions: 128
                                               deletions: 46
                                               changedFiles: 5
-                                              webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                                              webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                                               labels:
                                                 - id: lbl_01k2ja2000e0080000000000m1
                                                   name: bug
@@ -17892,7 +17892,7 @@ components:
                 handle:
                     type: string
                     description: |-
-                        The user's claimed profile handle (the identity behind cursor.com
+                        The user's claimed profile handle (the identity behind refweir.dev
                          /@handle), without the @ prefix. Present only while the user's profile
                          is publicly visible; omitted for users without a claimed handle and for
                          non-public profiles.
@@ -19114,7 +19114,7 @@ components:
                     additions: 128
                     deletions: 46
                     changedFiles: 5
-                    webUrl: https://cursor.com/codebase/acme/rocket/pull/17
+                    webUrl: https://refweir.dev/codebase/acme/rocket/pull/17
                     stack:
                         id: stk_01k2ja2000e0080000000000s1
                         parentPullRequest:
@@ -19419,7 +19419,7 @@ components:
                     id: repo_01k2ja2000e0080000000000q4
                     name: rocket
                     fullName: acme/rocket
-                    webUrl: https://cursor.com/codebase/acme/rocket
+                    webUrl: https://refweir.dev/codebase/acme/rocket
                     owner:
                         slug: acme
                         id: ns_01k2ja2000e0080000000000p3
@@ -19488,7 +19488,7 @@ components:
                     id: repo_01k2ja2000e0080000000000q4
                     name: rocket
                     fullName: acme/rocket
-                    webUrl: https://cursor.com/codebase/acme/rocket
+                    webUrl: https://refweir.dev/codebase/acme/rocket
                     owner:
                         slug: acme
                         id: ns_01k2ja2000e0080000000000p3

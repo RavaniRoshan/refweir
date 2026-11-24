@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
@@ -309,5 +310,91 @@ func TestStore_Fork(t *testing.T) {
 		t.Error("fork hook not executable")
 	}
 }
+
+func TestStore_SyncFork(t *testing.T) {
+	s := newStore(t)
+	sig := object.Signature{Name: "Dev", Email: "dev@refweir.local", When: time.Now()}
+
+	// 1. Upstream with initial commit
+	if _, err := s.Init("upstream", "lib", "main"); err != nil {
+		t.Fatalf("Init upstream: %v", err)
+	}
+	_, err := s.WriteFiles("upstream", "lib", "main", []FileChange{
+		{Path: "README.md", Content: "# Lib\n"},
+	}, sig, "initial upstream commit")
+	if err != nil {
+		t.Fatalf("WriteFiles upstream initial: %v", err)
+	}
+
+	// 2. Fork into contributor/lib
+	if _, err := s.Fork("upstream", "lib", "contributor", "lib"); err != nil {
+		t.Fatalf("Fork: %v", err)
+	}
+
+	// 3. Sync immediately - should be "none" (already up to date)
+	res, err := s.SyncFork("upstream", "lib", "contributor", "lib", "main", sig)
+	if err != nil {
+		t.Fatalf("SyncFork (initial): %v", err)
+	}
+	if res.MergeType != "none" {
+		t.Errorf("expected merge_type 'none', got %q", res.MergeType)
+	}
+
+	// 4. Upstream advances with a new commit - should fast-forward
+	_, err = s.WriteFiles("upstream", "lib", "main", []FileChange{
+		{Path: "feature.txt", Content: "v2 feature\n"},
+	}, sig, "add feature")
+	if err != nil {
+		t.Fatalf("WriteFiles upstream v2: %v", err)
+	}
+
+	res, err = s.SyncFork("upstream", "lib", "contributor", "lib", "main", sig)
+	if err != nil {
+		t.Fatalf("SyncFork (fast-forward): %v", err)
+	}
+	if res.MergeType != "fast-forward" {
+		t.Errorf("expected merge_type 'fast-forward', got %q", res.MergeType)
+	}
+
+	// Verify fork has feature.txt
+	data, _, _, isDir, err := s.ReadFileAtPath("contributor", "lib", res.CommitSHA, "feature.txt")
+	if err != nil || isDir || string(data) != "v2 feature\n" {
+		t.Fatalf("expected feature.txt with 'v2 feature\\n', got err=%v, data=%q", err, string(data))
+	}
+
+	// 5. Fork commits a new file, upstream commits another file -> 3-way merge
+	_, err = s.WriteFiles("contributor", "lib", "main", []FileChange{
+		{Path: "fork_only.txt", Content: "from fork\n"},
+	}, sig, "fork side change")
+	if err != nil {
+		t.Fatalf("WriteFiles fork: %v", err)
+	}
+
+	_, err = s.WriteFiles("upstream", "lib", "main", []FileChange{
+		{Path: "upstream_only.txt", Content: "from upstream\n"},
+	}, sig, "upstream side change")
+	if err != nil {
+		t.Fatalf("WriteFiles upstream: %v", err)
+	}
+
+	res, err = s.SyncFork("upstream", "lib", "contributor", "lib", "main", sig)
+	if err != nil {
+		t.Fatalf("SyncFork (3-way merge): %v", err)
+	}
+	if res.MergeType != "merge" {
+		t.Errorf("expected merge_type 'merge', got %q", res.MergeType)
+	}
+
+	// Verify fork has both fork_only.txt and upstream_only.txt
+	dataFork, _, _, _, err := s.ReadFileAtPath("contributor", "lib", res.CommitSHA, "fork_only.txt")
+	if err != nil || string(dataFork) != "from fork\n" {
+		t.Errorf("expected fork_only.txt to be preserved after merge, err=%v, data=%q", err, string(dataFork))
+	}
+	dataUpstream, _, _, _, err := s.ReadFileAtPath("contributor", "lib", res.CommitSHA, "upstream_only.txt")
+	if err != nil || string(dataUpstream) != "from upstream\n" {
+		t.Errorf("expected upstream_only.txt to be merged into fork, err=%v, data=%q", err, string(dataUpstream))
+	}
+}
+
 
 
